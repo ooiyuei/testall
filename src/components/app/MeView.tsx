@@ -52,6 +52,8 @@ import { LevelCard } from "@/components/me/LevelCard";
 import { DeviationTrend, type TrendSeries } from "@/components/me/DeviationTrend";
 import { computeTotalExp, levelFromExp } from "@/lib/exp";
 import { defaultRemainingMonths, estimateGoalGap, estimateRequiredBlocks } from "@/lib/planning";
+import { HOURS_PER_BLOCK } from "@/lib/planning/constants";
+import { bucketMid } from "@/lib/store";
 import { guessArea, PRIMARY_AREAS } from "@/lib/master/subjects/guessArea";
 
 export function MeView() {
@@ -638,36 +640,53 @@ function LevelSection() {
   });
   const lv = levelFromExp(totalExp);
 
-  // 目標 (border 偏差値) までの残りブロック数を概算
   const profile = state.profile;
-  let remainingBlocks: number | undefined;
-  let overallProgress = Math.min(1, lv.totalExp / 50000);
-  let goalLabel = "目標";
+  const done = (state.blockLogs ?? []).length;
+  let blocksRemainingByHorizon: Record<"exam" | "year" | "quarter", number> | undefined;
+  let blocksDoneByHorizon: Record<"exam" | "year" | "quarter", number> | undefined;
+
   if (profile?.deviation && profile.targetUniversities?.length) {
     const grade = (profile.grade as "h1" | "h2" | "h3" | "ronin") ?? "h2";
-    const months = defaultRemainingMonths(grade);
-    const remainingWeeks = Math.max(1, Math.round((months * 30) / 7));
-    const border = 65;
-    const gap = estimateGoalGap({
-      targets: [
-        {
-          universityId: profile.targetUniversities[0].universityId,
-          priority: 1,
-          borderDeviation: border,
-          safeDeviation: border + 3,
-          stretchDeviation: border + 5,
-        },
-      ],
-      currentTotal: profile.deviation,
-      currentByArea: {},
-      remainingWeeks,
-    });
-    const req = estimateRequiredBlocks({ gap, remainingWeeks });
-    const future = req.futureRequiredHours.upper / (25 / 60);
-    const done = (state.blockLogs ?? []).length;
-    remainingBlocks = Math.max(0, Math.round(future - done));
-    overallProgress = Math.min(1, done / Math.max(1, future));
-    goalLabel = "本番";
+    const monthsToExam = defaultRemainingMonths(grade);
+    // 目標偏差値: profile.targetDeviationBucket があれば使う、なければ +10 を目標に
+    const border = profile.targetDeviationBucket
+      ? bucketMid(profile.targetDeviationBucket)
+      : Math.min(75, profile.deviation + 10);
+
+    // 「本番」までの必要ブロック (中央値ベース、概算)
+    function calcRemaining(months: number): number {
+      const remainingWeeks = Math.max(1, Math.round((months * 30) / 7));
+      const gap = estimateGoalGap({
+        targets: [
+          {
+            universityId: profile!.targetUniversities![0].universityId,
+            priority: 1,
+            borderDeviation: border,
+            safeDeviation: border + 3,
+            stretchDeviation: border + 5,
+          },
+        ],
+        currentTotal: profile!.deviation!,
+        currentByArea: {},
+        remainingWeeks,
+      });
+      const req = estimateRequiredBlocks({ gap, remainingWeeks });
+      // 中央値で表示。upper だと挑戦的すぎる
+      const futureMid =
+        (req.futureRequiredHours.lower + req.futureRequiredHours.upper) / 2;
+      const futureBlocks = futureMid / HOURS_PER_BLOCK;
+      // この期間内で必要なブロックの按分
+      const portion = Math.min(1, months / monthsToExam);
+      return Math.max(0, Math.round(futureBlocks * portion - done));
+    }
+
+    blocksRemainingByHorizon = {
+      exam: calcRemaining(monthsToExam),
+      year: calcRemaining(Math.min(12, monthsToExam)),
+      quarter: calcRemaining(Math.min(3, monthsToExam)),
+    };
+    // 達成済は今までの累計だが、horizon ごとの目標に対する割合で出す
+    blocksDoneByHorizon = { exam: done, year: done, quarter: done };
   }
 
   return (
@@ -675,9 +694,8 @@ function LevelSection() {
       level={lv.level}
       currentLevelExp={lv.currentLevelExp}
       nextLevelExp={lv.nextLevelExp}
-      goalLabel={goalLabel}
-      blocksRemaining={remainingBlocks}
-      blocksDone={(state.blockLogs ?? []).length}
+      blocksRemainingByHorizon={blocksRemainingByHorizon}
+      blocksDoneByHorizon={blocksDoneByHorizon}
     />
   );
 }

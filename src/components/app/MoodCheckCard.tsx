@@ -76,6 +76,9 @@ export function MoodCheckCard() {
     blockMinutes: 30,
   });
 
+  // 就寝時間を超えている / 残り時間が物理的に0
+  const tooLate = result.availableBlocks <= 0;
+
   function commit() {
     if (!planning) setPlanning(profile);
     logDailyMood({
@@ -87,6 +90,22 @@ export function MoodCheckCard() {
       createdAt: new Date().toISOString(),
     });
     setDecided(true);
+  }
+
+  if (tooLate && !decided) {
+    return (
+      <section className="rounded-2xl border border-ink-100/80 bg-cream-50 p-5 text-center">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+          今日はもう
+        </div>
+        <p className="mt-2 text-[15px] font-bold leading-[1.6] text-ink-900">
+          就寝時間まで時間がありません。<br />しっかり休んで、明日にしましょう 🌙
+        </p>
+        <p className="mt-2 text-[11px] text-ink-500">
+          就寝 {profile.defaultBedtime} まで残り{result.availableBlocks <= 0 ? "わずか" : ""}
+        </p>
+      </section>
+    );
   }
 
   if (decided) {
