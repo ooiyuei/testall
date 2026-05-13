@@ -1,18 +1,27 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
 import {
-  ChevronRight,
+  AlertCircle,
+  Camera,
   ChevronLeft,
+  ChevronRight,
+  Edit3,
+  ImagePlus,
+  Loader2,
   Plus,
   Trash2,
-  Loader2,
-  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { GRADES, SUBJECTS, TARGET_LEVELS } from "@/lib/subjects";
+import { GRADES } from "@/lib/subjects";
+import {
+  subjectsForGrade,
+  TEST_KINDS,
+  type GradeId,
+  type SubjectDef,
+} from "@/lib/curriculum";
 import { readStore, saveTest, setProfile } from "@/lib/store";
 import type {
   Diagnosis,
@@ -21,23 +30,187 @@ import type {
   UnitInput,
 } from "@/lib/types";
 
+type Mode = "select" | "manual" | "photo";
+
 const CAUSE_OPTIONS: { id: MissCause; label: string; tone: string }[] = [
   { id: "knowledge", label: "知識不足", tone: "bg-peach-100 text-peach-500" },
-  { id: "understanding", label: "理解不足", tone: "bg-coral-300 text-white" },
+  {
+    id: "understanding",
+    label: "理解不足",
+    tone: "bg-coral-300 text-white",
+  },
   { id: "time", label: "時間不足", tone: "bg-sun-300 text-ink-900" },
   { id: "careless", label: "ケアレス", tone: "bg-sky-100 text-sky-700" },
 ];
 
+export function NewTestForm() {
+  const [mode, setMode] = useState<Mode>("select");
+
+  return (
+    <>
+      {mode === "select" ? (
+        <ModeSelect
+          onPickManual={() => setMode("manual")}
+          onPickPhoto={() => setMode("photo")}
+        />
+      ) : mode === "photo" ? (
+        <PhotoMode onBack={() => setMode("select")} />
+      ) : (
+        <ManualForm />
+      )}
+    </>
+  );
+}
+
+function ModeSelect({
+  onPickManual,
+  onPickPhoto,
+}: {
+  onPickManual: () => void;
+  onPickPhoto: () => void;
+}) {
+  return (
+    <div className="px-4 pt-3 pb-10">
+      <p className="text-sm text-ink-600">
+        模試・校内テストの結果を入力すると、AIが苦手と次の45分を整えます。
+      </p>
+
+      <div className="mt-5 grid gap-3">
+        <button
+          type="button"
+          onClick={onPickPhoto}
+          className="flex items-center gap-4 rounded-3xl border border-cream-200 bg-white p-5 text-left shadow-soft active:scale-[0.99] transition"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
+            <Camera className="h-6 w-6" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm font-black text-ink-900">写真で取り込む</div>
+            <div className="mt-0.5 text-[11px] text-ink-500">
+              答案・成績票を撮影。問題文の中身は保存しません。
+            </div>
+          </div>
+          <span className="rounded-full bg-sun-200 px-2 py-0.5 text-[10px] font-bold text-ink-900">
+            β版
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onPickManual}
+          className="flex items-center gap-4 rounded-3xl border border-cream-200 bg-white p-5 text-left shadow-soft active:scale-[0.99] transition"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-mint-100 text-mint-600">
+            <Edit3 className="h-6 w-6" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm font-black text-ink-900">手入力する</div>
+            <div className="mt-0.5 text-[11px] text-ink-500">
+              科目・単元ごとに正答数と原因を選ぶだけ。
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <div className="mt-8 rounded-2xl bg-sky-50 p-4 text-[11px] text-sky-900">
+        <p className="font-bold">どちらも数十秒で終わります</p>
+        <p className="mt-1 text-sky-700">
+          学年・志望校に合わせた具体的な作戦が、診断後すぐ届きます。
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function PhotoMode({ onBack }: { onBack: () => void }) {
+  const [scope, setScope] = useState<"answer" | "question" | "both">("answer");
+
+  return (
+    <div className="px-4 pt-3 pb-10">
+      <button
+        type="button"
+        onClick={onBack}
+        className="flex h-9 items-center gap-1 rounded-full text-xs font-bold text-ink-500 hover:bg-cream-100"
+      >
+        <ChevronLeft className="h-4 w-4" />
+        モードを変える
+      </button>
+
+      <h1 className="mt-3 text-xl font-black text-ink-900">
+        テストを撮影して取り込む
+      </h1>
+      <p className="mt-1 text-xs text-ink-500">
+        AIが答案を読み取って、単元別の正答数を自動入力します。
+      </p>
+
+      <div className="mt-5">
+        <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
+          何を撮影しますか？
+        </div>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          {(
+            [
+              { id: "answer", label: "答案のみ" },
+              { id: "question", label: "問題のみ" },
+              { id: "both", label: "両方" },
+            ] as const
+          ).map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setScope(opt.id)}
+              className={cn(
+                "rounded-2xl border-2 px-2 py-2.5 text-xs font-bold transition",
+                scope === opt.id
+                  ? "border-sky-500 bg-sky-50 text-sky-700"
+                  : "border-cream-200 bg-white text-ink-700",
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <label className="mt-5 flex flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-cream-300 bg-white/60 p-8 text-center cursor-pointer hover:bg-cream-50 transition">
+        <ImagePlus className="h-8 w-8 text-sky-500" />
+        <span className="text-sm font-black text-ink-900">写真を選ぶ</span>
+        <span className="text-[11px] text-ink-500">
+          または カメラで撮影
+        </span>
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              alert(
+                `写真モードはβ版です。\n選択ファイル: ${file.name}\n\n現在は手入力モードのみ精度を保証しています。`,
+              );
+            }
+          }}
+        />
+      </label>
+
+      <div className="mt-6 rounded-2xl border border-cream-200 bg-white p-4 text-[11px] text-ink-700">
+        <p className="font-bold text-ink-900">プライバシー</p>
+        <p className="mt-1">
+          画像はAI解析にのみ使い、保存されません。問題文の中身は記録しません。
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── 手入力フォーム ──
+
 type Step = 0 | 1 | 2;
 
 type FormState = {
-  // profile
-  grade: string;
-  target: string;
-  examDate: string;
-  availableMinutesPerDay: number;
-  textbooks: string[];
-  // test
+  grade: GradeId;
+  testKindId: string;
   subjectId: string;
   testName: string;
   score: string;
@@ -45,25 +218,19 @@ type FormState = {
   units: UnitInput[];
 };
 
-function defaultExamDate(): string {
-  const d = new Date();
-  d.setMonth(d.getMonth() + 6);
-  return d.toISOString().slice(0, 10);
-}
-
 function buildInitialState(): FormState {
   const existing = readStore().profile;
+  const grade = (existing?.grade as GradeId) ?? "h2";
+  const subjects = subjectsForGrade(grade);
+  const subject = subjects[0] ?? subjectsForGrade("h2")[0];
   return {
-    grade: existing?.grade ?? "h2",
-    target: existing?.target ?? "private-top",
-    examDate: existing?.examDate ?? defaultExamDate(),
-    availableMinutesPerDay: existing?.availableMinutesPerDay ?? 120,
-    textbooks: existing?.textbooks?.length ? existing.textbooks : [""],
-    subjectId: "math",
+    grade,
+    testKindId: "school-mock",
+    subjectId: subject.id,
     testName: "",
     score: "",
     fullScore: "100",
-    units: SUBJECTS[0].units.slice(0, 3).map((u) => ({
+    units: subject.units.slice(0, 3).map((u) => ({
       unit: u,
       correct: 0,
       total: 0,
@@ -71,17 +238,41 @@ function buildInitialState(): FormState {
   };
 }
 
-export function NewTestForm() {
+function ManualForm() {
   const router = useRouter();
   const [step, setStep] = useState<Step>(0);
   const [form, setForm] = useState<FormState>(buildInitialState);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const subject = useMemo(
-    () => SUBJECTS.find((s) => s.id === form.subjectId) ?? SUBJECTS[0],
-    [form.subjectId],
+  const subjectsAvailable = useMemo(
+    () => subjectsForGrade(form.grade),
+    [form.grade],
   );
+  const subject = useMemo(
+    () =>
+      subjectsAvailable.find((s) => s.id === form.subjectId) ??
+      subjectsAvailable[0],
+    [subjectsAvailable, form.subjectId],
+  );
+
+  // 学年変更時に科目をリセット
+  useEffect(() => {
+    if (!subjectsAvailable.some((s) => s.id === form.subjectId)) {
+      const first = subjectsAvailable[0];
+      if (first) {
+        setForm((prev) => ({
+          ...prev,
+          subjectId: first.id,
+          units: first.units.slice(0, 3).map((u) => ({
+            unit: u,
+            correct: 0,
+            total: 0,
+          })),
+        }));
+      }
+    }
+  }, [form.grade, form.subjectId, subjectsAvailable]);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -112,26 +303,9 @@ export function NewTestForm() {
     }));
   }
 
-  function setTextbook(idx: number, value: string) {
-    setForm((prev) => ({
-      ...prev,
-      textbooks: prev.textbooks.map((t, i) => (i === idx ? value : t)),
-    }));
-  }
-
-  function addTextbook() {
-    setForm((prev) => ({ ...prev, textbooks: [...prev.textbooks, ""] }));
-  }
-
-  function removeTextbook(idx: number) {
-    setForm((prev) => ({
-      ...prev,
-      textbooks: prev.textbooks.filter((_, i) => i !== idx),
-    }));
-  }
-
   function changeSubject(id: string) {
-    const next = SUBJECTS.find((s) => s.id === id) ?? SUBJECTS[0];
+    const next = subjectsAvailable.find((s) => s.id === id) ?? subjectsAvailable[0];
+    if (!next) return;
     setForm((prev) => ({
       ...prev,
       subjectId: id,
@@ -146,9 +320,8 @@ export function NewTestForm() {
   function validateStep(s: Step): string | null {
     if (s === 0) {
       if (!form.grade) return "学年を選んでください";
-      if (!form.target) return "志望校レベルを選んでください";
-      if (!form.examDate) return "本番日を入れてください";
-      if (form.availableMinutesPerDay <= 0) return "1日の勉強時間を入れてください";
+      if (!form.testKindId) return "テスト種別を選んでください";
+      if (!form.subjectId) return "科目を選んでください";
     }
     if (s === 1) {
       if (!form.testName.trim()) return "テスト名を入れてください";
@@ -188,18 +361,19 @@ export function NewTestForm() {
     setSubmitting(true);
     setError(null);
 
-    const textbooks = form.textbooks.map((t) => t.trim()).filter(Boolean);
-    const profile = {
-      grade: form.grade,
-      target: form.target,
-      examDate: form.examDate,
-      availableMinutesPerDay: form.availableMinutesPerDay,
-      textbooks,
-    };
-    setProfile(profile);
+    const existing = readStore().profile;
+    // 学年が変わっていたら保存
+    if (existing && existing.grade !== form.grade) {
+      setProfile({ ...existing, grade: form.grade });
+    }
 
+    const profile = readStore().profile;
     const input: TestInput = {
-      ...profile,
+      grade: form.grade,
+      target: profile?.target ?? "private-top",
+      examDate: profile?.examDate ?? new Date().toISOString().slice(0, 10),
+      availableMinutesPerDay: profile?.availableMinutesPerDay ?? 120,
+      textbooks: profile?.textbooks ?? [],
       subject: subject.name,
       testName: form.testName.trim(),
       score: Number(form.score),
@@ -212,6 +386,14 @@ export function NewTestForm() {
           total: Number(u.total),
           cause: u.cause,
         })),
+      deviation: profile?.deviation,
+      schoolName: profile?.schoolName,
+      weekdayMinutes: profile?.weekdayMinutes,
+      weekendMinutes: profile?.weekendMinutes,
+      targetUniversities: profile?.targetUniversities?.map((tu) => ({
+        universityId: tu.universityId,
+        faculty: tu.faculty,
+      })),
     };
 
     try {
@@ -252,21 +434,18 @@ export function NewTestForm() {
 
       <div className="mt-4">
         {step === 0 ? (
-          <ProfileStep
+          <BasicStep
             form={form}
+            subjectsAvailable={subjectsAvailable}
             update={update}
-            setTextbook={setTextbook}
-            addTextbook={addTextbook}
-            removeTextbook={removeTextbook}
+            changeSubject={changeSubject}
           />
         ) : null}
-        {step === 1 ? (
-          <TestStep form={form} update={update} changeSubject={changeSubject} />
-        ) : null}
+        {step === 1 ? <ScoreStep form={form} update={update} /> : null}
         {step === 2 ? (
           <UnitStep
             form={form}
-            subjectUnits={subject.units}
+            subjectUnits={subject?.units ?? []}
             setUnit={setUnit}
             addUnit={addUnit}
             removeUnit={removeUnit}
@@ -318,7 +497,7 @@ export function NewTestForm() {
 }
 
 function StepIndicator({ step }: { step: Step }) {
-  const labels = ["プロフィール", "テスト", "単元"];
+  const labels = ["科目", "点数", "単元"];
   return (
     <div className="flex items-center gap-2">
       {labels.map((label, i) => (
@@ -357,18 +536,16 @@ function StepIndicator({ step }: { step: Step }) {
   );
 }
 
-function ProfileStep({
+function BasicStep({
   form,
+  subjectsAvailable,
   update,
-  setTextbook,
-  addTextbook,
-  removeTextbook,
+  changeSubject,
 }: {
   form: FormState;
+  subjectsAvailable: SubjectDef[];
   update: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
-  setTextbook: (idx: number, value: string) => void;
-  addTextbook: () => void;
-  removeTextbook: (idx: number) => void;
+  changeSubject: (id: string) => void;
 }) {
   return (
     <div className="space-y-4">
@@ -379,7 +556,7 @@ function ProfileStep({
             <Chip
               key={g.id}
               active={form.grade === g.id}
-              onClick={() => update("grade", g.id)}
+              onClick={() => update("grade", g.id as GradeId)}
             >
               {g.name}
             </Chip>
@@ -388,117 +565,52 @@ function ProfileStep({
       </Card>
 
       <Card>
-        <Label>志望校レベル</Label>
-        <div className="mt-2 space-y-2">
-          {TARGET_LEVELS.map((t) => (
-            <RowOption
-              key={t.id}
-              active={form.target === t.id}
-              onClick={() => update("target", t.id)}
-            >
-              {t.name}
-            </RowOption>
-          ))}
-        </div>
-      </Card>
-
-      <Card>
-        <Label>本番日</Label>
-        <input
-          type="date"
-          value={form.examDate}
-          onChange={(e) => update("examDate", e.target.value)}
-          className="mt-2 h-11 w-full rounded-xl border border-cream-200 bg-white px-3 text-sm text-ink-900 outline-none focus:border-sky-400"
-        />
-      </Card>
-
-      <Card>
-        <Label>1日に勉強できる時間</Label>
-        <div className="mt-2 flex items-center gap-3">
-          <input
-            type="range"
-            min={30}
-            max={480}
-            step={15}
-            value={form.availableMinutesPerDay}
-            onChange={(e) =>
-              update("availableMinutesPerDay", Number(e.target.value))
-            }
-            className="flex-1 accent-sky-500"
-          />
-          <div className="w-20 flex-none rounded-xl bg-cream-100 px-3 py-2 text-right text-sm font-black text-ink-900 tabular-nums">
-            {form.availableMinutesPerDay}
-            <span className="ml-0.5 text-[10px] font-bold text-ink-500">分</span>
-          </div>
-        </div>
-      </Card>
-
-      <Card>
-        <Label>持っている参考書</Label>
-        <p className="mt-1 text-[11px] text-ink-500">
-          AIが「これを回す」前提でルートを組みます。
-        </p>
-        <ul className="mt-2 space-y-2">
-          {form.textbooks.map((t, i) => (
-            <li key={i} className="flex items-center gap-2">
-              <input
-                value={t}
-                onChange={(e) => setTextbook(i, e.target.value)}
-                placeholder="例：チャート式 数IA"
-                className="h-11 flex-1 rounded-xl border border-cream-200 bg-white px-3 text-sm text-ink-900 outline-none focus:border-sky-400"
-              />
-              {form.textbooks.length > 1 ? (
-                <button
-                  type="button"
-                  onClick={() => removeTextbook(i)}
-                  className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-ink-400 hover:bg-cream-100"
-                  aria-label="削除"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-        <button
-          type="button"
-          onClick={addTextbook}
-          className="mt-2 flex h-10 w-full items-center justify-center gap-1 rounded-xl border border-dashed border-cream-300 text-xs font-bold text-ink-500 hover:bg-cream-50"
-        >
-          <Plus className="h-4 w-4" />
-          参考書を追加
-        </button>
-      </Card>
-    </div>
-  );
-}
-
-function TestStep({
-  form,
-  update,
-  changeSubject,
-}: {
-  form: FormState;
-  update: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
-  changeSubject: (id: string) => void;
-}) {
-  return (
-    <div className="space-y-4">
-      <Card>
-        <Label>科目</Label>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {SUBJECTS.map((s) => (
+        <Label>テスト種別</Label>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {TEST_KINDS.map((k) => (
             <Chip
-              key={s.id}
-              active={form.subjectId === s.id}
-              onClick={() => changeSubject(s.id)}
+              key={k.id}
+              active={form.testKindId === k.id}
+              onClick={() => update("testKindId", k.id)}
             >
-              {s.name}
+              {k.name}
             </Chip>
           ))}
         </div>
       </Card>
 
+      <Card>
+        <Label>科目</Label>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {subjectsAvailable.map((s) => (
+            <Chip
+              key={s.id}
+              active={form.subjectId === s.id}
+              onClick={() => changeSubject(s.id)}
+            >
+              {s.shortName}
+            </Chip>
+          ))}
+        </div>
+        {subjectsAvailable.length === 0 ? (
+          <p className="mt-2 text-[11px] text-ink-500">
+            選択中の学年に登録されている科目がありません。
+          </p>
+        ) : null}
+      </Card>
+    </div>
+  );
+}
+
+function ScoreStep({
+  form,
+  update,
+}: {
+  form: FormState;
+  update: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
+}) {
+  return (
+    <div className="space-y-4">
       <Card>
         <Label>テスト名</Label>
         <input
@@ -691,36 +803,6 @@ function Chip({
       )}
     >
       {children}
-    </button>
-  );
-}
-
-function RowOption({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-bold transition",
-        active
-          ? "bg-sky-50 text-sky-700 ring-2 ring-sky-200"
-          : "bg-cream-50 text-ink-700 hover:bg-cream-100",
-      )}
-    >
-      <span>{children}</span>
-      {active ? (
-        <span className="h-2 w-2 rounded-full bg-sky-500" />
-      ) : (
-        <span className="h-2 w-2 rounded-full bg-cream-300" />
-      )}
     </button>
   );
 }

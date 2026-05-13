@@ -82,11 +82,44 @@ function buildUserPrompt(input: TestInput): string {
     })
     .join("\n");
 
+  const profileContext = (input as TestInput & {
+    deviation?: number;
+    schoolName?: string;
+    weekdayMinutes?: number;
+    weekendMinutes?: number;
+    targetUniversities?: { universityId: string; faculty?: string }[];
+  });
+
+  const extraLines: string[] = [];
+  if (profileContext.deviation) {
+    extraLines.push(`- 現在の全国偏差値（おおよそ）: ${profileContext.deviation}`);
+  }
+  if (profileContext.schoolName) {
+    extraLines.push(`- 学校: ${profileContext.schoolName}`);
+  }
+  if (
+    typeof profileContext.weekdayMinutes === "number" &&
+    typeof profileContext.weekendMinutes === "number"
+  ) {
+    extraLines.push(
+      `- 1日に勉強できる時間: 平日 ${profileContext.weekdayMinutes}分 / 休日 ${profileContext.weekendMinutes}分`,
+    );
+  }
+  if (profileContext.targetUniversities && profileContext.targetUniversities.length > 0) {
+    const list = profileContext.targetUniversities
+      .map((tu, i) =>
+        `  第${i + 1}志望: ${tu.universityId}${tu.faculty ? ` / ${tu.faculty}` : ""}`,
+      )
+      .join("\n");
+    extraLines.push(`- 志望校:\n${list}`);
+  }
+
   return `生徒データ:
 - 学年: ${input.grade}
 - 志望校レベル: ${input.target}
 - 本番日: ${input.examDate}
 - 1日に勉強できる平均時間: ${input.availableMinutesPerDay}分
+${extraLines.join("\n")}
 
 直近のテスト:
 - テスト名: ${input.testName}
@@ -99,6 +132,10 @@ ${unitLines}
 ${input.textbooks.length === 0 ? "- 未入力（汎用ルートで提案）" : input.textbooks.map((t) => `- ${t}`).join("\n")}
 
 このデータをもとに、Testallの診断レポートを上記JSONスキーマで返してください。
+注意:
+- 志望校に複数候補がある場合、第1志望をベースに、第2・3志望も無理なくカバーできる作戦にする。
+- 偏差値と志望校最低ラインのギャップが大きい場合はそれを率直に書く（精神論ではなく作戦で埋める）。
+- 学年に応じた範囲で提案する（高1は基礎、高3は本番直結）。
 今日は${new Date().toLocaleDateString("ja-JP", { weekday: "long", month: "long", day: "numeric" })}です。
 todayBlocksは、今日の夕方17:00以降を想定して2-3個提案してください。`;
 }

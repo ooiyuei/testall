@@ -79,6 +79,8 @@ export function HomeView() {
     ? `おかえり、${state.profile.name}さん`
     : "おかえりなさい";
 
+  const needsOnboarding = hydrated && !state.profile?.onboardedAt;
+
   return (
     <div className="px-4 pt-2">
       <div className="flex items-end justify-between">
@@ -95,6 +97,8 @@ export function HomeView() {
           </div>
         ) : null}
       </div>
+
+      {needsOnboarding ? <OnboardingPrompt /> : null}
 
       {/* Today progress */}
       <section className="mt-5 overflow-hidden rounded-3xl bg-gradient-to-br from-sky-50 to-peach-50 p-5 shadow-soft">
@@ -307,6 +311,28 @@ function EmptyState({ hydrated }: { hydrated: boolean }) {
         最初のテストを追加
       </Link>
     </div>
+  );
+}
+
+export function OnboardingPrompt() {
+  return (
+    <Link
+      href="/onboarding"
+      className="mt-4 flex items-center justify-between rounded-2xl border border-sky-200 bg-sky-50 p-3"
+    >
+      <div>
+        <div className="text-[10px] font-bold uppercase tracking-widest text-sky-700">
+          まずはプロフィールから
+        </div>
+        <div className="mt-0.5 text-sm font-black text-ink-900">
+          学年・志望校・勉強時間を入れる
+        </div>
+        <p className="mt-0.5 text-[11px] text-ink-500">
+          ここを埋めるとAIが的確な作戦を出せます。
+        </p>
+      </div>
+      <ChevronRight className="h-5 w-5 text-sky-600" />
+    </Link>
   );
 }
 

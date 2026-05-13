@@ -9,6 +9,12 @@ export type TestInput = {
   units: UnitInput[];
   availableMinutesPerDay: number;
   textbooks: string[];
+  // v0.3 拡張
+  deviation?: number;
+  schoolName?: string;
+  weekdayMinutes?: number;
+  weekendMinutes?: number;
+  targetUniversities?: { universityId: string; faculty?: string }[];
 };
 
 export type UnitInput = {

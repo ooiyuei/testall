@@ -35,12 +35,12 @@ export function Hero() {
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
-            <Button href="/app" size="lg" variant="primary">
-              アプリを開く
+            <Button href="/signup" size="lg" variant="primary">
+              無料ではじめる
               <ArrowRight className="h-5 w-5" />
             </Button>
-            <Button href="#how" size="lg" variant="ghost">
-              使い方を見る
+            <Button href="/signin" size="lg" variant="ghost">
+              サインイン
             </Button>
           </div>
 
