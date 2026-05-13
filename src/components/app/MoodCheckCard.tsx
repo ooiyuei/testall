@@ -3,6 +3,7 @@
 // 今日の準備カード — クリーン版 (現在時刻起点)
 // 帰宅時間は設定で事前登録した値を使い、画面では「気分」のみ選ぶ。
 // 現在時刻〜就寝時間で物理上限を算出する。
+// 「この設定で進める」後は TodaySchedule を表示する。
 
 import { useMemo, useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
@@ -15,6 +16,7 @@ import {
   todayBaseBlocks,
 } from "@/lib/planning";
 import type { Mood } from "@/lib/planning";
+import { TodaySchedule } from "./TodaySchedule";
 
 const MOODS: { id: Mood; label: string; delta: string }[] = [
   { id: "less",   label: "少なめ", delta: "-2" },
@@ -89,36 +91,44 @@ export function MoodCheckCard() {
 
   if (decided) {
     return (
-      <section className="rounded-2xl border border-sky-200/70 bg-gradient-to-br from-sky-50/80 to-mint-50/40 p-5">
-        <div className="flex items-start gap-3">
-          <div className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-white text-sky-500">
-            <Sparkles className="h-[18px] w-[18px]" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-600">
-              今日の目標
+      <>
+        <section className="rounded-2xl border border-sky-200/70 bg-gradient-to-br from-sky-50/80 to-mint-50/40 p-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-white text-sky-500">
+              <Sparkles className="h-[18px] w-[18px]" />
             </div>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-[40px] font-bold leading-none tabular-nums text-ink-900">
-                {result.finalBlocks}
-              </span>
-              <span className="text-xs font-medium text-ink-500">
-                ブロック (25分×{result.finalBlocks})
-              </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-600">
+                今日の目標
+              </div>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-[40px] font-bold leading-none tabular-nums text-ink-900">
+                  {result.finalBlocks}
+                </span>
+                <span className="text-xs font-medium text-ink-500">
+                  ブロック (25分×{result.finalBlocks})
+                </span>
+              </div>
+              <p className="mt-2 text-[12px] leading-[1.6] text-ink-600">
+                {result.reason}
+              </p>
+              <button
+                type="button"
+                onClick={() => setDecided(false)}
+                className="mt-2 text-[11px] font-medium text-sky-500 underline-offset-2 hover:underline"
+              >
+                気分を変更
+              </button>
             </div>
-            <p className="mt-2 text-[12px] leading-[1.6] text-ink-600">
-              {result.reason}
-            </p>
-            <button
-              type="button"
-              onClick={() => setDecided(false)}
-              className="mt-2 text-[11px] font-medium text-sky-500 underline-offset-2 hover:underline"
-            >
-              気分を変更
-            </button>
           </div>
-        </div>
-      </section>
+        </section>
+        <TodaySchedule
+          finalBlocks={result.finalBlocks}
+          bedtime={profile.defaultBedtime}
+          tasks={state.tasks}
+          onReset={() => setDecided(false)}
+        />
+      </>
     );
   }
 
