@@ -246,7 +246,7 @@ export function HomeView() {
             const count = weeklyCounts[i] ?? 0;
             const hasBlocks = count > 0;
             return (
-              <li key={i}>
+              <li key={d}>
                 <div
                   className={cn(
                     "flex flex-col items-center gap-1.5 rounded-xl py-2.5 transition",
@@ -364,9 +364,17 @@ function SectionLabel({
   title: string;
   right?: React.ReactNode;
 }) {
+  // 日本語タイトルは uppercase / wide tracking を適用しない (英字専用効果のため)
+  const isAscii = /^[\x00-\x7F]+$/.test(title);
   return (
     <div className="flex items-baseline justify-between">
-      <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-ink-400">
+      <h2
+        className={
+          isAscii
+            ? "text-[11px] font-bold uppercase tracking-[0.18em] text-ink-400"
+            : "text-[11px] font-medium text-ink-500"
+        }
+      >
         {title}
       </h2>
       {right}

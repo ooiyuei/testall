@@ -39,7 +39,7 @@ export function BottomNav() {
       aria-label="メインナビゲーション"
       className="pb-safe fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-[480px] border-t border-cream-200/80 bg-cream-50/85 backdrop-blur-xl md:absolute md:bottom-0 md:rounded-b-[32px]"
     >
-      <ul className="flex items-stretch justify-around px-1 py-1.5">
+      <ul className="flex items-stretch justify-around px-2 py-2">
         {TABS.map((t) => {
           const active = t.match(pathname);
           const Icon = t.icon;
@@ -48,19 +48,28 @@ export function BottomNav() {
               <Link
                 href={t.href}
                 aria-current={active ? "page" : undefined}
-                className="group flex flex-col items-center gap-0.5 py-1.5"
+                className={cn(
+                  "group relative mx-0.5 flex min-h-[49px] flex-col items-center justify-center gap-0.5 rounded-xl py-2 transition active:scale-[0.96]",
+                  active && "bg-sky-50/80",
+                )}
               >
+                {/* アクティブ時のアクセントドット (iOS 風) */}
+                {active ? (
+                  <span className="pointer-events-none absolute -top-px left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-sky-500" />
+                ) : null}
                 <Icon
                   className={cn(
                     "h-[22px] w-[22px] transition-colors",
-                    active ? "text-sky-500" : "text-ink-400",
+                    active ? "text-sky-600" : "text-ink-400 group-hover:text-ink-700",
                   )}
-                  strokeWidth={active ? 2.2 : 1.8}
+                  strokeWidth={active ? 2.2 : 1.75}
                 />
                 <span
                   className={cn(
-                    "text-[10px] tracking-tight transition-colors",
-                    active ? "font-bold text-sky-500" : "font-medium text-ink-400",
+                    "text-[10px] leading-none tracking-tight transition-colors",
+                    active
+                      ? "font-bold text-sky-600"
+                      : "font-medium text-ink-400 group-hover:text-ink-700",
                   )}
                 >
                   {t.label}

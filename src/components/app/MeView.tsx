@@ -945,10 +945,18 @@ function SectionTitle({
   icon: typeof Target;
   title: string;
 }) {
+  // 日本語タイトルは uppercase/wide tracking を外し、アイコンも 12px に縮小
+  const isAscii = /^[\x00-\x7F]+$/.test(title);
   return (
     <div className="flex items-center gap-1.5">
-      <Icon className="h-3.5 w-3.5 text-ink-500" />
-      <h2 className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
+      <Icon className="h-3 w-3 text-ink-400" strokeWidth={2} />
+      <h2
+        className={
+          isAscii
+            ? "text-[10px] font-bold uppercase tracking-widest text-ink-500"
+            : "text-[11px] font-medium text-ink-500"
+        }
+      >
         {title}
       </h2>
     </div>

@@ -202,15 +202,16 @@ export function MoodCheckCard() {
             return (
               <li key={m.id} className="relative flex-1">
                 {showBadge && (
-                  <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-amber-400 px-1.5 py-0.5 text-[8px] font-bold leading-none text-white shadow-sm">
-                    おすすめ✨
+                  <span className="pointer-events-none absolute -top-2 left-1/2 flex -translate-x-1/2 items-center gap-0.5 whitespace-nowrap rounded-full bg-amber-400 px-1.5 py-0.5 text-[8px] font-bold leading-none text-white shadow-sm">
+                    <Sparkles className="h-2 w-2" strokeWidth={2.5} />
+                    おすすめ
                   </span>
                 )}
                 <button
                   type="button"
                   onClick={() => setMood(m.id)}
                   className={cn(
-                    "flex h-10 w-full flex-col items-center justify-center rounded-lg transition",
+                    "flex h-11 w-full flex-col items-center justify-center rounded-lg transition active:scale-[0.97]",
                     active ? "bg-white shadow-soft" : "bg-transparent",
                   )}
                 >

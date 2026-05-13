@@ -289,7 +289,8 @@ function TimerView({
             <button
               type="button"
               onClick={onFinish}
-              className="flex h-12 items-center justify-center gap-1 rounded-full bg-white/10 px-4 text-xs font-bold text-white"
+              aria-label="タイマーを終了"
+              className="flex h-12 items-center justify-center gap-1 rounded-full bg-white/10 px-4 text-xs font-bold text-white/80 transition hover:bg-white/15 active:scale-[0.96]"
             >
               終了
             </button>
@@ -411,7 +412,7 @@ function FinishView({
         <p className="mt-1 text-[11px] text-ink-500">
           完了条件にどれくらい届いた？（1：ぜんぜん〜5：完璧）
         </p>
-        <div className="mt-3 flex items-center justify-between">
+        <div className="mt-3 flex items-center justify-center gap-3">
           {[1, 2, 3, 4, 5].map((n) => (
             <button
               key={n}

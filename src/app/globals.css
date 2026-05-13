@@ -62,14 +62,16 @@
   --color-coral-400: #f56a55;
   --color-coral-500: #d94a36;
 
-  /* Type stack — Apple SF Pro JP > Noto Sans JP > 和文 system fallback */
+  /* Type stack — Apple JP 実測値準拠 (Hiragino は ProN ではなく Pro) */
   --font-sans:
     "SF Pro JP", "SF Pro Text", -apple-system, BlinkMacSystemFont,
-    var(--font-noto-jp), "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    var(--font-noto-jp), "Hiragino Sans",
+    "Hiragino Kaku Gothic Pro", "ヒラギノ角ゴ Pro W3",
     "Yu Gothic", "Meiryo", system-ui, sans-serif;
   --font-display:
     "SF Pro JP", "SF Pro Display", -apple-system, BlinkMacSystemFont,
-    var(--font-noto-jp), "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    var(--font-noto-jp), "Hiragino Sans",
+    "Hiragino Kaku Gothic Pro", "ヒラギノ角ゴ Pro W3",
     "Yu Gothic", "Meiryo", system-ui, sans-serif;
   --font-mono:
     "SF Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
@@ -96,8 +98,8 @@
    ───────────────────────────────────────────── */
 html {
   font-family: var(--font-sans);
-  /* palt = 和文プロポーショナル / lnum = 等幅数字 OFF (tabular-numsで個別制御) */
-  font-feature-settings: "palt" 1;
+  /* Apple HIG: SF Pro JP は内蔵字詰めを持つため palt は不使用 */
+  font-feature-settings: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -108,7 +110,8 @@ html {
 body {
   background: var(--color-cream-50);
   color: var(--color-ink-900);
-  letter-spacing: 0.01em;
+  /* Apple 実測値 -0.357px (15pxベース ≒ -0.024em) */
+  letter-spacing: -0.02em;
   font-size: 15px;
   line-height: 1.6;
 }

@@ -552,8 +552,8 @@ export function TodaySchedule({
         </div>
       )}
 
-      {/* ゾーン表示 */}
-      <div className="overflow-y-auto" style={{ maxHeight: "520px" }}>
+      {/* ゾーン表示 — 端末高さから固定 UI 分を引いた残り */}
+      <div className="max-h-[calc(100dvh-320px)] overflow-y-auto">
 
         {/* ゾーン1: 深夜・早朝（起床前） */}
         {wakeupMin > 0 && (

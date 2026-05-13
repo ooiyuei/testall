@@ -226,16 +226,18 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
             </button>
           </div>
 
-          {/* 種類タブ */}
-          <ul className="mt-3 flex gap-1 overflow-x-auto rounded-xl bg-cream-100/70 p-1">
+          {/* 種類タブ — 横スクロール可能なピル型に */}
+          <ul className="-mx-5 mt-3 flex gap-1.5 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {(Object.keys(KIND_LABEL) as BookshelfItem["kind"][]).map((k) => (
-              <li key={k} className="flex-1">
+              <li key={k} className="flex-none">
                 <button
                   type="button"
                   onClick={() => setKind(k)}
                   className={cn(
-                    "flex h-9 w-full items-center justify-center rounded-lg text-[11px] font-bold whitespace-nowrap transition",
-                    kind === k ? "bg-white text-ink-900 shadow-soft" : "text-ink-500",
+                    "flex h-9 min-w-[64px] items-center justify-center rounded-full px-3.5 text-[12px] font-bold whitespace-nowrap transition active:scale-[0.96]",
+                    kind === k
+                      ? "bg-ink-900 text-white shadow-soft"
+                      : "bg-cream-100/70 text-ink-500 hover:bg-cream-200/80",
                   )}
                 >
                   {KIND_LABEL[k]}

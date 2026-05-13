@@ -28,15 +28,16 @@ export function AppHeader({
 
   return (
     <>
-      <header className="pt-safe sticky top-0 z-20 border-b border-cream-200/60 bg-cream-50/80 backdrop-blur-xl">
-        <div className="flex h-12 items-center gap-2 px-3">
+      <header className="pt-safe sticky top-0 z-20 border-b border-ink-100/50 bg-cream-50/85 backdrop-blur-xl">
+        <div className="flex h-11 items-center gap-2 px-3">
+          {/* Apple HIG: Nav Bar 標準 44px (h-11) */}
           {back ? (
             <Link
               href={back}
-              className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-ink-600 active:bg-cream-200/60 transition"
+              className="flex h-10 w-10 flex-none items-center justify-center rounded-full text-ink-600 transition active:scale-[0.92] active:bg-cream-200/60"
               aria-label="戻る"
             >
-              <ArrowLeft className="h-[18px] w-[18px]" />
+              <ArrowLeft className="h-[18px] w-[18px]" strokeWidth={2.2} />
             </Link>
           ) : null}
           {title ? (
@@ -57,7 +58,7 @@ export function AppHeader({
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-ink-700 active:bg-cream-200/60 transition"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-ink-700 transition active:scale-[0.92] active:bg-cream-200/60"
                 aria-label="追加"
               >
                 <Plus className="h-[20px] w-[20px]" strokeWidth={2.2} />
