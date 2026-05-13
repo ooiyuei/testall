@@ -46,7 +46,7 @@ export function MoodCheckCard() {
         weekdayBaseBlocks: 3,
         weekendBaseBlocks: 6,
         defaultReturnTime: "18:30",
-        defaultBedtime: "24:00",
+        defaultBedtime: "23:30",
         bufferMinutes: 60,
       },
     [planning],
