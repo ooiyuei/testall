@@ -435,7 +435,7 @@ export function OnboardingPrompt() {
       className="mb-4 flex items-center justify-between rounded-2xl border border-sky-200 bg-sky-50/60 p-4 active:scale-[0.99] transition"
     >
       <div>
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-600">
+        <div className="text-[10px] font-bold tracking-[0.04em] text-sky-600">
           まずはプロフィール
         </div>
         <div className="mt-1 text-[14px] font-bold text-ink-900">

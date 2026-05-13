@@ -18,7 +18,7 @@ import { logBlock } from "@/lib/store";
 import type { Block } from "@/lib/types";
 import { LoadingState } from "@/components/ui/LoadingState";
 
-const DEFAULT_DURATION_SEC = 25 * 60; // ポモドーロ 25分
+const DEFAULT_DURATION_SEC = 25 * 60;
 
 type Phase = "idle" | "running" | "paused" | "finished";
 
@@ -52,7 +52,6 @@ export function FocusRun() {
   const startedAtRef = useRef<number | null>(null);
   const totalElapsedRef = useRef<number>(0);
 
-  // Tick
   useEffect(() => {
     if (phase !== "running") return;
     const interval = setInterval(() => {
@@ -111,7 +110,6 @@ export function FocusRun() {
 
   function saveAndExit() {
     if (rating === 0) return;
-    // testId が無い場合は「自由学習」として記録 (連続日数・ヒートマップに反映)
     const effectiveTestId = testId ?? "free-study";
     const effectiveBlockIdx =
       blockIdx !== null ? blockIdx : Math.floor(Date.now() / 1000);
@@ -133,30 +131,39 @@ export function FocusRun() {
   const elapsedRatio = 1 - remaining / DEFAULT_DURATION_SEC;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-ink-900 via-ink-800 to-sky-700">
+    <div
+      className="min-h-screen"
+      style={{
+        background:
+          "linear-gradient(160deg, #14130f 0%, #1c1a17 40%, #0f2a4a 80%, #0a1e36 100%)",
+      }}
+    >
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 pt-4">
+      <div className="flex items-center justify-between px-5 pt-safe-top pt-4">
         <Link
           href={testId ? `/app/test/${testId}` : "/app/focus"}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/80 backdrop-blur-sm transition hover:bg-white/15 active:scale-95"
           aria-label="戻る"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-4 w-4" />
         </Link>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">
-          集中モード
+        <span
+          className="text-[10px] font-bold uppercase tracking-widest text-white/40"
+          style={{ fontFamily: "'SF Pro Text', -apple-system, sans-serif" }}
+        >
+          Focus Mode
         </span>
         <button
           type="button"
           onClick={() => router.push("/app")}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/80 backdrop-blur-sm transition hover:bg-white/15 active:scale-95"
           aria-label="閉じる"
         >
-          <X className="h-5 w-5" />
+          <X className="h-4 w-4" />
         </button>
       </div>
 
-      <div className="px-5 pb-10 pt-6">
+      <div className="px-5 pb-12 pt-6">
         {phase !== "finished" ? (
           <TimerView
             block={block}
@@ -187,6 +194,10 @@ export function FocusRun() {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  TimerView                                                           */
+/* ------------------------------------------------------------------ */
+
 function TimerView({
   block,
   phase,
@@ -210,158 +221,320 @@ function TimerView({
 }) {
   const mins = Math.floor(remaining / 60);
   const secs = remaining % 60;
+  const minsLeft = Math.ceil(remaining / 60);
 
   return (
     <>
-      {/* Goal */}
-      <section className="rounded-2xl bg-white/10 p-4 text-white backdrop-blur">
-        {block ? (
-          <>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-white/60">
-              {block.subject} / {block.topic}
-            </div>
-            <div className="mt-1 text-base font-black">{block.source}</div>
-            <div className="mt-3 flex items-start gap-2 rounded-2xl bg-sky-400/20 p-3">
-              <Target className="mt-0.5 h-4 w-4 flex-none text-sky-200" />
-              <div className="text-[12px] leading-relaxed text-white">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-sky-200">
-                  完了条件
-                </div>
-                <div className="mt-0.5 font-bold">{block.completion}</div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="text-sm font-bold">
-            自由学習 25分。終わったら自己評価してください。
-          </div>
-        )}
-      </section>
+      <GoalCard block={block} />
 
       {/* Timer */}
-      <section className="mt-8 flex flex-col items-center">
-        <RingTimer ratio={ratio} />
-        <div className="mt-6 flex items-baseline gap-1 font-mono text-6xl font-black tabular-nums text-white">
-          <span>{String(mins).padStart(2, "0")}</span>
-          <span className="text-white/40">:</span>
-          <span>{String(secs).padStart(2, "0")}</span>
-        </div>
-        <div className="mt-2 text-[11px] font-bold uppercase tracking-widest text-white/50">
-          {phase === "idle"
-            ? "スタンバイ"
-            : phase === "running"
-            ? "進行中"
-            : "一時停止中"}
+      <section className="mt-10 flex flex-col items-center">
+        <div className="relative flex items-center justify-center" style={{ width: 220, height: 220 }}>
+          <RingTimer ratio={ratio} phase={phase} />
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <div
+              className="font-mono text-[52px] font-black tabular-nums leading-none text-white"
+              style={{ letterSpacing: "-0.02em" }}
+              aria-live="polite"
+              aria-label={`残り時間 ${mins}分${secs}秒`}
+            >
+              <span>{String(mins).padStart(2, "0")}</span>
+              <span className="text-white/30">:</span>
+              <span>{String(secs).padStart(2, "0")}</span>
+            </div>
+            <TimerLabel phase={phase} minsLeft={minsLeft} ratio={ratio} />
+          </div>
         </div>
       </section>
 
       {/* Controls */}
-      <section className="mt-10 flex items-center justify-center gap-3">
-        {phase === "idle" ? (
-          <button
-            type="button"
-            onClick={onStart}
-            className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-ink-900 shadow-[0_8px_24px_rgba(0,0,0,0.25)] active:scale-95 transition"
-            aria-label="開始"
-          >
-            <Play className="h-7 w-7" fill="currentColor" />
-          </button>
-        ) : null}
-
-        {phase === "running" ? (
-          <>
-            <button
-              type="button"
-              onClick={onReset}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white"
-              aria-label="リセット"
-            >
-              <RotateCcw className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={onPause}
-              className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-ink-900 shadow-[0_8px_24px_rgba(0,0,0,0.25)] active:scale-95 transition"
-              aria-label="一時停止"
-            >
-              <Pause className="h-7 w-7" fill="currentColor" />
-            </button>
-            <button
-              type="button"
-              onClick={onFinish}
-              aria-label="タイマーを終了"
-              className="flex h-12 items-center justify-center gap-1 rounded-full bg-white/10 px-4 text-xs font-bold text-white/80 transition hover:bg-white/15 active:scale-[0.96]"
-            >
-              終了
-            </button>
-          </>
-        ) : null}
-
-        {phase === "paused" ? (
-          <>
-            <button
-              type="button"
-              onClick={onReset}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white"
-              aria-label="リセット"
-            >
-              <RotateCcw className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={onResume}
-              className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-ink-900 shadow-[0_8px_24px_rgba(0,0,0,0.25)] active:scale-95 transition"
-              aria-label="再開"
-            >
-              <Play className="h-7 w-7" fill="currentColor" />
-            </button>
-            <button
-              type="button"
-              onClick={onFinish}
-              className="flex h-12 items-center justify-center gap-1 rounded-full bg-white/10 px-4 text-xs font-bold text-white"
-            >
-              終了
-            </button>
-          </>
-        ) : null}
-      </section>
+      <Controls
+        phase={phase}
+        onStart={onStart}
+        onPause={onPause}
+        onResume={onResume}
+        onReset={onReset}
+        onFinish={onFinish}
+      />
     </>
   );
 }
 
-function RingTimer({ ratio }: { ratio: number }) {
+/* ------------------------------------------------------------------ */
+/*  GoalCard                                                            */
+/* ------------------------------------------------------------------ */
+
+function GoalCard({ block }: { block: Block | null }) {
+  return (
+    <section
+      className="rounded-2xl p-4 text-white"
+      style={{
+        background: "rgba(255,255,255,0.07)",
+        backdropFilter: "blur(20px) saturate(180%)",
+        WebkitBackdropFilter: "blur(20px) saturate(180%)",
+        border: "1px solid rgba(255,255,255,0.10)",
+      }}
+      aria-label="今回の学習目標"
+    >
+      {block ? (
+        <>
+          <div
+            className="text-[10px] font-bold uppercase tracking-widest"
+            style={{ color: "rgba(255,255,255,0.45)" }}
+          >
+            {block.subject} / {block.topic}
+          </div>
+          <div className="mt-1 text-base font-bold text-white/90">
+            {block.source}
+          </div>
+          <div
+            className="mt-3 flex items-start gap-2.5 rounded-xl p-3"
+            style={{ background: "rgba(77,155,255,0.15)" }}
+          >
+            <Target
+              className="mt-0.5 h-4 w-4 flex-none"
+              style={{ color: "#7bb8ff" }}
+              aria-hidden="true"
+            />
+            <div>
+              <div
+                className="text-[10px] font-bold uppercase tracking-widest"
+                style={{ color: "#7bb8ff" }}
+              >
+                完了条件
+              </div>
+              <div className="mt-0.5 text-sm font-bold leading-relaxed text-white">
+                {block.completion}
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-bold text-white/90">
+            自由学習モード
+          </div>
+          <span
+            className="rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+            style={{
+              background: "rgba(255,255,255,0.12)",
+              color: "rgba(255,255,255,0.6)",
+            }}
+          >
+            Free Focus
+          </span>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  TimerLabel                                                          */
+/* ------------------------------------------------------------------ */
+
+function TimerLabel({
+  phase,
+  minsLeft,
+  ratio,
+}: {
+  phase: Phase;
+  minsLeft: number;
+  ratio: number;
+}) {
+  const labelText =
+    phase === "idle"
+      ? "集中時間"
+      : phase === "running"
+        ? ratio < 0.8
+          ? `あと ${minsLeft} 分`
+          : "もうすぐ完了"
+        : "一時停止中";
+
+  return (
+    <div
+      className="mt-2 text-[11px] font-bold uppercase tracking-widest"
+      style={{ color: "rgba(255,255,255,0.35)" }}
+    >
+      {labelText}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  RingTimer                                                           */
+/* ------------------------------------------------------------------ */
+
+function RingTimer({ ratio, phase }: { ratio: number; phase: Phase }) {
   const clamped = Math.max(0, Math.min(1, ratio));
   const size = 220;
-  const stroke = 10;
+  const stroke = 12;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const offset = c * (1 - clamped);
 
+  const ringColor =
+    clamped < 0.5
+      ? "#4d9bff"
+      : clamped < 0.8
+        ? "#6fd4a0"
+        : "#ffd047";
+
+  const glowColor =
+    clamped < 0.5
+      ? "rgba(77,155,255,0.35)"
+      : clamped < 0.8
+        ? "rgba(111,212,160,0.35)"
+        : "rgba(255,208,71,0.35)";
+
   return (
-    <svg width={size} height={size} className="-rotate-90">
+    <svg
+      width={size}
+      height={size}
+      className="-rotate-90"
+      style={{ filter: `drop-shadow(0 0 8px ${glowColor})` }}
+      aria-hidden="true"
+    >
+      {/* track */}
       <circle
         cx={size / 2}
         cy={size / 2}
         r={r}
         fill="none"
-        stroke="rgba(255,255,255,0.12)"
+        stroke="rgba(255,255,255,0.08)"
         strokeWidth={stroke}
       />
+      {/* progress */}
       <circle
         cx={size / 2}
         cy={size / 2}
         r={r}
         fill="none"
-        stroke="white"
+        stroke={ringColor}
         strokeWidth={stroke}
         strokeDasharray={c}
-        strokeDashoffset={offset}
+        strokeDashoffset={phase === "idle" ? c : offset}
         strokeLinecap="round"
-        style={{ transition: "stroke-dashoffset 1s linear" }}
+        style={{
+          transition: "stroke-dashoffset 1s linear, stroke 0.8s ease",
+          willChange: "transform",
+        }}
       />
     </svg>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*  Controls                                                            */
+/* ------------------------------------------------------------------ */
+
+function Controls({
+  phase,
+  onStart,
+  onPause,
+  onResume,
+  onReset,
+  onFinish,
+}: {
+  phase: Phase;
+  onStart: () => void;
+  onPause: () => void;
+  onResume: () => void;
+  onReset: () => void;
+  onFinish: () => void;
+}) {
+  const secondaryBtn =
+    "flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white/80 transition hover:bg-white/15 active:scale-95";
+
+  const mainBtn =
+    "flex h-16 w-16 items-center justify-center rounded-full bg-white text-ink-900 transition hover:shadow-[0_12px_32px_rgba(0,0,0,0.35)] active:scale-95";
+
+  const finishBtn =
+    "flex h-12 items-center justify-center rounded-full bg-white/8 px-5 text-xs font-bold text-white/50 opacity-70 transition hover:bg-white/12 active:scale-[0.96]";
+
+  return (
+    <section
+      className="mt-10 flex items-center justify-center gap-5"
+      aria-label="タイマーコントロール"
+    >
+      {phase === "idle" && (
+        <button
+          type="button"
+          onClick={onStart}
+          className={mainBtn}
+          style={{ boxShadow: "0 8px_24px rgba(0,0,0,0.3)" }}
+          aria-label="集中タイマーを開始"
+        >
+          <Play className="h-7 w-7" fill="currentColor" aria-hidden="true" />
+        </button>
+      )}
+
+      {phase === "running" && (
+        <>
+          <button
+            type="button"
+            onClick={onReset}
+            className={secondaryBtn}
+            aria-label="タイマーをリセット"
+          >
+            <RotateCcw className="h-5 w-5" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={onPause}
+            className={mainBtn}
+            style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
+            aria-label="一時停止"
+          >
+            <Pause className="h-7 w-7" fill="currentColor" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={onFinish}
+            className={finishBtn}
+            aria-label="タイマーを終了して記録へ進む"
+          >
+            終了
+          </button>
+        </>
+      )}
+
+      {phase === "paused" && (
+        <>
+          <button
+            type="button"
+            onClick={onReset}
+            className={secondaryBtn}
+            aria-label="タイマーをリセット"
+          >
+            <RotateCcw className="h-5 w-5" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={onResume}
+            className={mainBtn}
+            style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
+            aria-label="タイマーを再開"
+          >
+            <Play className="h-7 w-7" fill="currentColor" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={onFinish}
+            className={finishBtn}
+            aria-label="タイマーを終了して記録へ進む"
+          >
+            終了
+          </button>
+        </>
+      )}
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  FinishView                                                          */
+/* ------------------------------------------------------------------ */
 
 function FinishView({
   block,
@@ -385,66 +558,77 @@ function FinishView({
   hasContext: boolean;
 }) {
   return (
-    <div className="space-y-5">
-      <section className="rounded-2xl bg-white p-5 shadow-soft">
+    <div className="space-y-4">
+      {/* お疲れさまカード */}
+      <section className="rounded-2xl bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.10)]">
         <div className="text-[10px] font-bold uppercase tracking-widest text-mint-600">
-          お疲れさま
+          Session Complete
         </div>
-        <h2 className="mt-1 text-lg font-black text-ink-900">
-          25分、走り切りました
+        <h2 className="mt-1 text-2xl font-black text-ink-900 leading-tight">
+          お疲れさま
         </h2>
+        <p className="mt-1 text-sm text-ink-400">25分、走り切りました</p>
         {block ? (
-          <div className="mt-3 rounded-2xl bg-sky-50 p-3">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-sky-700">
+          <div className="mt-4 rounded-xl bg-sky-50 p-3">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-sky-600">
               振り返り：完了条件
             </div>
-            <p className="mt-0.5 text-sm font-bold text-ink-900">
+            <p className="mt-1 text-sm font-bold text-ink-900 leading-relaxed">
               {block.completion}
             </p>
           </div>
         ) : null}
       </section>
 
-      <section className="rounded-2xl bg-white p-5 shadow-soft">
-        <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
-          自己評価
+      {/* 自己評価 */}
+      <section className="rounded-2xl bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.10)]">
+        <div className="text-[10px] font-bold uppercase tracking-widest text-ink-400">
+          Self Rating
         </div>
-        <p className="mt-1 text-[11px] text-ink-500">
+        <p className="mt-1 text-[11px] text-ink-400">
           完了条件にどれくらい届いた？（1：ぜんぜん〜5：完璧）
         </p>
-        <div className="mt-3 flex items-center justify-center gap-3">
+        <div
+          className="mt-3 flex items-center justify-center gap-3"
+          role="group"
+          aria-label="集中度の自己評価"
+        >
           {[1, 2, 3, 4, 5].map((n) => (
             <button
               key={n}
               type="button"
               onClick={() => setRating(n)}
               className={cn(
-                "flex h-12 w-12 items-center justify-center rounded-2xl transition",
+                "flex h-12 w-12 items-center justify-center rounded-2xl transition hover:scale-110 active:scale-95",
                 rating >= n
                   ? "bg-sun-300 text-ink-900"
                   : "bg-cream-100 text-ink-300",
               )}
               aria-label={`${n}点`}
+              aria-pressed={rating >= n}
             >
               <Star
                 className="h-6 w-6"
                 fill={rating >= n ? "currentColor" : "none"}
+                aria-hidden="true"
               />
             </button>
           ))}
         </div>
       </section>
 
-      <section className="rounded-2xl bg-white p-5 shadow-soft">
-        <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
-          メモ（任意）
+      {/* メモ */}
+      <section className="rounded-2xl bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.10)]">
+        <div className="text-[10px] font-bold uppercase tracking-widest text-ink-400">
+          Memo（任意）
         </div>
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="ひっかかった点・次に試したいこと"
           rows={3}
-          className="mt-2 w-full rounded-xl border border-cream-200 bg-cream-50 px-3 py-2 text-sm text-ink-900 outline-none focus:border-sky-400"
+          aria-label="振り返りメモ"
+          className="mt-2 w-full rounded-xl border border-cream-200 bg-cream-50 px-3 py-2 text-sm text-ink-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
         />
       </section>
 
@@ -454,15 +638,17 @@ function FinishView({
         </div>
       ) : null}
 
+      {/* 保存ボタン */}
       <button
         type="button"
         onClick={onSave}
         disabled={disabled}
+        aria-label={hasContext ? "集中記録を保存して戻る" : "集中セッションを完了する"}
         className={cn(
-          "flex h-14 w-full items-center justify-center rounded-2xl text-base font-black text-white shadow-soft transition",
+          "flex h-14 w-full items-center justify-center rounded-2xl text-base font-black text-white transition",
           disabled
             ? "bg-ink-300"
-            : "bg-mint-500 active:scale-[0.98]",
+            : "bg-mint-500 shadow-[0_4px_20px_rgba(15,155,94,0.35)] active:scale-[0.98] hover:shadow-[0_6px_24px_rgba(15,155,94,0.45)]",
         )}
       >
         {hasContext ? "記録して戻る" : "完了"}
