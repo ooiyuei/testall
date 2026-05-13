@@ -1,9 +1,22 @@
 // 科目・単元マスター
-// 既存 curriculum.ts の SUBJECTS_V2 をベースに、
-// 文科省 学習指導要領コード（mextCode）と Testall 独自タグ（testallTags）を重ねる
-//
-// mextCode は学習指導要領の科目記号を採用（例: 数学I = "MA-I", 物理基礎 = "PH-B"）
-// 実際の正式コードは PDF/Excel しか公開されてないため、暫定の規約
+// 階層: 教科(area) → 科目(subject) → 領域(domain) → 単元(unit) → 能力(ability)
+// 既存 curriculum.ts の SUBJECTS_V2 とは互換維持しつつ、新階層 (CURRICULUM) を提供。
+
+import {
+  CURRICULUM,
+  SUBJECT_AREAS,
+  ABILITIES,
+  getSubject,
+  subjectsByArea,
+  allUnits,
+  type SubjectArea,
+  type SubjectAreaId,
+  type Subject as SubjectHier,
+  type Domain,
+  type Unit as UnitHier,
+  type Ability,
+  type GradeId as GradeIdH,
+} from "./hierarchy";
 
 import {
   SUBJECTS_V2,
@@ -15,71 +28,62 @@ import {
   type SubjectDef,
   type SubjectId,
 } from "../../curriculum";
+
 import type { SubjectMaster, UnitMaster } from "../types";
 import { buildSearchText } from "../types";
 
 export {
+  // 旧（互換）
   SUBJECTS_V2,
   CATEGORY_DEFS,
   getCategoryDef,
   subjectsForCategory,
-};
-export type { GradeId, SubjectCategory, SubjectDef, SubjectId };
-
-// 暫定 mext コード（学習指導要領記号ベース）
-const MEXT_CODES: Record<string, string> = {
-  math1a: "MA-IA",
-  math2bc: "MA-IIBC",
-  math3c: "MA-IIIC",
-  "english-comm": "EN-COM",
-  "english-logic": "EN-LOG",
-  "japanese-modern": "JP-MOD",
-  "japanese-classic": "JP-CLA",
-  "physics-basic": "SCI-PH-B",
-  physics: "SCI-PH",
-  "chemistry-basic": "SCI-CH-B",
-  chemistry: "SCI-CH",
-  "biology-basic": "SCI-BI-B",
-  biology: "SCI-BI",
-  "earth-basic": "SCI-ES-B",
-  earth: "SCI-ES",
-  "history-general": "SOC-HG",
-  "japanese-history": "SOC-JH",
-  "world-history": "SOC-WH",
-  "geography-general": "SOC-GG",
-  geography: "SOC-GE",
-  "civics-public": "SOC-PB",
-  "civics-politics": "SOC-PE",
-  "civics-ethics": "SOC-ET",
-  info1: "INFO-I",
+  // 新（階層）
+  CURRICULUM,
+  SUBJECT_AREAS,
+  ABILITIES,
+  getSubject,
+  subjectsByArea,
+  allUnits,
 };
 
-// Testall 受験用独自タグ（単元名 → 受験タグ）
-const TESTALL_UNIT_TAGS: Record<string, string[]> = {
-  二次関数: ["頻出", "基礎"],
-  確率: ["頻出", "苦手注意"],
-  整数の性質: ["難関頻出"],
-  数列: ["頻出"],
-  ベクトル: ["頻出"],
-  微分法の応用: ["難関頻出"],
-  積分法の応用: ["難関頻出", "計算量大"],
-  "リーディング（長文）": ["頻出", "時間配分注意"],
-  リスニング: ["頻出"],
-  力学: ["頻出", "基礎"],
-  電磁気: ["難関頻出"],
-  熱力学: ["頻出"],
-  波動: ["頻出"],
-  原子: ["共通テスト"],
-  理論化学: ["頻出"],
-  有機化学: ["頻出", "難関頻出"],
-  無機化学: ["共通テスト"],
+export type {
+  GradeId,
+  SubjectCategory,
+  SubjectDef,
+  SubjectId,
+  SubjectArea,
+  SubjectAreaId,
+  SubjectHier,
+  Domain,
+  UnitHier,
+  Ability,
 };
 
-export const SUBJECT_MASTER: SubjectMaster[] = SUBJECTS_V2.map((s) => {
+// ── 教科 → SubjectCategory 互換マップ（旧 5 大分類） ──
+// 旧 social = 地歴+公民
+export function areaToLegacyCategory(area: SubjectAreaId): SubjectCategory {
+  if (area === "history" || area === "civics") return "social";
+  return area as SubjectCategory;
+}
+
+// ── 出版社一覧（参考書フィルタ用） ──
+// 既存 textbooks の publisher を集めて公開（重複排除）
+import { TEXTBOOKS as RAW_TEXTBOOKS } from "../../textbooks";
+export const PUBLISHERS: string[] = Array.from(
+  new Set(RAW_TEXTBOOKS.map((b) => b.publisher)),
+).sort();
+
+// ── マスター層への変換（既存 SUBJECT_MASTER / UNIT_MASTER） ──
+const MEXT_CODES: Record<string, string> = Object.fromEntries(
+  CURRICULUM.map((s) => [s.id, s.mextCode ?? ""]),
+);
+
+export const SUBJECT_MASTER: SubjectMaster[] = CURRICULUM.map((s) => {
   const m: SubjectMaster = {
     id: s.id,
-    mextCode: MEXT_CODES[s.id],
-    category: s.category,
+    mextCode: MEXT_CODES[s.id] || undefined,
+    category: areaToLegacyCategory(s.area),
     name: s.name,
     grades: s.grades,
     source: "mext",
@@ -89,18 +93,21 @@ export const SUBJECT_MASTER: SubjectMaster[] = SUBJECTS_V2.map((s) => {
   return m;
 });
 
-export const UNIT_MASTER: UnitMaster[] = SUBJECTS_V2.flatMap((s) =>
-  s.units.map((unitName, idx): UnitMaster => {
-    const u: UnitMaster = {
-      id: `${s.id}::${idx}`,
-      subjectId: s.id,
-      name: unitName,
-      testallTags: TESTALL_UNIT_TAGS[unitName],
-      source: "mext",
-    };
-    u.searchText = buildSearchText(u);
-    return u;
-  }),
+export const UNIT_MASTER: UnitMaster[] = CURRICULUM.flatMap((s) =>
+  s.domains.flatMap((d) =>
+    d.units.map((u): UnitMaster => {
+      const m: UnitMaster = {
+        id: u.id,
+        subjectId: s.id,
+        name: `${d.name} / ${u.name}`,
+        testallTags: u.abilities ? Array.from(u.abilities) : undefined,
+        examFrequency: u.examFrequency,
+        source: "mext",
+      };
+      m.searchText = buildSearchText(m);
+      return m;
+    }),
+  ),
 );
 
 export function getSubjectMaster(id: string): SubjectMaster | undefined {
