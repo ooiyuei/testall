@@ -24,6 +24,7 @@ import { TodaySuggestion } from "./TodaySuggestion";
 import { GuideTour } from "./GuideTour";
 import { WeeklyReviewCard } from "./WeeklyReviewCard";
 import { AiChat } from "./AiChat";
+import { StreakHeatmap } from "./StreakHeatmap";
 
 const WEEKDAY_LABEL = ["月", "火", "水", "木", "金", "土", "日"];
 
@@ -282,6 +283,13 @@ export function HomeView() {
           })}
         </ul>
       </section>
+
+      {/* 学習ヒートマップ */}
+      {hydrated ? (
+        <section className="mt-7">
+          <StreakHeatmap />
+        </section>
+      ) : null}
 
       {/* 今日のブロック */}
       {totalCount > 0 && latest ? (
