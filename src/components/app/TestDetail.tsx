@@ -137,7 +137,7 @@ export function TestDetail({ id }: { id: string }) {
 
       {/* Today blocks */}
       <section>
-        <SectionTitle>今日の45分ブロック</SectionTitle>
+        <SectionTitle>今日の25分ブロック</SectionTitle>
         <ul className="mt-2 space-y-2">
           {diagnosis.todayBlocks.map((b, i) => {
             const done = state.blockLogs.some(

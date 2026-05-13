@@ -193,7 +193,7 @@ export function HomeView() {
       {totalCount > 0 && latest ? (
         <section className="mt-7">
           <SectionLabel
-            title="今日の45分ブロック"
+            title="今日の25分ブロック"
             right={
               <Link
                 href="/app/focus"
@@ -219,8 +219,8 @@ export function HomeView() {
         </section>
       ) : null}
 
-      {/* AI からのひとこと */}
-      {latest ? (
+      {/* AI からのひとこと — 一旦削除 (TODO v0.7 で復活) */}
+      {false && latest ? (
         <section className="mt-7 rounded-2xl border border-ink-100/80 bg-white p-4">
           <div className="flex items-start gap-3">
             <div className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-mint-50 text-mint-600">
@@ -269,7 +269,7 @@ function EmptyTodayCard() {
   return (
     <section className="mt-5 rounded-2xl border border-ink-100/80 bg-white p-5 text-center">
       <div className="text-[15px] font-bold text-ink-900">
-        テストを追加すると、今日の45分が決まります
+        テストを追加すると、今日の25分が決まります
       </div>
       <p className="mt-1.5 text-[12px] leading-[1.7] text-ink-500">
         模試・校内テストの結果からAIが弱点と次の手を出します。

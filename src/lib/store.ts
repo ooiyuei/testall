@@ -81,14 +81,49 @@ export type BookshelfItem = {
 // ── タスク（TODO） ─────────────────────────
 export type TaskTag = "homework" | "elective" | "qualification" | "added" | "other";
 
+export type DueBucket = "today" | "tomorrow" | "this-week" | "someday";
+
+export const DUE_LABEL: Record<DueBucket, string> = {
+  today: "今日",
+  tomorrow: "明日",
+  "this-week": "今週",
+  someday: "いつでも",
+};
+
+// 期日からデフォルトの優先度を導く
+export function priorityFromDue(due: DueBucket): 1 | 2 | 3 {
+  if (due === "today") return 1;
+  if (due === "tomorrow") return 2;
+  return 3; // this-week / someday
+}
+
+// 期日が迫ったタスクは優先度を自動 UP
+// today はそのまま、tomorrow は本日を過ぎていれば 1
+export function effectivePriority(task: StoredTask, today = new Date()): 1 | 2 | 3 {
+  if (task.priority === 1) return 1;
+  if (!task.due) return task.priority;
+  const todayISO = today.toISOString().slice(0, 10);
+  if (task.due === "today" || (task.dueDate && task.dueDate <= todayISO)) {
+    return 1;
+  }
+  if (task.due === "tomorrow") {
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    if (todayISO >= tomorrow.toISOString().slice(0, 10)) return 1;
+    return 2;
+  }
+  return task.priority;
+}
+
 export type StoredTask = {
   id: string;
   title: string;
-  blocks: number;         // 1〜
+  blocks: number;         // 1〜 (1ブロック = 25分)
   tag: TaskTag;
   subjectArea?: string;   // SubjectAreaId
   priority: 1 | 2 | 3;    // 1=高
-  dueDate?: string;
+  due?: DueBucket;        // 期日カテゴリ
+  dueDate?: string;       // 具体日 (任意, YYYY-MM-DD)
   status: "todo" | "doing" | "done";
   createdAt: string;
   completedAt?: string;
@@ -388,6 +423,20 @@ export function toggleTaskStatus(id: string): StoreState {
     if (t.id !== id) return t;
     if (t.status === "done") return { ...t, status: "todo" as const, completedAt: undefined };
     return { ...t, status: "done" as const, completedAt: new Date().toISOString() };
+  });
+  return writeStore({ ...current, tasks });
+}
+
+// 7日経った完了タスクをクリーンアップ
+export function cleanupCompletedTasks(today = new Date()): StoreState {
+  const current = readStore();
+  const week = new Date(today);
+  week.setDate(week.getDate() - 7);
+  const cutoff = week.toISOString();
+  const tasks = (current.tasks ?? []).filter((t) => {
+    if (t.status !== "done") return true;
+    if (!t.completedAt) return true;
+    return t.completedAt >= cutoff;
   });
   return writeStore({ ...current, tasks });
 }

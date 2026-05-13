@@ -1,7 +1,8 @@
 "use client";
 
-// 今日の準備カード — クリーン版
-// 気分セグメント + 帰宅セグメント → 今日のブロック計算結果
+// 今日の準備カード — クリーン版 (現在時刻起点)
+// 帰宅時間は設定で事前登録した値を使い、画面では「気分」のみ選ぶ。
+// 現在時刻〜就寝時間で物理上限を算出する。
 
 import { useMemo, useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
@@ -22,20 +23,12 @@ const MOODS: { id: Mood; label: string; delta: string }[] = [
   { id: "max",    label: "特盛",   delta: "+4" },
 ];
 
-const RETURNS: { id: string; label: string; offset: number }[] = [
-  { id: "earlier", label: "早め",     offset: -60 },
-  { id: "usual",   label: "いつも",   offset: 0 },
-  { id: "later",   label: "遅め",     offset: +60 },
-];
-
-function shiftTime(time: string, offsetMin: number): string {
-  const [h, m] = time.split(":").map(Number);
-  if (Number.isNaN(h) || Number.isNaN(m)) return time;
-  let total = Math.max(0, Math.min(24 * 60, h * 60 + m + offsetMin));
+function nowHHmm(): string {
+  const d = new Date();
   return (
-    String(Math.floor(total / 60)).padStart(2, "0") +
+    String(d.getHours()).padStart(2, "0") +
     ":" +
-    String(total % 60).padStart(2, "0")
+    String(d.getMinutes()).padStart(2, "0")
   );
 }
 
@@ -43,8 +36,6 @@ export function MoodCheckCard() {
   const { state } = useStore();
   const planning = state.planning;
   const [mood, setMood] = useState<Mood>("normal");
-  const [returnChoice, setReturnChoice] = useState("usual");
-  const [customTime, setCustomTime] = useState("");
   const [decided, setDecided] = useState(false);
 
   const profile = useMemo(
@@ -54,32 +45,33 @@ export function MoodCheckCard() {
         weekendBaseBlocks: 6,
         defaultReturnTime: "18:30",
         defaultBedtime: "24:00",
-        bufferMinutes: 90,
+        bufferMinutes: 60,
       },
     [planning],
   );
 
+  // 起算は「現在時刻」と「事前設定の帰宅時間」のうち、後の方
   const now = new Date();
+  const currentTime = nowHHmm();
+  const startTime =
+    parseTimeToMinutes(currentTime) > parseTimeToMinutes(profile.defaultReturnTime)
+      ? currentTime
+      : profile.defaultReturnTime;
+
   const baseBlocks = todayBaseBlocks(
     now,
     profile.weekdayBaseBlocks,
     profile.weekendBaseBlocks,
   );
 
-  const returnTime =
-    returnChoice === "custom"
-      ? customTime || profile.defaultReturnTime
-      : shiftTime(
-          profile.defaultReturnTime,
-          RETURNS.find((r) => r.id === returnChoice)?.offset ?? 0,
-        );
-
   const result = adjustTodayBlocks({
     baseBlocks,
     mood,
-    returnTime,
+    returnTime: startTime,
     bedtime: profile.defaultBedtime,
     bufferMinutes: profile.bufferMinutes,
+    // ポモドーロ: 25分集中 + 5分休憩 = 30分占有
+    blockMinutes: 30,
   });
 
   function commit() {
@@ -87,7 +79,7 @@ export function MoodCheckCard() {
     logDailyMood({
       dateISO: now.toISOString().slice(0, 10),
       mood,
-      returnTime,
+      returnTime: startTime,
       finalBlocks: result.finalBlocks,
       reason: result.reason,
       createdAt: new Date().toISOString(),
@@ -95,7 +87,6 @@ export function MoodCheckCard() {
     setDecided(true);
   }
 
-  // 確定後カード
   if (decided) {
     return (
       <section className="rounded-2xl border border-sky-200/70 bg-gradient-to-br from-sky-50/80 to-mint-50/40 p-5">
@@ -111,7 +102,9 @@ export function MoodCheckCard() {
               <span className="text-[40px] font-bold leading-none tabular-nums text-ink-900">
                 {result.finalBlocks}
               </span>
-              <span className="text-xs font-medium text-ink-500">ブロック</span>
+              <span className="text-xs font-medium text-ink-500">
+                ブロック (25分×{result.finalBlocks})
+              </span>
             </div>
             <p className="mt-2 text-[12px] leading-[1.6] text-ink-600">
               {result.reason}
@@ -129,51 +122,53 @@ export function MoodCheckCard() {
     );
   }
 
-  // 入力カード
   return (
     <section className="rounded-2xl border border-ink-100/80 bg-white p-5">
-      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
-        今日の準備
+      <div className="flex items-baseline justify-between">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+          今日の準備
+        </div>
+        <span className="text-[10px] font-medium text-ink-400 tabular-nums">
+          今 {currentTime} → 就寝 {profile.defaultBedtime}
+        </span>
       </div>
 
       <div className="mt-3">
         <div className="text-[13px] font-bold text-ink-900">気分は？</div>
-        <SegmentRow
-          value={mood}
-          options={MOODS.map((m) => ({ id: m.id, label: m.label, sub: m.delta }))}
-          onChange={(v) => setMood(v as Mood)}
-        />
-      </div>
-
-      <div className="mt-4">
-        <div className="flex items-baseline justify-between">
-          <div className="text-[13px] font-bold text-ink-900">今日の帰宅</div>
-          <span className="text-[11px] font-medium text-ink-400 tabular-nums">
-            {returnTime}
-          </span>
-        </div>
-        <SegmentRow
-          value={returnChoice}
-          options={RETURNS.map((r) => ({ id: r.id, label: r.label }))}
-          onChange={setReturnChoice}
-        />
-        <div className="mt-2 flex items-center gap-2">
-          <input
-            type="time"
-            value={customTime}
-            onChange={(e) => {
-              setCustomTime(e.target.value);
-              setReturnChoice("custom");
-            }}
-            className={cn(
-              "h-9 flex-1 rounded-xl border bg-cream-50 px-3 text-[13px] text-ink-900 outline-none transition",
-              returnChoice === "custom"
-                ? "border-sky-300 bg-white"
-                : "border-ink-100/80",
-            )}
-            placeholder="時刻を指定"
-          />
-        </div>
+        <ul className="mt-2 flex gap-1 rounded-xl bg-cream-100/70 p-1">
+          {MOODS.map((m) => {
+            const active = mood === m.id;
+            return (
+              <li key={m.id} className="flex-1">
+                <button
+                  type="button"
+                  onClick={() => setMood(m.id)}
+                  className={cn(
+                    "flex h-10 w-full flex-col items-center justify-center rounded-lg transition",
+                    active ? "bg-white shadow-soft" : "bg-transparent",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "text-[12px] font-bold",
+                      active ? "text-ink-900" : "text-ink-500",
+                    )}
+                  >
+                    {m.label}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-[9px] font-medium tabular-nums",
+                      active ? "text-ink-400" : "text-ink-300",
+                    )}
+                  >
+                    {m.delta}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       </div>
 
       <div className="mt-5 flex items-end justify-between rounded-xl bg-cream-50/80 px-4 py-3">
@@ -185,7 +180,9 @@ export function MoodCheckCard() {
             <span className="text-3xl font-bold leading-none tabular-nums text-ink-900">
               {result.finalBlocks}
             </span>
-            <span className="text-[10px] font-medium text-ink-500">blk</span>
+            <span className="text-[10px] font-medium text-ink-500">
+              ×25分
+            </span>
           </div>
         </div>
         <div className="text-right text-[10px] leading-[1.6] text-ink-500">
@@ -208,53 +205,8 @@ export function MoodCheckCard() {
   );
 }
 
-function SegmentRow({
-  value,
-  options,
-  onChange,
-}: {
-  value: string;
-  options: { id: string; label: string; sub?: string }[];
-  onChange: (v: string) => void;
-}) {
-  return (
-    <ul className="mt-2 flex gap-1 rounded-xl bg-cream-100/70 p-1">
-      {options.map((o) => {
-        const active = value === o.id;
-        return (
-          <li key={o.id} className="flex-1">
-            <button
-              type="button"
-              onClick={() => onChange(o.id)}
-              className={cn(
-                "flex h-10 w-full flex-col items-center justify-center rounded-lg transition",
-                active
-                  ? "bg-white shadow-soft"
-                  : "bg-transparent active:bg-white/40",
-              )}
-            >
-              <span
-                className={cn(
-                  "text-[12px] font-bold",
-                  active ? "text-ink-900" : "text-ink-500",
-                )}
-              >
-                {o.label}
-              </span>
-              {o.sub ? (
-                <span
-                  className={cn(
-                    "text-[9px] font-medium tabular-nums",
-                    active ? "text-ink-400" : "text-ink-300",
-                  )}
-                >
-                  {o.sub}
-                </span>
-              ) : null}
-            </button>
-          </li>
-        );
-      })}
-    </ul>
-  );
+function parseTimeToMinutes(hhmm: string): number {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm);
+  if (!m) return 0;
+  return Number(m[1]) * 60 + Number(m[2]);
 }

@@ -13,7 +13,7 @@ import {
   WEEK_LOAD_LABEL,
 } from "@/lib/planning";
 
-const HOURS_PER_BLOCK = 0.75;
+import { HOURS_PER_BLOCK } from "@/lib/planning/constants";
 
 export function GapCard() {
   const { state, hydrated } = useStore();

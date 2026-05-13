@@ -1,23 +1,33 @@
 "use client";
 
-// TODO リスト — Apple Reminders ライクなクリーンUI
-// グループ: 未完了 / すべて / 完了
-// タスク: タイトル / ブロック / タグ / 教科 / 優先度
+// TODO — 期日・優先度自動・タブヘッダ
+// タブ: 今日 / 未完了 / 完了 / すべて (検索 + 絞り)
+// 完了タスクは7日経過で自動クリーン
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Check,
+  Filter,
   Flag,
   ListTodo,
   Plus,
+  Search,
   Trash2,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
-import { deleteTask, saveTask, toggleTaskStatus } from "@/lib/store";
-import type { StoredTask, TaskTag } from "@/lib/store";
+import {
+  cleanupCompletedTasks,
+  deleteTask,
+  effectivePriority,
+  priorityFromDue,
+  saveTask,
+  toggleTaskStatus,
+  DUE_LABEL,
+} from "@/lib/store";
+import type { DueBucket, StoredTask, TaskTag } from "@/lib/store";
 import { SUBJECT_AREAS } from "@/lib/master/subjects/hierarchy";
 
 const TAG_LABEL: Record<TaskTag, string> = {
@@ -35,89 +45,198 @@ const TAG_TONE: Record<TaskTag, string> = {
   other: "bg-cream-100 text-ink-600",
 };
 const PRIORITY_LABEL: Record<1 | 2 | 3, string> = { 1: "高", 2: "中", 3: "低" };
+const PRIORITY_TONE: Record<1 | 2 | 3, string> = {
+  1: "bg-coral-300 text-white",
+  2: "bg-sun-200 text-ink-900",
+  3: "bg-cream-100 text-ink-600",
+};
+
+type Tab = "today" | "todo" | "done" | "all";
 
 export function TodoView() {
   const sp = useSearchParams();
   const { state, hydrated } = useStore();
   const [open, setOpen] = useState(false);
-  const [filter, setFilter] = useState<"todo" | "all" | "done">("todo");
+  const [tab, setTab] = useState<Tab>("today");
+  const [query, setQuery] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [priorityFilter, setPriorityFilter] = useState<"all" | 1 | 2 | 3>("all");
+  const [tagFilter, setTagFilter] = useState<"all" | TaskTag>("all");
 
   useEffect(() => {
     if (sp.get("new") === "1") setOpen(true);
   }, [sp]);
 
+  // 7日経過の完了タスクをクリーン
+  useEffect(() => {
+    if (hydrated) cleanupCompletedTasks();
+  }, [hydrated]);
+
+  const tasks = state.tasks ?? [];
+  const todayISO = new Date().toISOString().slice(0, 10);
+
+  const visible = useMemo(() => {
+    let list = tasks;
+    // タブ絞り
+    if (tab === "today") {
+      list = list.filter(
+        (t) =>
+          t.status !== "done" &&
+          (t.due === "today" ||
+            (t.dueDate && t.dueDate <= todayISO) ||
+            effectivePriority(t) === 1),
+      );
+    } else if (tab === "todo") {
+      list = list.filter((t) => t.status !== "done");
+    } else if (tab === "done") {
+      list = list.filter((t) => t.status === "done");
+    }
+    if (priorityFilter !== "all") {
+      list = list.filter((t) => effectivePriority(t) === priorityFilter);
+    }
+    if (tagFilter !== "all") {
+      list = list.filter((t) => t.tag === tagFilter);
+    }
+    if (query.trim()) {
+      const q = query.trim().toLowerCase();
+      list = list.filter((t) => t.title.toLowerCase().includes(q));
+    }
+    return [...list].sort((a, b) => {
+      if (a.status !== b.status) return a.status === "done" ? 1 : -1;
+      return effectivePriority(a) - effectivePriority(b);
+    });
+  }, [tasks, tab, priorityFilter, tagFilter, query, todayISO]);
+
+  const filterCount = (priorityFilter !== "all" ? 1 : 0) + (tagFilter !== "all" ? 1 : 0);
+
   if (!hydrated) {
     return <div className="px-5 pt-8 text-sm text-ink-500">読み込み中…</div>;
   }
 
-  const tasks = (state.tasks ?? []).filter((t) => {
-    if (filter === "all") return true;
-    if (filter === "todo") return t.status !== "done";
-    return t.status === "done";
-  });
-
   return (
-    <div className="px-5 pb-8 pt-3 space-y-5">
-      <section>
-        <h1 className="text-[22px] font-bold leading-tight text-ink-900">
-          TODO
-        </h1>
+    <div className="px-5 pb-8 pt-3 space-y-4">
+      <header>
+        <h1 className="text-[22px] font-bold leading-tight text-ink-900">TODO</h1>
         <p className="mt-1 text-[12px] leading-[1.7] text-ink-500">
           今日やることだけ。1タップで完了。
         </p>
-      </section>
+      </header>
 
-      {/* セグメント */}
+      {/* タブ */}
       <ul className="flex gap-1 rounded-xl bg-cream-100/70 p-1">
-        {(["todo", "all", "done"] as const).map((f) => (
-          <li key={f} className="flex-1">
+        {([
+          { id: "today", label: "今日" },
+          { id: "todo", label: "未完了" },
+          { id: "done", label: "完了" },
+          { id: "all", label: "すべて" },
+        ] as { id: Tab; label: string }[]).map((t) => (
+          <li key={t.id} className="flex-1">
             <button
               type="button"
-              onClick={() => setFilter(f)}
+              onClick={() => setTab(t.id)}
               className={cn(
                 "flex h-9 w-full items-center justify-center rounded-lg text-[12px] font-bold transition",
-                filter === f
-                  ? "bg-white text-ink-900 shadow-soft"
-                  : "text-ink-500",
+                tab === t.id ? "bg-white text-ink-900 shadow-soft" : "text-ink-500",
               )}
             >
-              {f === "todo" ? "未完了" : f === "all" ? "すべて" : "完了"}
+              {t.label}
             </button>
           </li>
         ))}
       </ul>
 
+      {/* 検索 + 絞り */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="タスクを検索"
+            className="h-9 w-full rounded-xl border border-ink-100/80 bg-white pl-8 pr-3 text-[12px] text-ink-900 outline-none focus:border-sky-400"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setFilterOpen((v) => !v)}
+          className={cn(
+            "flex h-9 flex-none items-center gap-1 rounded-xl border px-3 text-[11px] font-bold transition",
+            filterCount > 0
+              ? "border-ink-900 bg-ink-900 text-white"
+              : "border-ink-100/80 bg-white text-ink-700",
+          )}
+        >
+          <Filter className="h-3 w-3" />
+          絞る
+          {filterCount > 0 ? (
+            <span className="ml-0.5 rounded-full bg-white/15 px-1 tabular-nums">
+              {filterCount}
+            </span>
+          ) : null}
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex h-9 items-center gap-1 rounded-full bg-ink-900 px-3 text-[12px] font-bold text-white"
+        >
+          <Plus className="h-3 w-3" strokeWidth={2.5} />
+          追加
+        </button>
+      </div>
+
+      {/* フィルタパネル */}
+      {filterOpen ? (
+        <div className="rounded-xl border border-ink-100/80 bg-white p-3 space-y-3">
+          <Chips
+            label="優先度"
+            value={String(priorityFilter)}
+            onChange={(v) =>
+              setPriorityFilter(v === "all" ? "all" : (Number(v) as 1 | 2 | 3))
+            }
+            options={[
+              { value: "all", label: "すべて" },
+              { value: "1", label: "高" },
+              { value: "2", label: "中" },
+              { value: "3", label: "低" },
+            ]}
+          />
+          <Chips
+            label="タグ"
+            value={tagFilter}
+            onChange={(v) => setTagFilter(v as typeof tagFilter)}
+            options={[
+              { value: "all", label: "すべて" },
+              ...(Object.keys(TAG_LABEL) as TaskTag[]).map((t) => ({
+                value: t,
+                label: TAG_LABEL[t],
+              })),
+            ]}
+          />
+        </div>
+      ) : null}
+
       {/* リスト */}
-      {tasks.length === 0 ? (
+      {visible.length === 0 ? (
         <div className="rounded-2xl border border-ink-100/80 bg-white px-5 py-10 text-center">
           <ListTodo className="mx-auto h-8 w-8 text-ink-300" strokeWidth={1.5} />
           <p className="mt-3 text-[13px] font-bold text-ink-700">
-            {filter === "done" ? "完了タスクはありません" : "タスクがありません"}
+            {tab === "today"
+              ? "今日のタスクはありません"
+              : tab === "done"
+              ? "完了タスクはありません"
+              : "タスクがありません"}
           </p>
           <p className="mt-1 text-[11px] text-ink-500">
-            右上の「＋」または下のボタンから追加できます
+            右の「＋追加」から登録
           </p>
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="mt-4 inline-flex h-10 items-center gap-1 rounded-full bg-ink-900 px-4 text-[12px] font-bold text-white"
-          >
-            <Plus className="h-3.5 w-3.5" strokeWidth={2.4} />
-            追加
-          </button>
         </div>
       ) : (
         <ul className="divide-y divide-ink-100/70 overflow-hidden rounded-2xl border border-ink-100/80 bg-white">
-          {tasks
-            .sort((a, b) => {
-              if (a.status !== b.status) return a.status === "done" ? 1 : -1;
-              return a.priority - b.priority;
-            })
-            .map((t) => (
-              <li key={t.id}>
-                <TaskRow task={t} />
-              </li>
-            ))}
+          {visible.map((t) => (
+            <li key={t.id}>
+              <TaskRow task={t} />
+            </li>
+          ))}
         </ul>
       )}
 
@@ -129,6 +248,7 @@ export function TodoView() {
 function TaskRow({ task }: { task: StoredTask }) {
   const done = task.status === "done";
   const area = SUBJECT_AREAS.find((a) => a.id === task.subjectArea);
+  const effective = effectivePriority(task);
   return (
     <article className="flex items-start gap-3 px-4 py-3">
       <button
@@ -157,6 +277,20 @@ function TaskRow({ task }: { task: StoredTask }) {
           <span
             className={cn(
               "rounded-md px-1.5 py-0.5 text-[10px] font-bold",
+              PRIORITY_TONE[effective],
+            )}
+          >
+            <Flag className="inline h-2.5 w-2.5 mr-0.5" />
+            {PRIORITY_LABEL[effective]}
+          </span>
+          {task.due ? (
+            <span className="rounded-md bg-ink-900 px-1.5 py-0.5 text-[10px] font-bold text-white">
+              {DUE_LABEL[task.due]}
+            </span>
+          ) : null}
+          <span
+            className={cn(
+              "rounded-md px-1.5 py-0.5 text-[10px] font-bold",
               TAG_TONE[task.tag],
             )}
           >
@@ -173,11 +307,7 @@ function TaskRow({ task }: { task: StoredTask }) {
             </span>
           ) : null}
           <span className="rounded-md bg-cream-100 px-1.5 py-0.5 text-[10px] font-bold text-ink-600 tabular-nums">
-            {task.blocks} blk
-          </span>
-          <span className="flex items-center gap-0.5 text-[10px] font-medium text-ink-500">
-            <Flag className="h-2.5 w-2.5" />
-            優先度 {PRIORITY_LABEL[task.priority]}
+            25分×{task.blocks}
           </span>
         </div>
       </div>
@@ -198,7 +328,8 @@ function TaskModal({ onClose }: { onClose: () => void }) {
   const [blocks, setBlocks] = useState(1);
   const [tag, setTag] = useState<TaskTag>("homework");
   const [subjectArea, setSubjectArea] = useState<string>("");
-  const [priority, setPriority] = useState<1 | 2 | 3>(2);
+  const [due, setDue] = useState<DueBucket>("today");
+  const [customDate, setCustomDate] = useState("");
 
   function handle(e: React.FormEvent) {
     e.preventDefault();
@@ -209,7 +340,9 @@ function TaskModal({ onClose }: { onClose: () => void }) {
       blocks,
       tag,
       subjectArea: subjectArea || undefined,
-      priority,
+      priority: priorityFromDue(due),
+      due,
+      dueDate: customDate || undefined,
       status: "todo",
       createdAt: new Date().toISOString(),
     });
@@ -256,56 +389,65 @@ function TaskModal({ onClose }: { onClose: () => void }) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
-                ブロック数
-              </label>
-              <div className="mt-1 flex items-center rounded-xl border border-ink-100/80 bg-white px-1">
-                <button
-                  type="button"
-                  onClick={() => setBlocks(Math.max(1, blocks - 1))}
-                  className="flex h-9 w-9 items-center justify-center text-ink-700"
-                >
-                  −
-                </button>
-                <span className="flex-1 text-center text-[15px] font-bold tabular-nums text-ink-900">
-                  {blocks}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setBlocks(Math.min(8, blocks + 1))}
-                  className="flex h-9 w-9 items-center justify-center text-ink-700"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
-                優先度
-              </label>
-              <ul className="mt-1 flex gap-1 rounded-xl bg-cream-100/70 p-1">
-                {([1, 2, 3] as const).map((p) => (
-                  <li key={p} className="flex-1">
-                    <button
-                      type="button"
-                      onClick={() => setPriority(p)}
-                      className={cn(
-                        "flex h-7 w-full items-center justify-center rounded-md text-[11px] font-bold transition",
-                        priority === p
-                          ? "bg-white text-ink-900 shadow-soft"
-                          : "text-ink-500",
-                      )}
-                    >
-                      {PRIORITY_LABEL[p]}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+          {/* 期日 */}
+          <div>
+            <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+              期日 (優先度自動)
+            </label>
+            <ul className="mt-1 flex gap-1 rounded-xl bg-cream-100/70 p-1">
+              {(Object.keys(DUE_LABEL) as DueBucket[]).map((d) => (
+                <li key={d} className="flex-1">
+                  <button
+                    type="button"
+                    onClick={() => setDue(d)}
+                    className={cn(
+                      "flex h-9 w-full flex-col items-center justify-center rounded-lg text-[10px] font-bold transition",
+                      due === d ? "bg-white text-ink-900 shadow-soft" : "text-ink-500",
+                    )}
+                  >
+                    <span>{DUE_LABEL[d]}</span>
+                    <span className="text-[8px] font-medium text-ink-400">
+                      {priorityFromDue(d) === 1 ? "優先度 高" : priorityFromDue(d) === 2 ? "優先度 中" : "優先度 低"}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <input
+              type="date"
+              value={customDate}
+              onChange={(e) => setCustomDate(e.target.value)}
+              className="mt-2 h-9 w-full rounded-xl border border-ink-100/80 bg-white px-3 text-[12px] text-ink-900 outline-none focus:border-sky-400"
+            />
+          </div>
+
+          {/* ブロック */}
+          <div>
+            <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+              ブロック数（1ブロック = 25分）
+            </label>
+            <div className="mt-1 flex items-center rounded-xl border border-ink-100/80 bg-white px-1">
+              <button
+                type="button"
+                onClick={() => setBlocks(Math.max(1, blocks - 1))}
+                className="flex h-9 w-9 items-center justify-center text-ink-700"
+              >
+                −
+              </button>
+              <span className="flex-1 text-center text-[15px] font-bold tabular-nums text-ink-900">
+                {blocks} <span className="text-[10px] text-ink-400">/ {blocks * 25}分</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setBlocks(Math.min(12, blocks + 1))}
+                className="flex h-9 w-9 items-center justify-center text-ink-700"
+              >
+                +
+              </button>
             </div>
           </div>
 
+          {/* タグ */}
           <div>
             <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
               タグ
@@ -328,6 +470,7 @@ function TaskModal({ onClose }: { onClose: () => void }) {
             </ul>
           </div>
 
+          {/* 教科 */}
           <div>
             <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
               教科 (任意)
@@ -374,6 +517,41 @@ function TaskModal({ onClose }: { onClose: () => void }) {
           追加する
         </button>
       </form>
+    </div>
+  );
+}
+
+function Chips({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <div>
+      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+        {label}
+      </div>
+      <div className="mt-1.5 flex flex-wrap gap-1">
+        {options.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => onChange(o.value)}
+            className={cn(
+              "h-7 rounded-full px-2.5 text-[10px] font-bold transition",
+              value === o.value ? "bg-ink-900 text-white" : "bg-cream-100 text-ink-700",
+            )}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
