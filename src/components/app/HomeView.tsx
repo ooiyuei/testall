@@ -11,11 +11,13 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  Flame,
   Play,
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
+import { currentDayISO } from "@/lib/store";
 import type { Block } from "@/lib/types";
 import { MoodCheckCard } from "./MoodCheckCard";
 import { TodaySuggestion } from "./TodaySuggestion";
@@ -58,8 +60,72 @@ export function HomeView() {
   });
   if (nextIdx >= 0) blockStatus[nextIdx] = "now";
 
-  const doneCount = blockStatus.filter((s) => s === "done").length;
-  const totalCount = blocks.length;
+  // 今日の実完了数 (6時リセット起点・全ソース)
+  const todayISO = currentDayISO(now);
+  const todayCompletedTotal = useMemo(
+    () =>
+      state.blockLogs.filter(
+        (b) => currentDayISO(new Date(b.completedAt)) === todayISO,
+      ).length,
+    [state.blockLogs, todayISO],
+  );
+
+  // 今日の目標 (mood log があればそれ、なければ latest test の blocks 数)
+  const todayMoodLog = useMemo(
+    () => state.dailyMoodLogs?.find((l) => l.dateISO === todayISO),
+    [state.dailyMoodLogs, todayISO],
+  );
+  const todayTarget = todayMoodLog?.finalBlocks ?? blocks.length;
+
+  // 今日の進み: 完了数を todayCompletedTotal / target (mood log 優先) で出す
+  const doneCount = todayCompletedTotal > 0 ? todayCompletedTotal : blockStatus.filter((s) => s === "done").length;
+  const totalCount = Math.max(todayTarget, doneCount);
+
+  // 週間ストリーク (連続日数)
+  const streakDays = useMemo(() => {
+    const dateSet = new Set(
+      state.blockLogs.map((b) => currentDayISO(new Date(b.completedAt))),
+    );
+    if (dateSet.size === 0) return 0;
+    const [ty, tm, td] = todayISO.split("-").map(Number);
+    const todayDate = new Date(ty, tm - 1, td);
+    const yesterdayDate = new Date(todayDate);
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterdayISO = yesterdayDate.toISOString().slice(0, 10);
+    let cursorISO = dateSet.has(todayISO)
+      ? todayISO
+      : dateSet.has(yesterdayISO)
+        ? yesterdayISO
+        : null;
+    if (!cursorISO) return 0;
+    let count = 0;
+    const [cy, cm, cd] = cursorISO.split("-").map(Number);
+    const cursor = new Date(cy, cm - 1, cd);
+    while (dateSet.has(cursor.toISOString().slice(0, 10))) {
+      count += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return count;
+  }, [state.blockLogs, todayISO]);
+
+  // 今週各曜日の完了ブロック数 (月=0..日=6)
+  const weeklyCounts = useMemo(() => {
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    const startOfWeekDate = new Date(now);
+    startOfWeekDate.setDate(now.getDate() - todayIdx);
+    startOfWeekDate.setHours(0, 0, 0, 0);
+    const endOfWeekDate = new Date(startOfWeekDate);
+    endOfWeekDate.setDate(startOfWeekDate.getDate() + 7);
+    for (const b of state.blockLogs) {
+      const d = new Date(b.completedAt);
+      if (d >= startOfWeekDate && d < endOfWeekDate) {
+        const idx = weekdayIndex(d);
+        counts[idx] += 1;
+      }
+    }
+    return counts;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.blockLogs, todayIdx]);
 
   const dateLabel = useMemo(
     () =>
@@ -82,13 +148,24 @@ export function HomeView() {
     <div className="px-5 pb-8 pt-3">
       {hydrated && state.profile?.onboardedAt ? <GuideTour /> : null}
       {/* Hero greeting */}
-      <section className="mb-5">
-        <div className="text-[11px] font-medium tracking-wider text-ink-400">
-          {dateLabel}
+      <section className="mb-5 flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[11px] font-medium tracking-wider text-ink-400">
+            {dateLabel}
+          </div>
+          <h1 className="mt-1 text-[22px] font-bold leading-tight text-ink-900">
+            {greeting}
+          </h1>
         </div>
-        <h1 className="mt-1 text-[22px] font-bold leading-tight text-ink-900">
-          {greeting}
-        </h1>
+        {streakDays > 0 ? (
+          <div className="flex flex-none items-center gap-1 rounded-full bg-coral-300/10 px-3 py-1.5 text-coral-500">
+            <Flame className="h-3.5 w-3.5" strokeWidth={2.4} />
+            <span className="text-[12px] font-bold tabular-nums">
+              {streakDays}
+              <span className="ml-0.5 text-[10px] font-medium">日連続</span>
+            </span>
+          </div>
+        ) : null}
       </section>
 
       {needsOnboarding ? <OnboardingPrompt /> : null}
@@ -161,6 +238,8 @@ export function HomeView() {
           {WEEKDAY_LABEL.map((d, i) => {
             const isToday = i === todayIdx;
             const past = i < todayIdx;
+            const count = weeklyCounts[i] ?? 0;
+            const hasBlocks = count > 0;
             return (
               <li key={i}>
                 <div
@@ -168,13 +247,15 @@ export function HomeView() {
                     "flex flex-col items-center gap-1.5 rounded-xl py-2.5 transition",
                     isToday
                       ? "bg-ink-900 text-white"
-                      : "bg-white border border-ink-100/70",
+                      : hasBlocks
+                        ? "bg-mint-50 border border-mint-200"
+                        : "bg-white border border-ink-100/70",
                   )}
                 >
                   <span
                     className={cn(
                       "text-[10px] font-bold",
-                      isToday ? "text-white/70" : "text-ink-400",
+                      isToday ? "text-white/70" : hasBlocks ? "text-mint-600" : "text-ink-400",
                     )}
                   >
                     {d}
@@ -182,14 +263,18 @@ export function HomeView() {
                   <span
                     className={cn(
                       "flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold tabular-nums",
-                      past
-                        ? "bg-mint-500 text-white"
+                      hasBlocks
+                        ? isToday
+                          ? "bg-white/20 text-white"
+                          : "bg-mint-500 text-white"
                         : isToday
-                        ? "bg-white/20 text-white"
-                        : "bg-cream-100 text-ink-400",
+                          ? "bg-white/20 text-white"
+                          : past
+                            ? "bg-cream-100 text-ink-400"
+                            : "bg-cream-100 text-ink-300",
                     )}
                   >
-                    {past ? "✓" : isToday ? "•" : ""}
+                    {hasBlocks ? count : isToday ? "•" : past ? "—" : ""}
                   </span>
                 </div>
               </li>
