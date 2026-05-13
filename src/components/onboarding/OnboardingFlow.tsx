@@ -2,53 +2,143 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   ChevronLeft,
   ChevronRight,
-  GraduationCap,
   Plus,
-  School,
   Search,
-  Target,
   Trash2,
-  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { GRADES } from "@/lib/subjects";
 import {
-  searchUniversities,
   TIER_LABEL,
   UNIVERSITIES as MASTER_UNIVERSITIES,
 } from "@/lib/master/universities";
 import { searchHighschools } from "@/lib/master/highschools";
-import {
-  mergedHighschools,
-  mergedUniversities,
-} from "@/lib/master/userAdditions";
+import { mergedHighschools, mergedUniversities } from "@/lib/master/userAdditions";
 import type { Highschool, University } from "@/lib/master";
-import { DEVIATION_BUCKETS, bucketMid, readStore, setProfile } from "@/lib/store";
-import type { DeviationBucket, StoredProfile, TargetUniversity } from "@/lib/store";
+import {
+  DEVIATION_BUCKETS,
+  bucketMid,
+  readStore,
+  setProfile,
+} from "@/lib/store";
+import type {
+  DeviationBucket,
+  StoredProfile,
+  SubjectAreaId,
+  TargetUniversity,
+} from "@/lib/store";
 import { AddEntityModal, type AddEntityKind } from "@/components/master/AddEntityModal";
 
+// ── ステップ定義 ──────────────────────────────────────
 const STEPS = [
-  { id: "grade", label: "学年", icon: GraduationCap },
-  { id: "deviation", label: "偏差値", icon: TrendingUp },
-  { id: "target", label: "志望校", icon: Target },
-  { id: "school", label: "学校", icon: School },
-  { id: "time", label: "勉強時間", icon: Plus },
+  { id: "grade" },
+  { id: "school" },
+  { id: "deviation" },
+  { id: "target-dev" },
+  { id: "univ-types" },
+  { id: "target-unis" },
+  { id: "study-time" },
+  { id: "schedule" },
+  { id: "weekend" },
+  { id: "strengths" },
 ] as const;
 
 type StepId = (typeof STEPS)[number]["id"];
 
+// ── 5大教科 ──────────────────────────────────────────
+const SUBJECT_AREAS: { id: SubjectAreaId; label: string }[] = [
+  { id: "japanese", label: "国語" },
+  { id: "math", label: "数学" },
+  { id: "english", label: "英語" },
+  { id: "science", label: "理科" },
+  { id: "social", label: "社会" },
+];
+
+// ── 学部カテゴリ ───────────────────────────────────────
+const FACULTY_CATEGORIES = [
+  { id: "letters", label: "文" },
+  { id: "law", label: "法" },
+  { id: "economics", label: "経済経営" },
+  { id: "science", label: "理" },
+  { id: "engineering", label: "工" },
+  { id: "medical", label: "医療" },
+  { id: "agriculture", label: "農" },
+  { id: "info", label: "情報" },
+  { id: "education", label: "教育" },
+  { id: "other", label: "その他" },
+];
+
+// ── 勉強時間 ─────────────────────────────────────────
+const WEEKDAY_OPTIONS = [
+  { label: "〜1h", minutes: 45 },
+  { label: "1〜2h", minutes: 90 },
+  { label: "2〜3h", minutes: 150 },
+  { label: "3〜4h", minutes: 210 },
+  { label: "4h〜", minutes: 270 },
+];
+
+const WEEKEND_OPTIONS = [
+  { label: "〜2h", minutes: 60 },
+  { label: "2〜4h", minutes: 180 },
+  { label: "4〜6h", minutes: 300 },
+  { label: "6〜8h", minutes: 420 },
+  { label: "8h〜", minutes: 540 },
+];
+
+// ── 時刻ヘルパー ─────────────────────────────────────
+function minutesToTime(totalMin: number): string {
+  const h = Math.floor(totalMin / 60) % 24;
+  const m = totalMin % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function timeToMinutes(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function makeTimeOptions(startMin: number, endMin: number, stepMin = 30): string[] {
+  const opts: string[] = [];
+  for (let m = startMin; m <= endMin; m += stepMin) {
+    opts.push(minutesToTime(m));
+  }
+  return opts;
+}
+
+const WAKEUP_OPTIONS = makeTimeOptions(5 * 60, 10 * 60);    // 5:00〜10:00
+const RETURN_OPTIONS = makeTimeOptions(14 * 60, 23 * 60);   // 14:00〜23:00
+const BED_OPTIONS = makeTimeOptions(20 * 60, 26 * 60);      // 20:00〜26:00 (26:00=翌2:00)
+
+// ── フォームステート ──────────────────────────────────
 type FormState = {
+  // step1: grade
   grade: string;
-  deviationBucket: DeviationBucket;
-  targetDeviationBucket: DeviationBucket;
-  targetUniversities: TargetUniversity[];
+  // step2: school
   schoolName: string;
+  // step3: deviation
+  deviationBucket: DeviationBucket;
+  deviationByArea: Partial<Record<SubjectAreaId, DeviationBucket>>;
+  // step4: target-dev
+  targetDeviationBucket: DeviationBucket;
+  // step5: univ-types
+  universityTypes: ("national" | "public" | "private")[];
+  interestedFacultyCategories: string[];
+  // step6: target-unis
+  targetUniversities: TargetUniversity[];
+  // step7: study-time
   weekdayMinutes: number;
   weekendMinutes: number;
+  // step8: schedule
+  wakeupTime: string;
+  returnTime: string;
+  bedTime: string;
+  // step9: weekend
+  weekendDays: ("sat" | "sat-half" | "sun" | "sun-half")[];
+  // step10: strengths
+  proficiencyByArea: Partial<Record<SubjectAreaId, "good" | "fair" | "weak" | "bad">>;
 };
 
 function defaultExamDate(grade: string): string {
@@ -60,20 +150,30 @@ function defaultExamDate(grade: string): string {
   return `${year}-01-15`;
 }
 
+// ── メインコンポーネント ─────────────────────────────
 export function OnboardingFlow() {
   const router = useRouter();
   const [stepIdx, setStepIdx] = useState(0);
   const [addModal, setAddModal] = useState<AddEntityKind | null>(null);
+
   const [form, setForm] = useState<FormState>(() => {
     const existing = readStore().profile;
     return {
       grade: existing?.grade ?? "h2",
-      deviationBucket: existing?.deviationBucket ?? "55-60",
-      targetDeviationBucket: existing?.targetDeviationBucket ?? "65-70",
-      targetUniversities: existing?.targetUniversities ?? [],
       schoolName: existing?.schoolName ?? "",
+      deviationBucket: existing?.deviationBucket ?? "55-60",
+      deviationByArea: existing?.deviationByArea ?? {},
+      targetDeviationBucket: existing?.targetDeviationBucket ?? "65-70",
+      universityTypes: existing?.universityTypes ?? [],
+      interestedFacultyCategories: existing?.interestedFacultyCategories ?? [],
+      targetUniversities: existing?.targetUniversities ?? [],
       weekdayMinutes: existing?.weekdayMinutes ?? 120,
       weekendMinutes: existing?.weekendMinutes ?? 240,
+      wakeupTime: existing?.wakeupTime ?? "07:00",
+      returnTime: existing?.returnTime ?? "18:00",
+      bedTime: existing?.bedTime ?? "23:00",
+      weekendDays: existing?.weekendDays ?? [],
+      proficiencyByArea: existing?.proficiencyByArea ?? {},
     };
   });
 
@@ -85,11 +185,15 @@ export function OnboardingFlow() {
 
   function canProceed(): boolean {
     if (stepId === "grade") return !!form.grade;
-    if (stepId === "deviation") return !!form.deviationBucket && !!form.targetDeviationBucket;
-    if (stepId === "target") return form.targetUniversities.length > 0;
     if (stepId === "school") return true;
-    if (stepId === "time")
-      return form.weekdayMinutes > 0 && form.weekendMinutes > 0;
+    if (stepId === "deviation") return !!form.deviationBucket;
+    if (stepId === "target-dev") return !!form.targetDeviationBucket;
+    if (stepId === "univ-types") return true;
+    if (stepId === "target-unis") return true;
+    if (stepId === "study-time") return form.weekdayMinutes > 0 && form.weekendMinutes > 0;
+    if (stepId === "schedule") return true;
+    if (stepId === "weekend") return true;
+    if (stepId === "strengths") return true;
     return true;
   }
 
@@ -111,26 +215,57 @@ export function OnboardingFlow() {
     const profile: StoredProfile = {
       ...existing,
       grade: form.grade,
+      schoolName: form.schoolName.trim() || undefined,
       deviationBucket: form.deviationBucket,
       deviation: bucketMid(form.deviationBucket),
+      deviationByArea: Object.keys(form.deviationByArea).length > 0
+        ? form.deviationByArea
+        : undefined,
       targetDeviationBucket: form.targetDeviationBucket,
+      universityTypes: form.universityTypes.length > 0 ? form.universityTypes : undefined,
+      interestedFacultyCategories: form.interestedFacultyCategories.length > 0
+        ? form.interestedFacultyCategories
+        : undefined,
       targetUniversities: form.targetUniversities,
-      schoolName: form.schoolName.trim() || undefined,
       weekdayMinutes: form.weekdayMinutes,
       weekendMinutes: form.weekendMinutes,
       availableMinutesPerDay: Math.round(
         (form.weekdayMinutes * 5 + form.weekendMinutes * 2) / 7,
       ),
+      wakeupTime: form.wakeupTime,
+      returnTime: form.returnTime,
+      bedTime: form.bedTime,
+      weekendDays: form.weekendDays.length > 0 ? form.weekendDays : undefined,
+      proficiencyByArea: Object.keys(form.proficiencyByArea).length > 0
+        ? form.proficiencyByArea
+        : undefined,
       target:
         form.targetUniversities[0]
           ? form.targetUniversities[0].universityId
           : existing?.target ?? "private-top",
       examDate: existing?.examDate ?? defaultExamDate(form.grade),
       textbooks: existing?.textbooks ?? [],
-      userId: existing?.userId ?? String(10000 + Math.floor(Math.random() * 90000)),
+      userId:
+        existing?.userId ?? String(10000 + Math.floor(Math.random() * 90000)),
       onboardedAt: new Date().toISOString(),
     };
     setProfile(profile);
+    router.push("/app");
+  }
+
+  function handleSkip() {
+    const existing = readStore().profile;
+    setProfile({
+      ...(existing ?? {}),
+      grade: form.grade,
+      target: existing?.target ?? "private-top",
+      examDate: existing?.examDate ?? defaultExamDate(form.grade),
+      textbooks: existing?.textbooks ?? [],
+      onboardedAt: existing?.onboardedAt ?? new Date().toISOString(),
+      userId:
+        existing?.userId ??
+        String(10000 + Math.floor(Math.random() * 90000)),
+    } as StoredProfile);
     router.push("/app");
   }
 
@@ -155,28 +290,13 @@ export function OnboardingFlow() {
           </span>
           <button
             type="button"
-            onClick={() => {
-              // SKIP: 最低限の情報だけ確定してアプリへ
-              const existing = readStore().profile;
-              setProfile({
-                ...(existing ?? {}),
-                grade: form.grade,
-                target: existing?.target ?? "private-top",
-                examDate: existing?.examDate ?? defaultExamDate(form.grade),
-                textbooks: existing?.textbooks ?? [],
-                onboardedAt: existing?.onboardedAt ?? new Date().toISOString(),
-                userId:
-                  existing?.userId ??
-                  String(10000 + Math.floor(Math.random() * 90000)),
-              } as StoredProfile);
-              router.push("/app");
-            }}
+            onClick={handleSkip}
             className="text-xs font-bold text-ink-400 hover:text-ink-700"
           >
             スキップ
           </button>
         </div>
-        <div className="mt-3 flex gap-1.5">
+        <div className="mt-3 flex gap-1">
           {STEPS.map((_, i) => (
             <div
               key={i}
@@ -190,40 +310,77 @@ export function OnboardingFlow() {
       </header>
 
       <main className="flex-1 px-5 pt-6 pb-32">
-        {stepId === "grade" ? (
+        {stepId === "grade" && (
           <GradeStep value={form.grade} onChange={(v) => update("grade", v)} />
-        ) : null}
-        {stepId === "deviation" ? (
-          <DeviationStep
-            current={form.deviationBucket}
-            target={form.targetDeviationBucket}
-            onChangeCurrent={(v) => update("deviationBucket", v)}
-            onChangeTarget={(v) => update("targetDeviationBucket", v)}
-          />
-        ) : null}
-        {stepId === "target" ? (
-          <TargetStep
-            value={form.targetUniversities}
-            deviation={bucketMid(form.deviationBucket)}
-            onChange={(v) => update("targetUniversities", v)}
-            onAdd={() => setAddModal("university")}
-          />
-        ) : null}
-        {stepId === "school" ? (
+        )}
+        {stepId === "school" && (
           <SchoolStep
             value={form.schoolName}
             onChange={(v) => update("schoolName", v)}
             onAdd={() => setAddModal("highschool")}
           />
-        ) : null}
-        {stepId === "time" ? (
-          <TimeStep
+        )}
+        {stepId === "deviation" && (
+          <DeviationStep
+            current={form.deviationBucket}
+            byArea={form.deviationByArea}
+            onChangeCurrent={(v) => update("deviationBucket", v)}
+            onChangeByArea={(v) => update("deviationByArea", v)}
+          />
+        )}
+        {stepId === "target-dev" && (
+          <TargetDevStep
+            value={form.targetDeviationBucket}
+            onChange={(v) => update("targetDeviationBucket", v)}
+          />
+        )}
+        {stepId === "univ-types" && (
+          <UnivTypesStep
+            types={form.universityTypes}
+            faculties={form.interestedFacultyCategories}
+            onChangeTypes={(v) => update("universityTypes", v)}
+            onChangeFaculties={(v) => update("interestedFacultyCategories", v)}
+          />
+        )}
+        {stepId === "target-unis" && (
+          <TargetUnisStep
+            value={form.targetUniversities}
+            deviation={bucketMid(form.deviationBucket)}
+            univTypes={form.universityTypes}
+            onChange={(v) => update("targetUniversities", v)}
+            onAdd={() => setAddModal("university")}
+          />
+        )}
+        {stepId === "study-time" && (
+          <StudyTimeStep
             weekday={form.weekdayMinutes}
             weekend={form.weekendMinutes}
             onChangeWeekday={(v) => update("weekdayMinutes", v)}
             onChangeWeekend={(v) => update("weekendMinutes", v)}
           />
-        ) : null}
+        )}
+        {stepId === "schedule" && (
+          <ScheduleStep
+            wakeup={form.wakeupTime}
+            returnT={form.returnTime}
+            bed={form.bedTime}
+            onChangeWakeup={(v) => update("wakeupTime", v)}
+            onChangeReturn={(v) => update("returnTime", v)}
+            onChangeBed={(v) => update("bedTime", v)}
+          />
+        )}
+        {stepId === "weekend" && (
+          <WeekendStep
+            value={form.weekendDays}
+            onChange={(v) => update("weekendDays", v)}
+          />
+        )}
+        {stepId === "strengths" && (
+          <StrengthsStep
+            value={form.proficiencyByArea}
+            onChange={(v) => update("proficiencyByArea", v)}
+          />
+        )}
       </main>
 
       <footer className="sticky bottom-0 z-10 border-t border-ink-100/60 bg-cream-50/85 px-5 py-4 backdrop-blur-xl">
@@ -254,32 +411,99 @@ export function OnboardingFlow() {
   );
 }
 
-function StepTitle({
-  title,
-  subtitle,
-}: {
-  title: string;
-  subtitle?: string;
-}) {
+// ── 共通パーツ ───────────────────────────────────────
+
+function StepTitle({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="mb-6">
       <h1 className="text-[22px] font-bold leading-tight tracking-tight text-ink-900">
         {title}
       </h1>
       {subtitle ? (
-        <p className="mt-2 text-sm text-ink-600">{subtitle}</p>
+        <p className="mt-2 text-sm leading-relaxed text-ink-600">{subtitle}</p>
       ) : null}
     </div>
   );
 }
 
-function GradeStep({
+function BucketPicker({
+  label,
+  value,
+  onChange,
+  tone = "sky",
+}: {
+  label: string;
+  value: DeviationBucket;
+  onChange: (v: DeviationBucket) => void;
+  tone?: "sky" | "peach";
+}) {
+  const toneActive =
+    tone === "sky" ? "bg-sky-500 text-white" : "bg-peach-200 text-peach-500";
+  return (
+    <div className="rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
+      <div className="text-[11px] font-bold uppercase tracking-widest text-ink-500">
+        {label}
+      </div>
+      <ul className="mt-2 grid grid-cols-4 gap-1.5">
+        {DEVIATION_BUCKETS.map((b) => (
+          <li key={b.id}>
+            <button
+              type="button"
+              onClick={() => onChange(b.id)}
+              className={cn(
+                "flex h-11 w-full items-center justify-center rounded-xl text-xs font-black transition",
+                value === b.id ? `${toneActive} shadow-soft` : "bg-cream-50 text-ink-700",
+              )}
+            >
+              {b.label}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function SegmentPicker<T extends string>({
+  label,
+  options,
   value,
   onChange,
 }: {
-  value: string;
-  onChange: (v: string) => void;
+  label: string;
+  options: { id: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
 }) {
+  return (
+    <div className="rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
+      {label ? (
+        <div className="mb-3 text-sm font-bold text-ink-700">{label}</div>
+      ) : null}
+      <div className="flex gap-1 rounded-xl bg-cream-100 p-1">
+        {options.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            onClick={() => onChange(o.id)}
+            className={cn(
+              "flex-1 rounded-lg py-2 text-xs font-bold transition",
+              value === o.id
+                ? "bg-white text-sky-600 shadow-soft"
+                : "text-ink-500 hover:text-ink-700",
+            )}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Step 1: 学年 ─────────────────────────────────────
+
+function GradeStep({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <>
       <StepTitle
@@ -300,11 +524,12 @@ function GradeStep({
             )}
           >
             <span className="text-base font-black text-ink-900">{g.name}</span>
-            {value === g.id ? (
-              <span className="h-3 w-3 rounded-full bg-sky-500" />
-            ) : (
-              <span className="h-3 w-3 rounded-full bg-cream-200" />
-            )}
+            <span
+              className={cn(
+                "h-3 w-3 rounded-full",
+                value === g.id ? "bg-sky-500" : "bg-cream-200",
+              )}
+            />
           </button>
         ))}
       </div>
@@ -312,40 +537,210 @@ function GradeStep({
   );
 }
 
-function DeviationStep({
-  current,
-  target,
-  onChangeCurrent,
-  onChangeTarget,
+// ── Step 2: 高校 ─────────────────────────────────────
+
+function SchoolStep({
+  value,
+  onChange,
+  onAdd,
 }: {
-  current: DeviationBucket;
-  target: DeviationBucket;
-  onChangeCurrent: (v: DeviationBucket) => void;
-  onChangeTarget: (v: DeviationBucket) => void;
+  value: string;
+  onChange: (v: string) => void;
+  onAdd: () => void;
 }) {
+  const [query, setQuery] = useState(value);
+
+  const results = useMemo((): Highschool[] => {
+    if (!query.trim()) return [];
+    const base = searchHighschools(query.trim(), 30);
+    const merged = mergedHighschools([]);
+    const userAdded = merged.filter((h) =>
+      h.searchText?.includes(query.toLowerCase()),
+    );
+    const combined = [...userAdded, ...base];
+    const seen = new Set<string>();
+    return combined.filter((h) => {
+      if (seen.has(h.id)) return false;
+      seen.add(h.id);
+      return true;
+    }).slice(0, 30);
+  }, [query]);
+
+  function pick(name: string) {
+    onChange(name);
+    setQuery(name);
+  }
+
   return (
     <>
       <StepTitle
-        title="偏差値を教えて"
+        title="通っている学校"
+        subtitle="任意。同じ学校の人と比較するのに使います。"
+      />
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+        <input
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            onChange(e.target.value);
+          }}
+          placeholder="高校名を検索（例：日比谷）"
+          className="h-12 w-full rounded-2xl border border-cream-200 bg-white pl-9 pr-3 text-base text-ink-900 outline-none focus:border-sky-400"
+        />
+      </div>
+
+      {results.length > 0 ? (
+        <ul className="mt-3 space-y-1.5">
+          {results.map((h) => (
+            <li key={h.id}>
+              <button
+                type="button"
+                onClick={() => pick(h.name)}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-xl p-3 text-left transition",
+                  value === h.name
+                    ? "bg-sky-100 text-sky-700"
+                    : "bg-white text-ink-900 hover:bg-cream-50",
+                )}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-black">{h.name}</div>
+                  <div className="text-[10px] text-ink-500">
+                    {h.prefecture}
+                    {h.city ? ` · ${h.city}` : ""} ·{" "}
+                    {h.type === "private" ? "私立" : h.type === "national" ? "国立" : "公立"}
+                    {h.deviation ? ` · 偏差値 ${h.deviation}` : ""}
+                  </div>
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {query.trim() && results.length === 0 ? (
+        <button
+          type="button"
+          onClick={onAdd}
+          className="mt-3 flex w-full items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-cream-200 bg-white p-4 text-xs text-ink-500 hover:border-sky-300 hover:bg-sky-50"
+        >
+          <Plus className="h-3.5 w-3.5" />「{query}」が見つからない — 追加する
+        </button>
+      ) : null}
+
+      <p className="mt-3 text-[11px] text-ink-500">
+        空欄でも構いません。後から設定で変えられます。
+      </p>
+    </>
+  );
+}
+
+// ── Step 3: 現在の偏差値 ────────────────────────────
+
+function DeviationStep({
+  current,
+  byArea,
+  onChangeCurrent,
+  onChangeByArea,
+}: {
+  current: DeviationBucket;
+  byArea: Partial<Record<SubjectAreaId, DeviationBucket>>;
+  onChangeCurrent: (v: DeviationBucket) => void;
+  onChangeByArea: (v: Partial<Record<SubjectAreaId, DeviationBucket>>) => void;
+}) {
+  function setArea(id: SubjectAreaId, val: DeviationBucket | undefined) {
+    if (val === undefined) {
+      const next = { ...byArea };
+      delete next[id];
+      onChangeByArea(next);
+    } else {
+      onChangeByArea({ ...byArea, [id]: val });
+    }
+  }
+
+  return (
+    <>
+      <StepTitle
+        title="今の偏差値は？"
         subtitle="おおよその帯でOK。後で模試結果から自動補正されます。"
       />
 
       <BucketPicker
-        label="今の偏差値"
+        label="平均偏差値"
         value={current}
         onChange={onChangeCurrent}
         tone="sky"
       />
 
-      <div className="mt-5" />
+      <div className="mt-5">
+        <p className="mb-3 text-xs font-bold text-ink-500">
+          教科ごとに違う場合は任意で設定（空欄なら平均値を使います）
+        </p>
+        <div className="space-y-3">
+          {SUBJECT_AREAS.map((s) => (
+            <div
+              key={s.id}
+              className="rounded-2xl border border-cream-200 bg-white p-3"
+            >
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-sm font-bold text-ink-700">{s.label}</span>
+                {byArea[s.id] ? (
+                  <button
+                    type="button"
+                    onClick={() => setArea(s.id, undefined)}
+                    className="text-[10px] text-ink-400 hover:text-ink-600"
+                  >
+                    クリア
+                  </button>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {DEVIATION_BUCKETS.map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => setArea(s.id, b.id)}
+                    className={cn(
+                      "rounded-lg px-2.5 py-1.5 text-xs font-bold transition",
+                      byArea[s.id] === b.id
+                        ? "bg-sky-500 text-white"
+                        : "bg-cream-50 text-ink-600 hover:bg-cream-100",
+                    )}
+                  >
+                    {b.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
 
+// ── Step 4: 目指す偏差値 ────────────────────────────
+
+function TargetDevStep({
+  value,
+  onChange,
+}: {
+  value: DeviationBucket;
+  onChange: (v: DeviationBucket) => void;
+}) {
+  return (
+    <>
+      <StepTitle
+        title="目指す偏差値は？"
+        subtitle="志望校の合格ラインに必要な偏差値を選んでください。"
+      />
       <BucketPicker
-        label="目指す学校の偏差値"
-        value={target}
-        onChange={onChangeTarget}
+        label="目標偏差値"
+        value={value}
+        onChange={onChange}
         tone="peach"
       />
-
       <p className="mt-4 text-[11px] text-ink-500">
         ※ 偏差値は模試ごとに意味が変わるため、内部では帯の中央値で扱います。
       </p>
@@ -353,45 +748,102 @@ function DeviationStep({
   );
 }
 
-function BucketPicker({
-  label,
-  value,
-  onChange,
-  tone,
+// ── Step 5: 大学タイプ ───────────────────────────────
+
+function UnivTypesStep({
+  types,
+  faculties,
+  onChangeTypes,
+  onChangeFaculties,
 }: {
-  label: string;
-  value: DeviationBucket;
-  onChange: (v: DeviationBucket) => void;
-  tone: "sky" | "peach";
+  types: ("national" | "public" | "private")[];
+  faculties: string[];
+  onChangeTypes: (v: ("national" | "public" | "private")[]) => void;
+  onChangeFaculties: (v: string[]) => void;
 }) {
-  const toneActive =
-    tone === "sky" ? "bg-sky-500 text-white" : "bg-peach-200 text-peach-500";
+  function toggleType(id: "national" | "public" | "private") {
+    if (types.includes(id)) {
+      onChangeTypes(types.filter((t) => t !== id));
+    } else {
+      onChangeTypes([...types, id]);
+    }
+  }
+
+  function toggleFaculty(id: string) {
+    if (faculties.includes(id)) {
+      onChangeFaculties(faculties.filter((f) => f !== id));
+    } else {
+      onChangeFaculties([...faculties, id]);
+    }
+  }
+
+  const typeOptions = [
+    { id: "national" as const, label: "国立" },
+    { id: "public" as const, label: "公立" },
+    { id: "private" as const, label: "私立" },
+  ];
+
   return (
-    <div className="rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
-      <div className="text-[11px] font-bold uppercase tracking-widest text-ink-500">
-        {label}
-      </div>
-      <ul className="mt-2 grid grid-cols-4 gap-1.5">
-        {DEVIATION_BUCKETS.map((b) => (
-          <li key={b.id}>
+    <>
+      <StepTitle
+        title="志望校のタイプ"
+        subtitle="複数選択OK。絞り込みに使います。"
+      />
+
+      <div className="mb-5 rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
+        <div className="mb-3 text-[11px] font-bold uppercase tracking-widest text-ink-500">
+          大学タイプ
+        </div>
+        <div className="flex gap-2">
+          {typeOptions.map((o) => (
             <button
+              key={o.id}
               type="button"
-              onClick={() => onChange(b.id)}
+              onClick={() => toggleType(o.id)}
               className={cn(
-                "flex h-12 w-full items-center justify-center rounded-xl text-xs font-black transition",
-                value === b.id
-                  ? `${toneActive} shadow-soft`
-                  : "bg-cream-50 text-ink-700",
+                "flex-1 rounded-xl py-3 text-sm font-bold transition",
+                types.includes(o.id)
+                  ? "bg-sky-500 text-white shadow-soft"
+                  : "bg-cream-50 text-ink-600 hover:bg-cream-100",
               )}
             >
-              {b.label}
+              {o.label}
             </button>
-          </li>
-        ))}
-      </ul>
-    </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
+        <div className="mb-3 text-[11px] font-bold uppercase tracking-widest text-ink-500">
+          興味のある学部
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {FACULTY_CATEGORIES.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => toggleFaculty(f.id)}
+              className={cn(
+                "rounded-xl px-3 py-2 text-sm font-bold transition",
+                faculties.includes(f.id)
+                  ? "bg-sky-500 text-white shadow-soft"
+                  : "bg-cream-50 text-ink-600 hover:bg-cream-100",
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <p className="mt-3 text-[11px] text-ink-500">
+        どれも選ばなくてもOKです。後から変えられます。
+      </p>
+    </>
   );
 }
+
+// ── Step 6: 志望校選択 ───────────────────────────────
 
 function facultyDevRange(u: University): { min: number; max: number } | null {
   const devs = u.faculties
@@ -401,32 +853,37 @@ function facultyDevRange(u: University): { min: number; max: number } | null {
   return { min: Math.min(...devs), max: Math.max(...devs) };
 }
 
-function TargetStep({
+function TargetUnisStep({
   value,
   deviation,
+  univTypes,
   onChange,
   onAdd,
 }: {
   value: TargetUniversity[];
   deviation: number;
+  univTypes: ("national" | "public" | "private")[];
   onChange: (v: TargetUniversity[]) => void;
   onAdd: () => void;
 }) {
   const [query, setQuery] = useState("");
 
+  const allMerged = useMemo(() => mergedUniversities(MASTER_UNIVERSITIES), []);
+
   const results = useMemo(() => {
-    const merged = mergedUniversities(MASTER_UNIVERSITIES);
-    const all = query.trim()
-      ? merged.filter((u) => u.searchText?.includes(query.toLowerCase()))
-      : merged;
+    const filtered = query.trim()
+      ? allMerged.filter((u) => u.searchText?.includes(query.toLowerCase()))
+      : univTypes.length > 0
+      ? allMerged.filter((u) => univTypes.includes(u.type))
+      : allMerged;
+
     const tierWeight: Record<string, number> = { S: 0, A: 1, B: 2, C: 3, D: 4 };
-    return [...all]
+    return [...filtered]
       .map((u) => {
         const range = facultyDevRange(u);
         const minDev = range?.min ?? 50;
-        const maxDev = range?.max ?? 50;
         const dist = Math.max(0, minDev - deviation);
-        return { u, minDev, maxDev, dist };
+        return { u, minDev, range, dist };
       })
       .sort((a, b) => {
         const selA = value.some((v) => v.universityId === a.u.id) ? 1 : 0;
@@ -438,7 +895,7 @@ function TargetStep({
         return a.dist - b.dist;
       })
       .slice(0, 30);
-  }, [query, deviation, value]);
+  }, [query, deviation, value, univTypes, allMerged]);
 
   function toggle(uniId: string) {
     if (value.some((v) => v.universityId === uniId)) {
@@ -459,7 +916,6 @@ function TargetStep({
   }
 
   const empty = query.trim() && results.length === 0;
-  const all = mergedUniversities(MASTER_UNIVERSITIES);
 
   return (
     <>
@@ -471,7 +927,7 @@ function TargetStep({
       {value.length > 0 ? (
         <ul className="mb-4 space-y-2">
           {value.map((tu, i) => {
-            const u = all.find((x) => x.id === tu.universityId);
+            const u = allMerged.find((x) => x.id === tu.universityId);
             if (!u) return null;
             return (
               <li
@@ -513,10 +969,9 @@ function TargetStep({
       </div>
 
       <ul className="mt-3 space-y-1.5">
-        {results.map(({ u, minDev, maxDev }) => {
+        {results.map(({ u, minDev, range }) => {
           const selected = value.some((v) => v.universityId === u.id);
           const disabled = !selected && value.length >= 3;
-          const range = facultyDevRange(u);
           const reach = range
             ? minDev > deviation + 5
               ? "挑戦"
@@ -555,13 +1010,13 @@ function TargetStep({
                   <div className="text-sm font-black">{u.name}</div>
                   <div className="text-[10px] text-ink-500">
                     {u.tier ? `${TIER_LABEL[u.tier]} · ` : ""}
-                    {range ? `偏差値 ${minDev}-${maxDev} · ` : ""}
+                    {range ? `偏差値 ${range.min}-${range.max} · ` : ""}
                     {u.region}
                   </div>
                 </div>
                 <span
                   className={cn(
-                    "rounded-full px-2 py-0.5 text-[10px] font-bold flex-none",
+                    "flex-none rounded-full px-2 py-0.5 text-[10px] font-bold",
                     reachTone,
                   )}
                 >
@@ -596,104 +1051,9 @@ function TargetStep({
   );
 }
 
-function SchoolStep({
-  value,
-  onChange,
-  onAdd,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  onAdd: () => void;
-}) {
-  const [query, setQuery] = useState(value);
+// ── Step 7: 勉強時間 ─────────────────────────────────
 
-  const results = useMemo(() => {
-    const merged = mergedHighschools([]);
-    // 全シード + ユーザー追加から絞り込み
-    const base = query.trim()
-      ? searchHighschools(query.trim(), 50)
-      : ([] as Highschool[]);
-    const userAdded = merged.filter(
-      (h) => !query.trim() || h.searchText?.includes(query.toLowerCase()),
-    );
-    return [...userAdded, ...base].slice(0, 30);
-  }, [query]);
-
-  function pick(name: string) {
-    onChange(name);
-    setQuery(name);
-  }
-
-  return (
-    <>
-      <StepTitle
-        title="通っている学校"
-        subtitle="任意。同じ学校の人と比較するのに使います。"
-      />
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
-        <input
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            onChange(e.target.value);
-          }}
-          placeholder="高校名を検索（例：日比谷）"
-          className="h-12 w-full rounded-2xl border border-cream-200 bg-white pl-9 pr-3 text-base text-ink-900 outline-none focus:border-sky-400"
-        />
-      </div>
-
-      {query.trim() && results.length > 0 ? (
-        <ul className="mt-3 space-y-1.5">
-          {results.map((h) => (
-            <li key={h.id}>
-              <button
-                type="button"
-                onClick={() => pick(h.name)}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-xl p-3 text-left transition",
-                  value === h.name
-                    ? "bg-sky-100 text-sky-700"
-                    : "bg-white text-ink-900 hover:bg-cream-50",
-                )}
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-black">{h.name}</div>
-                  <div className="text-[10px] text-ink-500">
-                    {h.prefecture}
-                    {h.city ? ` · ${h.city}` : ""} ·{" "}
-                    {h.type === "private"
-                      ? "私立"
-                      : h.type === "national"
-                      ? "国立"
-                      : "公立"}
-                    {h.deviation ? ` · 偏差値 ${h.deviation}` : ""}
-                  </div>
-                </div>
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      {query.trim() && results.length === 0 ? (
-        <button
-          type="button"
-          onClick={onAdd}
-          className="mt-3 flex w-full items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-cream-200 bg-white p-4 text-xs text-ink-500 hover:border-sky-300 hover:bg-sky-50"
-        >
-          <Plus className="h-3.5 w-3.5" />「{query}」が見つからない — 追加する
-        </button>
-      ) : null}
-
-      <p className="mt-3 text-[11px] text-ink-500">
-        空欄でも構いません。後から設定で変えられます。
-      </p>
-    </>
-  );
-}
-
-function TimeStep({
+function StudyTimeStep({
   weekday,
   weekend,
   onChangeWeekday,
@@ -704,78 +1064,325 @@ function TimeStep({
   onChangeWeekday: (v: number) => void;
   onChangeWeekend: (v: number) => void;
 }) {
+  const weekdayIdx = WEEKDAY_OPTIONS.findIndex((o) => o.minutes === weekday);
+  const weekendIdx = WEEKEND_OPTIONS.findIndex((o) => o.minutes === weekend);
+
   return (
     <>
       <StepTitle
         title="1日の勉強時間"
-        subtitle="平均でOK。AIが現実的な計画を組みます。"
+        subtitle="おおよそでOK。AIが現実的な計画を組みます。"
       />
-      <Slider
+
+      <TimeOptionPicker
         label="平日"
-        value={weekday}
-        onChange={onChangeWeekday}
-        min={0}
-        max={600}
+        options={WEEKDAY_OPTIONS}
+        selectedIdx={weekdayIdx === -1 ? 1 : weekdayIdx}
+        onChange={(i) => onChangeWeekday(WEEKDAY_OPTIONS[i].minutes)}
       />
+
       <div className="mt-4" />
-      <Slider
+
+      <TimeOptionPicker
         label="休日"
-        value={weekend}
-        onChange={onChangeWeekend}
-        min={0}
-        max={720}
+        options={WEEKEND_OPTIONS}
+        selectedIdx={weekendIdx === -1 ? 1 : weekendIdx}
+        onChange={(i) => onChangeWeekend(WEEKEND_OPTIONS[i].minutes)}
       />
     </>
   );
 }
 
-function Slider({
+function TimeOptionPicker({
   label,
-  value,
+  options,
+  selectedIdx,
   onChange,
-  min,
-  max,
 }: {
   label: string;
-  value: number;
-  onChange: (v: number) => void;
-  min: number;
-  max: number;
+  options: { label: string; minutes: number }[];
+  selectedIdx: number;
+  onChange: (i: number) => void;
 }) {
-  const hours = Math.floor(value / 60);
-  const mins = value % 60;
   return (
-    <div className="rounded-3xl border border-cream-200 bg-white p-5 shadow-soft">
-      <div className="flex items-baseline justify-between">
-        <span className="text-sm font-black text-ink-900">{label}</span>
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-black tabular-nums text-ink-900">
-            {hours}
+    <div className="rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
+      <div className="mb-3 text-sm font-bold text-ink-700">{label}</div>
+      <div className="grid grid-cols-5 gap-1.5">
+        {options.map((o, i) => (
+          <button
+            key={o.label}
+            type="button"
+            onClick={() => onChange(i)}
+            className={cn(
+              "flex flex-col items-center justify-center rounded-xl py-3 text-xs font-bold transition",
+              selectedIdx === i
+                ? "bg-sky-500 text-white shadow-soft"
+                : "bg-cream-50 text-ink-600 hover:bg-cream-100",
+            )}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Step 8: スケジュール ─────────────────────────────
+
+function ScheduleStep({
+  wakeup,
+  returnT,
+  bed,
+  onChangeWakeup,
+  onChangeReturn,
+  onChangeBed,
+}: {
+  wakeup: string;
+  returnT: string;
+  bed: string;
+  onChangeWakeup: (v: string) => void;
+  onChangeReturn: (v: string) => void;
+  onChangeBed: (v: string) => void;
+}) {
+  return (
+    <>
+      <StepTitle
+        title="平日のスケジュール"
+        subtitle="勉強できる時間帯を把握して、計画に反映します。"
+      />
+
+      <TimeScroller
+        label="起床"
+        options={WAKEUP_OPTIONS}
+        value={wakeup}
+        onChange={onChangeWakeup}
+      />
+      <div className="mt-3" />
+      <TimeScroller
+        label="帰宅"
+        options={RETURN_OPTIONS}
+        value={returnT}
+        onChange={onChangeReturn}
+      />
+      <div className="mt-3" />
+      <TimeScroller
+        label="就寝"
+        options={BED_OPTIONS}
+        value={bed}
+        onChange={onChangeBed}
+        note="26:00 = 翌2時"
+      />
+    </>
+  );
+}
+
+function TimeScroller({
+  label,
+  options,
+  value,
+  onChange,
+  note,
+}: {
+  label: string;
+  options: string[];
+  value: string;
+  onChange: (v: string) => void;
+  note?: string;
+}) {
+  const selectedIdx = options.indexOf(value);
+  const midIdx = Math.floor(options.length / 2);
+  const [customMode, setCustomMode] = useState(false);
+
+  // segment: 朝/昼/夜 に相当するざっくり3区分をラベルとして表示
+  const segments = [
+    { label: options[0], idx: 0 },
+    { label: options[midIdx], idx: midIdx },
+    { label: options[options.length - 1], idx: options.length - 1 },
+  ];
+
+  return (
+    <div className="rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-sm font-bold text-ink-700">{label}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-black tabular-nums text-ink-900">
+            {value}
           </span>
-          <span className="text-xs font-bold text-ink-500">h</span>
-          {mins > 0 ? (
-            <>
-              <span className="ml-1 text-2xl font-black tabular-nums text-ink-900">
-                {mins}
-              </span>
-              <span className="text-xs font-bold text-ink-500">m</span>
-            </>
+          {note ? (
+            <span className="text-[10px] text-ink-400">{note}</span>
           ) : null}
         </div>
       </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={15}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-3 w-full accent-sky-500"
-      />
-      <div className="mt-1 flex justify-between text-[10px] font-bold text-ink-400 tabular-nums">
-        <span>0</span>
-        <span>{Math.round(max / 60)}h</span>
-      </div>
+
+      {customMode ? (
+        <div className="flex flex-col gap-2">
+          <input
+            type="time"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full rounded-xl border border-cream-200 px-3 py-2 text-sm text-ink-900 outline-none focus:border-sky-400"
+          />
+          <button
+            type="button"
+            onClick={() => setCustomMode(false)}
+            className="text-xs text-ink-400 hover:text-ink-600"
+          >
+            プリセットから選ぶ
+          </button>
+        </div>
+      ) : (
+        <>
+          <input
+            type="range"
+            min={0}
+            max={options.length - 1}
+            step={1}
+            value={selectedIdx === -1 ? 0 : selectedIdx}
+            onChange={(e) => onChange(options[Number(e.target.value)])}
+            className="w-full accent-sky-500"
+          />
+          <div className="mt-1 flex justify-between text-[10px] font-bold text-ink-400 tabular-nums">
+            {segments.map((s) => (
+              <span key={s.idx}>{s.label}</span>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => setCustomMode(true)}
+            className="mt-2 text-xs text-ink-400 hover:text-ink-600"
+          >
+            詳細入力
+          </button>
+        </>
+      )}
     </div>
+  );
+}
+
+// ── Step 9: 休日 ─────────────────────────────────────
+
+type WeekendDay = "sat" | "sat-half" | "sun" | "sun-half";
+
+const WEEKEND_DAY_OPTIONS: { id: WeekendDay; label: string; sub: string }[] = [
+  { id: "sat", label: "土曜 終日", sub: "丸1日使える" },
+  { id: "sat-half", label: "土曜 半日", sub: "午前or午後のみ" },
+  { id: "sun", label: "日曜 終日", sub: "丸1日使える" },
+  { id: "sun-half", label: "日曜 半日", sub: "午前or午後のみ" },
+];
+
+function WeekendStep({
+  value,
+  onChange,
+}: {
+  value: WeekendDay[];
+  onChange: (v: WeekendDay[]) => void;
+}) {
+  function toggle(id: WeekendDay) {
+    if (value.includes(id)) {
+      onChange(value.filter((v) => v !== id));
+    } else {
+      onChange([...value, id]);
+    }
+  }
+
+  return (
+    <>
+      <StepTitle
+        title="休日の使い方"
+        subtitle="勉強に使える日・時間帯を教えてください。"
+      />
+      <div className="grid gap-2.5">
+        {WEEKEND_DAY_OPTIONS.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            onClick={() => toggle(o.id)}
+            className={cn(
+              "flex items-center justify-between rounded-2xl border-2 p-4 text-left transition",
+              value.includes(o.id)
+                ? "border-sky-500 bg-sky-50"
+                : "border-cream-200 bg-white hover:bg-cream-50",
+            )}
+          >
+            <div>
+              <div className="text-base font-black text-ink-900">{o.label}</div>
+              <div className="text-xs text-ink-500">{o.sub}</div>
+            </div>
+            <span
+              className={cn(
+                "h-3 w-3 rounded-full",
+                value.includes(o.id) ? "bg-sky-500" : "bg-cream-200",
+              )}
+            />
+          </button>
+        ))}
+      </div>
+      <p className="mt-3 text-[11px] text-ink-500">
+        どれも選ばなくてもOKです。
+      </p>
+    </>
+  );
+}
+
+// ── Step 10: 得意・苦手 ────────────────────────────
+
+type Proficiency = "good" | "fair" | "weak" | "bad";
+
+const PROFICIENCY_OPTIONS: { id: Proficiency; label: string; color: string }[] = [
+  { id: "good", label: "得意", color: "bg-mint-100 text-mint-600 border-mint-200" },
+  { id: "fair", label: "ちょい得意", color: "bg-sky-100 text-sky-600 border-sky-200" },
+  { id: "weak", label: "苦手", color: "bg-sun-100 text-amber-600 border-amber-200" },
+  { id: "bad", label: "マジで苦手", color: "bg-coral-100 text-red-500 border-red-200" },
+];
+
+function StrengthsStep({
+  value,
+  onChange,
+}: {
+  value: Partial<Record<SubjectAreaId, Proficiency>>;
+  onChange: (v: Partial<Record<SubjectAreaId, Proficiency>>) => void;
+}) {
+  function set(id: SubjectAreaId, p: Proficiency) {
+    onChange({ ...value, [id]: p });
+  }
+
+  return (
+    <>
+      <StepTitle
+        title="教科の得意・苦手"
+        subtitle="AIが重点的に補強する教科を判断します。"
+      />
+      <div className="space-y-3">
+        {SUBJECT_AREAS.map((s) => (
+          <div
+            key={s.id}
+            className="rounded-2xl border border-cream-200 bg-white p-4"
+          >
+            <div className="mb-3 text-sm font-black text-ink-900">{s.label}</div>
+            <div className="grid grid-cols-4 gap-1.5">
+              {PROFICIENCY_OPTIONS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => set(s.id, p.id)}
+                  className={cn(
+                    "rounded-xl border py-2.5 text-xs font-bold transition",
+                    value[s.id] === p.id
+                      ? p.color + " shadow-soft"
+                      : "border-cream-200 bg-cream-50 text-ink-600 hover:bg-cream-100",
+                  )}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-[11px] text-ink-500">
+        未選択のままでもOK。後から変えられます。
+      </p>
+    </>
   );
 }
