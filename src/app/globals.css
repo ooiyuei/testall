@@ -225,6 +225,11 @@ button, a, [role="button"] {
 }
 .animate-slideDown { animation: slideDown 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 
+@keyframes toast-progress {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
 /* iOS safe-area helpers */
 .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
 .pt-safe { padding-top: max(env(safe-area-inset-top), 0px); }

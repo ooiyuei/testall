@@ -21,6 +21,7 @@ import type { CalendarEvent, CalendarEventKind } from "@/lib/store";
 import { WeeklyGoalCard } from "./WeeklyGoalCard";
 import { WeeklyTaskBoard } from "./WeeklyTaskBoard";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { toast } from "@/components/ui/Toast";
 
 const WEEKDAYS = ["月", "火", "水", "木", "金", "土", "日"];
 
@@ -693,7 +694,7 @@ function EventEditor({
             type="button"
             onClick={() => {
               if (!draft.title.trim()) {
-                alert("タイトルを入れてください");
+                toast.error("タイトルを入れてください");
                 return;
               }
               onSave({

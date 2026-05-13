@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { addBookshelfItem } from "@/lib/store";
+import { toast } from "@/components/ui/Toast";
 import type { BookshelfItem } from "@/lib/store";
 import {
   TEXTBOOKS,
@@ -118,6 +119,7 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
   function confirmAddFromLookup() {
     if (lookupState.phase !== "found") return;
     const r = lookupState.result;
+    let title: string;
     if (r.source === "local") {
       const b = r.textbook;
       addBookshelfItem({
@@ -130,6 +132,7 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
         author: b.author,
         coverUrl: b.coverUrl,
       });
+      title = b.name;
     } else {
       const c = r.custom;
       addBookshelfItem({
@@ -141,7 +144,9 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
         author: c.author,
         coverUrl: c.coverUrl,
       });
+      title = c.title;
     }
+    toast.success("本棚に追加しました", title);
     onClose();
   }
 
@@ -192,6 +197,7 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
       kind,
       subjectArea: b.subject,
     });
+    toast.success("本棚に追加しました", b.name);
     onClose();
   }
 
@@ -711,12 +717,16 @@ function ManualInput({
 
   function handle(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      toast.error("書籍名を入れてください");
+      return;
+    }
     addBookshelfItem({
       id: `bk-${Date.now().toString(36)}`,
       name: name.trim(),
       kind,
     });
+    toast.success("本棚に追加しました", name.trim());
     onDone();
   }
 

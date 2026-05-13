@@ -33,6 +33,7 @@ import type { FixedSlot } from "@/lib/store";
 import { nanoid } from "nanoid";
 import { useStore } from "@/lib/hooks/useStore";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { toast } from "@/components/ui/Toast";
 
 export function SettingsView() {
   const { state, hydrated } = useStore();
@@ -62,7 +63,7 @@ export function SettingsView() {
     }
     clearAll();
     setConfirmStep(0);
-    alert("ローカルデータをすべて削除しました。");
+    toast.success("削除しました", "ローカルデータをすべて削除しました");
   }
 
   return (

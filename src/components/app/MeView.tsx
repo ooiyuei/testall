@@ -59,6 +59,8 @@ import { HOURS_PER_BLOCK } from "@/lib/planning/constants";
 import { bucketMid } from "@/lib/store";
 import { guessArea, PRIMARY_AREAS } from "@/lib/master/subjects/guessArea";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { Card } from "@/components/ui/Card";
+import { SectionLabel } from "@/components/ui/SectionLabel";
 
 export function MeView() {
   const { state, hydrated } = useStore();
@@ -90,43 +92,16 @@ export function MeView() {
   const allBookshelf: BookshelfItem[] = profile?.bookshelfItems ?? [];
 
   return (
-    <div className="px-5 pb-8 pt-3 space-y-5">
+    <div className="px-5 pb-8 pt-4 space-y-5">
       {/* ── ヘッダ ── */}
-      <button
-        type="button"
-        onClick={() => setProfileOpen((v) => !v)}
-        className="w-full overflow-hidden rounded-2xl border border-ink-100/80 bg-white p-4 text-left active:scale-[0.99] transition"
-      >
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 flex-none items-center justify-center rounded-full bg-ink-900 text-base font-bold text-white">
-            {profile?.name?.[0] ?? "あ"}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[15px] font-bold text-ink-900 truncate">
-                {profile?.name ?? "あなた"}
-              </span>
-              <span className="flex items-center text-[10px] font-medium text-ink-400">
-                <AtSign className="h-2.5 w-2.5" />
-                {userId}
-              </span>
-            </div>
-            <div className="mt-0.5 flex items-center gap-1 text-[11px] text-ink-500">
-              <GraduationCap className="h-3 w-3" />
-              {gradeLabel}
-              <span className="mx-0.5 text-ink-300">·</span>
-              <Target className="h-3 w-3" />
-              <span className="truncate">{firstUniName}</span>
-            </div>
-          </div>
-          <ChevronDown
-            className={cn(
-              "h-4 w-4 flex-none text-ink-400 transition-transform",
-              profileOpen && "rotate-180",
-            )}
-          />
-        </div>
-      </button>
+      <ProfileButton
+        profile={profile}
+        userId={userId}
+        gradeLabel={gradeLabel}
+        firstUniName={firstUniName}
+        open={profileOpen}
+        onToggle={() => setProfileOpen((v) => !v)}
+      />
 
       {/* ── 自己紹介（展開時） ── */}
       {profileOpen ? (
@@ -147,56 +122,10 @@ export function MeView() {
       <ExpTrendSection />
 
       {/* ── 本棚 ── */}
-      <section>
-        <div className="flex items-center justify-between">
-          <SectionTitle icon={BookMarked} title="本棚" />
-          <button
-            type="button"
-            onClick={() => setBookshelfModal(true)}
-            className="flex h-7 items-center gap-1 rounded-full bg-cream-100 px-2.5 text-[10px] font-bold text-ink-700 hover:bg-cream-200"
-          >
-            <Plus className="h-3 w-3" />
-            追加
-          </button>
-        </div>
-        {allBookshelf.length === 0 ? (
-          <p className="mt-2 text-[11px] text-ink-500">
-            参考書・教科書がまだありません。
-          </p>
-        ) : (
-          <ul className="mt-2 grid grid-cols-2 gap-2">
-            {allBookshelf.map((b) => (
-              <li
-                key={b.id}
-                className="relative rounded-2xl border border-ink-100/80 bg-white p-3"
-              >
-                <div className="text-[9px] font-bold uppercase tracking-widest text-ink-500">
-                  {KIND_LABEL[b.kind]}
-                </div>
-                <div className="mt-0.5 text-xs font-black text-ink-900 line-clamp-2">
-                  {b.name}
-                </div>
-                {b.progressPct !== undefined ? (
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-cream-100">
-                    <div
-                      className="h-full rounded-full bg-sky-500"
-                      style={{ width: `${b.progressPct}%` }}
-                    />
-                  </div>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => removeBookshelfItem(b.id)}
-                  className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full text-ink-400 hover:bg-cream-100"
-                  aria-label="削除"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <BookshelfSection
+        allBookshelf={allBookshelf}
+        onAdd={() => setBookshelfModal(true)}
+      />
 
       {/* ── ステータス（五角形 + 9教科リンク + 偏差値/スコア） ── */}
       <StatusCard profile={profile} statusPoints={statusPoints} />
@@ -217,6 +146,74 @@ export function MeView() {
         <BookshelfAddModal onClose={() => setBookshelfModal(false)} />
       ) : null}
     </div>
+  );
+}
+
+// ─── プロフィールボタン（ヘッダ） ───────────────────
+function ProfileButton({
+  profile,
+  userId,
+  gradeLabel,
+  firstUniName,
+  open,
+  onToggle,
+}: {
+  profile?: StoredProfile;
+  userId: string;
+  gradeLabel: string;
+  firstUniName: string;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const initials = profile?.name?.[0] ?? "あ";
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="w-full overflow-hidden rounded-2xl border border-ink-100/80 bg-white p-5 text-left shadow-soft active:scale-[0.99] transition"
+    >
+      <div className="flex items-center gap-4">
+        {/* アバター: グラデーション背景 */}
+        <div
+          className="flex h-14 w-14 flex-none items-center justify-center rounded-full text-[18px] font-bold text-white"
+          style={{
+            background: "linear-gradient(135deg, #3b82f6 0%, #0f9b5e 100%)",
+          }}
+        >
+          {initials}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          {/* 名前 */}
+          <div className="flex items-center gap-2">
+            <span className="text-[20px] font-bold leading-tight text-ink-900 truncate">
+              {profile?.name ?? "あなた"}
+            </span>
+          </div>
+          {/* @ID — 控えめ */}
+          <div className="mt-0.5 flex items-center gap-0.5 text-[10px] text-ink-400">
+            <AtSign className="h-2.5 w-2.5 flex-none" />
+            <span className="truncate">{userId}</span>
+          </div>
+          {/* 学年 + 第一志望 */}
+          <div className="mt-1.5 flex items-center gap-1.5 text-[12px] text-ink-500">
+            <GraduationCap className="h-3.5 w-3.5 flex-none" />
+            <span>{gradeLabel}</span>
+            <span className="text-ink-300">·</span>
+            <Target className="h-3.5 w-3.5 flex-none" />
+            <span className="truncate">{firstUniName}</span>
+          </div>
+        </div>
+
+        <ChevronDown
+          className={cn(
+            "h-5 w-5 flex-none text-ink-300 transition-transform duration-200",
+            open && "rotate-180",
+          )}
+        />
+      </div>
+    </button>
   );
 }
 
@@ -243,14 +240,13 @@ function ProfileDetails({
 
   function handleHighschoolSelect(name: string) {
     setDraft((d) => ({ ...d, schoolName: name }));
-    // 編集モード外でも即時保存
     if (profile && !editing) {
       setProfile({ ...profile, schoolName: name });
     }
   }
 
   return (
-    <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
+    <Card as="section" padding="lg">
       <div className="flex items-center justify-between">
         <SectionTitle icon={Edit3} title="自己紹介" />
         {editing ? (
@@ -272,7 +268,7 @@ function ProfileDetails({
         )}
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+      <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
         <FieldRow
           label="名前"
           value={merged.name}
@@ -307,80 +303,16 @@ function ProfileDetails({
           onChange={(v) => setDraft((d) => ({ ...d, prefecture: v }))}
           placeholder="例: 東京都"
         />
-        <div>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
-            高校
-          </div>
-          {editing ? (
-            <div className="mt-1 flex items-center gap-1">
-              <input
-                value={merged.schoolName ?? ""}
-                onChange={(e) => setDraft((d) => ({ ...d, schoolName: e.target.value }))}
-                placeholder="例: ○○高校"
-                className="h-9 flex-1 rounded-xl border border-cream-200 bg-cream-50 px-2 text-sm text-ink-900 outline-none focus:border-sky-400 focus:bg-white"
-              />
-              <button
-                type="button"
-                onClick={() => setHighschoolModal(true)}
-                className="flex h-9 w-9 flex-none items-center justify-center rounded-xl border border-cream-200 bg-cream-50 text-ink-500 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-600 transition"
-                aria-label="高校を検索"
-              >
-                <Search className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="mt-1 flex items-center gap-1">
-              <div className="flex-1 text-sm font-bold text-ink-900">
-                {merged.schoolName || "例: ○○高校"}
-              </div>
-              <button
-                type="button"
-                onClick={() => setHighschoolModal(true)}
-                className="flex h-7 w-7 flex-none items-center justify-center rounded-lg text-ink-400 hover:bg-cream-100 hover:text-ink-700 transition"
-                aria-label="高校を検索"
-              >
-                <Search className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          )}
-        </div>
+        <HighschoolField
+          editing={editing}
+          value={merged.schoolName}
+          onChange={(v) => setDraft((d) => ({ ...d, schoolName: v }))}
+          onSearch={() => setHighschoolModal(true)}
+        />
       </div>
 
       {/* 志望校1〜3 */}
-      <div className="mt-3">
-        <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
-          志望校
-        </div>
-        <ul className="mt-1.5 space-y-1.5">
-          {[1, 2, 3].map((p) => {
-            const t = profile?.targetUniversities?.find((x) => x.priority === p);
-            const u = t ? findUniversity(t.universityId) : undefined;
-            return (
-              <li
-                key={p}
-                className="flex items-center gap-3 rounded-2xl bg-cream-50 px-3 py-2"
-              >
-                <span className="flex h-7 w-7 flex-none items-center justify-center rounded-xl bg-sky-500 text-[10px] font-black text-white">
-                  第{p}
-                </span>
-                <span className="flex-1 truncate text-xs font-bold text-ink-900">
-                  {u ? u.name : "未設定"}
-                </span>
-                {t?.faculty ? (
-                  <span className="text-[10px] text-ink-500">{t.faculty}</span>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
-        <Link
-          href="/onboarding"
-          className="mt-2 inline-flex h-7 items-center gap-1 text-[10px] font-bold text-sky-600"
-        >
-          志望校を編集
-          <ChevronRight className="h-3 w-3" />
-        </Link>
-      </div>
+      <TargetUniversities profile={profile} />
 
       {highschoolModal ? (
         <HighschoolEditModal
@@ -389,7 +321,94 @@ function ProfileDetails({
           onClose={() => setHighschoolModal(false)}
         />
       ) : null}
-    </section>
+    </Card>
+  );
+}
+
+function HighschoolField({
+  editing,
+  value,
+  onChange,
+  onSearch,
+}: {
+  editing: boolean;
+  value?: string;
+  onChange: (v: string) => void;
+  onSearch: () => void;
+}) {
+  return (
+    <div>
+      <div className="text-[10px] font-medium text-ink-500">高校</div>
+      {editing ? (
+        <div className="mt-1 flex items-center gap-1">
+          <input
+            value={value ?? ""}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="例: ○○高校"
+            className="h-9 flex-1 rounded-xl border border-cream-200 bg-cream-50 px-2 text-sm text-ink-900 outline-none focus:border-sky-400 focus:bg-white"
+          />
+          <button
+            type="button"
+            onClick={onSearch}
+            className="flex h-9 w-9 flex-none items-center justify-center rounded-xl border border-cream-200 bg-cream-50 text-ink-500 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-600 transition"
+            aria-label="高校を検索"
+          >
+            <Search className="h-4 w-4" />
+          </button>
+        </div>
+      ) : (
+        <div className="mt-1 flex items-center gap-1">
+          <div className="flex-1 text-sm font-bold text-ink-900">
+            {value || "未設定"}
+          </div>
+          <button
+            type="button"
+            onClick={onSearch}
+            className="flex h-7 w-7 flex-none items-center justify-center rounded-lg text-ink-400 hover:bg-cream-100 hover:text-ink-700 transition"
+            aria-label="高校を検索"
+          >
+            <Search className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TargetUniversities({ profile }: { profile?: StoredProfile }) {
+  return (
+    <div className="mt-4">
+      <div className="text-[10px] font-medium text-ink-500">志望校</div>
+      <ul className="mt-2 space-y-1.5">
+        {[1, 2, 3].map((p) => {
+          const t = profile?.targetUniversities?.find((x) => x.priority === p);
+          const u = t ? findUniversity(t.universityId) : undefined;
+          return (
+            <li
+              key={p}
+              className="flex items-center gap-3 rounded-2xl bg-cream-50 px-3 py-2"
+            >
+              <span className="flex h-7 w-7 flex-none items-center justify-center rounded-xl bg-sky-500 text-[10px] font-black text-white">
+                第{p}
+              </span>
+              <span className="flex-1 truncate text-xs font-bold text-ink-900">
+                {u ? u.name : "未設定"}
+              </span>
+              {t?.faculty ? (
+                <span className="text-[10px] text-ink-500">{t.faculty}</span>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+      <Link
+        href="/onboarding"
+        className="mt-2 inline-flex h-7 items-center gap-1 text-[10px] font-bold text-sky-600"
+      >
+        志望校を編集
+        <ChevronRight className="h-3 w-3" />
+      </Link>
+    </div>
   );
 }
 
@@ -421,9 +440,7 @@ function FieldRow({
 }) {
   return (
     <div>
-      <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
-        {label}
-      </div>
+      <div className="text-[10px] font-medium text-ink-500">{label}</div>
       {editing ? (
         options ? (
           <select
@@ -477,7 +494,6 @@ function AreaDetail({
   );
   const areaDef = SUBJECT_AREAS.find((a) => a.id === area)!;
 
-  // 能力値の集計（領域に出現する全 ability）
   const abilityCounts = useMemo(() => {
     const map = new Map<string, number>();
     for (const s of visibleSubjects) {
@@ -493,7 +509,7 @@ function AreaDetail({
   }, [visibleSubjects]);
 
   return (
-    <section className="rounded-2xl border border-sky-200 bg-sky-50/70 p-4">
+    <section className="rounded-2xl border border-sky-200 bg-sky-50/70 p-5">
       <div className="flex items-center justify-between">
         <SectionTitle
           icon={ChevronRight}
@@ -509,7 +525,7 @@ function AreaDetail({
       </div>
 
       {/* 学年トグル */}
-      <ul className="mt-2 flex gap-1">
+      <ul className="mt-3 flex gap-1">
         {(["h1", "h2", "h3"] as GradeId[]).map((g) => (
           <li key={g}>
             <button
@@ -529,17 +545,17 @@ function AreaDetail({
       </ul>
 
       {/* 科目 → 領域 → 単元 */}
-      <ul className="mt-3 space-y-2">
+      <ul className="mt-4 space-y-2">
         {visibleSubjects.map((s) => (
           <li
             key={s.id}
-            className="rounded-2xl bg-white p-3"
+            className="rounded-2xl bg-white p-4"
           >
             <div className="text-xs font-black text-ink-900">{s.name}</div>
-            <ul className="mt-1.5 space-y-1.5">
+            <ul className="mt-2 space-y-2">
               {s.domains.map((d) => (
                 <li key={d.id}>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
+                  <div className="text-[10px] font-medium text-ink-500">
                     {d.name}
                   </div>
                   <ul className="mt-1 flex flex-wrap gap-1">
@@ -559,13 +575,12 @@ function AreaDetail({
         ))}
       </ul>
 
-      {/* 能力値リスト */}
       {abilityCounts.length > 0 ? (
-        <div className="mt-3 rounded-2xl bg-white p-3">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
+        <div className="mt-4 rounded-2xl bg-white p-4">
+          <div className="text-[10px] font-medium text-ink-500">
             必要な能力値
           </div>
-          <ul className="mt-1.5 flex flex-wrap gap-1">
+          <ul className="mt-2 flex flex-wrap gap-1">
             {abilityCounts.map(([name, count]) => (
               <li
                 key={name}
@@ -582,8 +597,6 @@ function AreaDetail({
   );
 }
 
-// ─── 本棚追加 ─── (新しい検索・絞り込み付きモーダルを使う)
-
 const KIND_LABEL: Record<BookshelfItem["kind"], string> = {
   textbook: "参考書",
   "school-textbook": "教科書",
@@ -591,6 +604,88 @@ const KIND_LABEL: Record<BookshelfItem["kind"], string> = {
   "past-exam": "過去問",
   other: "その他",
 };
+
+// ─── 本棚セクション ─────────────────────────
+function BookshelfSection({
+  allBookshelf,
+  onAdd,
+}: {
+  allBookshelf: BookshelfItem[];
+  onAdd: () => void;
+}) {
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <SectionTitle icon={BookMarked} title="本棚" />
+        <button
+          type="button"
+          onClick={onAdd}
+          className="flex h-8 items-center gap-1.5 rounded-full bg-sky-500 px-3 text-[11px] font-bold text-white hover:bg-sky-600 active:scale-[0.97] transition"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          追加
+        </button>
+      </div>
+      {allBookshelf.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-ink-200 bg-cream-50/60 p-8 text-center">
+          <BookMarked className="mx-auto h-8 w-8 text-ink-300 mb-2" />
+          <p className="text-[12px] text-ink-500">
+            参考書・教科書がまだありません
+          </p>
+          <button
+            type="button"
+            onClick={onAdd}
+            className="mt-3 flex h-9 items-center gap-1.5 rounded-full bg-sky-500 px-4 text-[12px] font-bold text-white mx-auto hover:bg-sky-600 transition"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            最初の一冊を追加
+          </button>
+        </div>
+      ) : (
+        <ul className="grid grid-cols-2 gap-2">
+          {allBookshelf.map((b) => (
+            <BookshelfCard key={b.id} item={b} />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function BookshelfCard({ item }: { item: BookshelfItem }) {
+  return (
+    <li className="relative rounded-2xl border border-ink-100/80 bg-white p-4 shadow-soft hover:shadow-card active:scale-[0.98] transition">
+      <div className="text-[10px] font-medium text-ink-500">
+        {KIND_LABEL[item.kind]}
+      </div>
+      <div className="mt-1 text-xs font-black text-ink-900 line-clamp-2 leading-[1.5]">
+        {item.name}
+      </div>
+      {item.progressPct !== undefined ? (
+        <div className="mt-3 space-y-1">
+          <div className="flex justify-between text-[10px] text-ink-400">
+            <span>進捗</span>
+            <span className="tabular-nums">{item.progressPct}%</span>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-cream-100">
+            <div
+              className="h-full rounded-full bg-sky-500 transition-all"
+              style={{ width: `${item.progressPct}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
+      <button
+        type="button"
+        onClick={() => removeBookshelfItem(item.id)}
+        className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full text-ink-300 hover:bg-cream-100 hover:text-ink-600 transition"
+        aria-label="削除"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </li>
+  );
+}
 
 // ─── ステータスカード ─────────────────────────
 function StatusCard({
@@ -601,7 +696,6 @@ function StatusCard({
   statusPoints: RadarPoint[];
 }) {
   const router = useRouter();
-  // アプリスコア (暫定): 直近テスト得点率の平均
   const appScore = useMemo(() => {
     if (statusPoints.length === 0) return 0;
     const vals = statusPoints.map((p) => p.value);
@@ -611,37 +705,35 @@ function StatusCard({
   const deviation = profile?.deviation;
 
   return (
-    <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
+    <Card as="section" padding="lg">
       <div className="flex items-baseline justify-between">
         <SectionTitle icon={Target} title="ステータス" />
         <span className="text-[10px] text-ink-400">タップで詳細</span>
       </div>
 
-      {/* 数字 (偏差値 / アプリスコア) + 五角形 */}
-      <div className="mt-2 flex items-center gap-3">
-        <div className="flex-1 space-y-2">
-          <div className="rounded-xl bg-cream-50/70 p-2.5">
-            <div className="text-[10px] font-medium text-ink-500">偏差値</div>
-            <div className="mt-0.5 flex items-baseline gap-1">
-              <span className="text-2xl font-bold leading-none tabular-nums text-ink-900">
-                {deviation ?? "—"}
-              </span>
-            </div>
+      {/* 数字 (偏差値 / アプリスコア) */}
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="rounded-xl bg-cream-50/70 p-3">
+          <div className="text-[10px] font-medium text-ink-500">偏差値</div>
+          <div className="mt-1 flex items-baseline gap-1">
+            <span className="text-2xl font-bold leading-none tabular-nums text-ink-900">
+              {deviation ?? "—"}
+            </span>
           </div>
-          <div className="rounded-xl bg-cream-50/70 p-2.5">
-            <div className="text-[10px] font-medium text-ink-500">アプリスコア</div>
-            <div className="mt-0.5 flex items-baseline gap-1">
-              <span className="text-2xl font-bold leading-none tabular-nums text-ink-900">
-                {appScore}
-              </span>
-              <span className="text-[10px] font-medium text-ink-400">/ 100</span>
-            </div>
+        </div>
+        <div className="rounded-xl bg-cream-50/70 p-3">
+          <div className="text-[10px] font-medium text-ink-500">アプリスコア</div>
+          <div className="mt-1 flex items-baseline gap-1">
+            <span className="text-2xl font-bold leading-none tabular-nums text-ink-900">
+              {appScore}
+            </span>
+            <span className="text-[10px] font-medium text-ink-400">/ 100</span>
           </div>
         </div>
       </div>
 
-      {/* 五角形 (大きめ・教科タップで詳細ページへ) */}
-      <div className="mt-4">
+      {/* 五角形 */}
+      <div className="mt-5">
         <RadarChart
           data={statusPoints}
           size={260}
@@ -652,13 +744,13 @@ function StatusCard({
         />
       </div>
 
-      {/* 9教科グリッド（タップで詳細ページへ） */}
-      <ul className="mt-4 grid grid-cols-3 gap-1.5">
+      {/* 9教科グリッド */}
+      <ul className="mt-5 grid grid-cols-3 gap-1.5">
         {SUBJECT_AREAS.map((a) => (
           <li key={a.id}>
             <Link
               href={`/app/me/subjects/${a.id}`}
-              className="flex w-full items-center gap-1.5 rounded-lg px-2 py-2 bg-cream-50/80 text-ink-900 hover:bg-cream-100 transition"
+              className="flex w-full items-center gap-1.5 rounded-xl px-2 py-2.5 bg-cream-50/80 text-ink-900 hover:bg-cream-100 active:scale-[0.97] transition"
             >
               <span
                 className={cn(
@@ -673,16 +765,16 @@ function StatusCard({
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-center text-[10px] text-ink-400">
+      <p className="mt-3 text-center text-[10px] text-ink-400">
         タップで偏差値推移・単元・能力値を確認
       </p>
-    </section>
+    </Card>
   );
 }
 
 type TestRecord = ReturnType<typeof useStore>["state"]["tests"][number];
 
-// ─── LV / 経験値 / 山グラフ ─────────────────
+// ─── LV / 経験値 ─────────────────────────────
 function LevelSection() {
   const { state, hydrated } = useStore();
   if (!hydrated) return null;
@@ -702,12 +794,10 @@ function LevelSection() {
   if (profile?.deviation && profile.targetUniversities?.length) {
     const grade = (profile.grade as "h1" | "h2" | "h3" | "ronin") ?? "h2";
     const monthsToExam = defaultRemainingMonths(grade);
-    // 目標偏差値: profile.targetDeviationBucket があれば使う、なければ +10 を目標に
     const border = profile.targetDeviationBucket
       ? bucketMid(profile.targetDeviationBucket)
       : Math.min(75, profile.deviation + 10);
 
-    // 「本番」までの必要ブロック (中央値ベース、概算)
     function calcRemaining(months: number): number {
       const remainingWeeks = Math.max(1, Math.round((months * 30) / 7));
       const gap = estimateGoalGap({
@@ -725,11 +815,9 @@ function LevelSection() {
         remainingWeeks,
       });
       const req = estimateRequiredBlocks({ gap, remainingWeeks });
-      // 中央値で表示。upper だと挑戦的すぎる
       const futureMid =
         (req.futureRequiredHours.lower + req.futureRequiredHours.upper) / 2;
       const futureBlocks = futureMid / HOURS_PER_BLOCK;
-      // この期間内で必要なブロックの按分
       const portion = Math.min(1, months / monthsToExam);
       return Math.max(0, Math.round(futureBlocks * portion - done));
     }
@@ -739,7 +827,6 @@ function LevelSection() {
       year: calcRemaining(Math.min(12, monthsToExam)),
       quarter: calcRemaining(Math.min(3, monthsToExam)),
     };
-    // 達成済は今までの累計だが、horizon ごとの目標に対する割合で出す
     blocksDoneByHorizon = { exam: done, year: done, quarter: done };
   }
 
@@ -754,25 +841,22 @@ function LevelSection() {
   );
 }
 
-// ─── 偏差値推移 (主要5科目+全体) ───
+// ─── 偏差値推移 ──────────────────────────────
 function DeviationTrendSection() {
   const { state, hydrated } = useStore();
   if (!hydrated) return null;
   const tests = state.tests ?? [];
   if (tests.length === 0) {
     return (
-      <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
-          偏差値の推移
-        </div>
-        <p className="mt-2 text-[11px] leading-[1.6] text-ink-500">
+      <Card as="section" padding="lg">
+        <SectionLabel title="偏差値の推移" />
+        <p className="mt-3 text-[11px] leading-[1.6] text-ink-500">
           テスト結果を登録すると、ここに偏差値の推移が表示されます。
         </p>
-      </section>
+      </Card>
     );
   }
 
-  // 各教科ごとの色
   const COLORS: Record<SubjectAreaId, string> = {
     japanese: "#d35d18",
     math: "#0071e3",
@@ -783,7 +867,6 @@ function DeviationTrendSection() {
     info: "#36b97a",
   };
 
-  // 各教科のシリーズを作る
   const series: TrendSeries[] = [];
   for (const area of ["japanese","math","english","science","history","civics","info"] as SubjectAreaId[]) {
     const def = SUBJECT_AREAS.find((a) => a.id === area)!;
@@ -802,44 +885,36 @@ function DeviationTrendSection() {
   }
 
   return (
-    <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
+    <Card as="section" padding="lg">
       <div className="flex items-baseline justify-between">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
-          偏差値の推移
-        </div>
+        <SectionLabel title="偏差値の推移" />
         <span className="text-[10px] font-medium text-ink-500 tabular-nums">
           {tests.length} 回
         </span>
       </div>
-      <div className="mt-3">
+      <div className="mt-4">
         <DeviationTrend series={series} />
       </div>
-    </section>
+    </Card>
   );
 }
 
-// ─── 経験値推移 ───
+// ─── 経験値推移 ──────────────────────────────
 function ExpTrendSection() {
   const { state, hydrated } = useStore();
 
-  // ⚠️ useMemo は必ず early-return より前に呼ぶ (Rules of Hooks)
   const points = useMemo((): ExpTrendPoint[] => {
     if (!hydrated) return [];
     const dailyMap = new Map<string, number>();
 
-    // ログイン: +10/日
     for (const log of state.dailyMoodLogs ?? []) {
       const d = log.dateISO;
       dailyMap.set(d, (dailyMap.get(d) ?? 0) + 10);
     }
-
-    // 集中ブロック: +50/完了
     for (const bl of state.blockLogs ?? []) {
       const d = bl.completedAt.slice(0, 10);
       dailyMap.set(d, (dailyMap.get(d) ?? 0) + 50);
     }
-
-    // タスク完了: +30 × blocks
     for (const task of state.tasks ?? []) {
       if (task.status === "done" && task.completedAt) {
         const d = task.completedAt.slice(0, 10);
@@ -847,8 +922,6 @@ function ExpTrendSection() {
         dailyMap.set(d, (dailyMap.get(d) ?? 0) + gain);
       }
     }
-
-    // テスト登録: +200
     for (const test of state.tests ?? []) {
       const d = test.createdAt.slice(0, 10);
       dailyMap.set(d, (dailyMap.get(d) ?? 0) + 200);
@@ -856,7 +929,6 @@ function ExpTrendSection() {
 
     if (dailyMap.size === 0) return [];
 
-    // 直近 30 日のウィンドウ内のデータのみ
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 29);
     const cutoffStr = cutoff.toISOString().slice(0, 10);
@@ -865,7 +937,6 @@ function ExpTrendSection() {
       .filter(([d]) => d >= cutoffStr)
       .sort(([a], [b]) => a.localeCompare(b));
 
-    // 全期間の累計ベースを計算（cutoff 以前の分も合算）
     let baseExp = 0;
     for (const [d, gain] of [...dailyMap.entries()].sort(([a], [b]) => a.localeCompare(b))) {
       if (d < cutoffStr) baseExp += gain;
@@ -887,26 +958,24 @@ function ExpTrendSection() {
   const hasData = points.length > 0;
 
   return (
-    <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
+    <Card as="section" padding="lg">
       <div className="flex items-baseline justify-between">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
-          経験値の推移
-        </div>
+        <SectionLabel title="経験値の推移" />
         {hasData ? (
           <span className="text-[10px] font-medium text-ink-500 tabular-nums">
             累計 {points[points.length - 1].cumExp.toLocaleString()} EXP
           </span>
         ) : null}
       </div>
-      <div className="mt-3">
+      <div className="mt-4">
         <ExpTrend points={points} />
       </div>
       {hasData ? (
-        <p className="mt-1.5 text-[10px] text-ink-400">
+        <p className="mt-2 text-[10px] text-ink-400">
           テスト {totalTests}回 · ブロック {totalBlocks}回
         </p>
       ) : null}
-    </section>
+    </Card>
   );
 }
 
@@ -915,7 +984,6 @@ function buildStatusPoints(
   tests: TestRecord[],
   areas: SubjectAreaId[],
 ): RadarPoint[] {
-  // 暫定: 各科目の直近テスト得点率
   // TODO: 計画AI v0.2 で能力値ベース指標に置き換え
   return areas.map((a) => {
     const areaDef = SUBJECT_AREAS.find((x) => x.id === a)!;
@@ -925,7 +993,7 @@ function buildStatusPoints(
       const recent = filtered[0];
       value = Math.round((recent.input.score / recent.input.fullScore) * 100);
     } else {
-      value = 35; // 未記録のときの薄い表示
+      value = 35;
     }
     return {
       label: areaDef.name,
@@ -935,8 +1003,6 @@ function buildStatusPoints(
   });
 }
 
-// guessArea は src/lib/master/subjects/guessArea.ts に共通化された
-
 // ─── 共通 UI ───
 function SectionTitle({
   icon: Icon,
@@ -945,7 +1011,6 @@ function SectionTitle({
   icon: typeof Target;
   title: string;
 }) {
-  // 日本語タイトルは uppercase/wide tracking を外し、アイコンも 12px に縮小
   const isAscii = /^[\x00-\x7F]+$/.test(title);
   return (
     <div className="flex items-center gap-1.5">

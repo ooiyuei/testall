@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP, Inter } from "next/font/google";
 import "./globals.css";
 import { ServiceWorkerRegister } from "@/components/system/ServiceWorkerRegister";
+import { Toaster } from "@/components/ui/Toast";
 
 const notoJP = Noto_Sans_JP({
   variable: "--font-noto-jp",
@@ -63,6 +64,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-cream-50 text-ink-900">
         <ServiceWorkerRegister />
         {children}
+        <Toaster />
       </body>
     </html>
   );
