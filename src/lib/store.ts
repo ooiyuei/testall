@@ -294,34 +294,42 @@ export function getBlockLog(testId: string, blockIdx: number): BlockLog | undefi
 }
 
 export function getTodayLogs(): BlockLog[] {
-  const today = new Date().toDateString();
-  return readStore().blockLogs.filter(
-    (b) => new Date(b.completedAt).toDateString() === today,
-  );
+  const todayISO = currentDayISO();
+  return readStore().blockLogs.filter((b) => {
+    return currentDayISO(new Date(b.completedAt)) === todayISO;
+  });
 }
 
-// Streak: count consecutive days that have at least one logged block,
-// ending today (or yesterday — still valid until midnight tonight).
+// Streak: count consecutive days (6時リセット) that have at least one logged block.
 export function getStreak(): number {
   const logs = readStore().blockLogs;
   if (logs.length === 0) return 0;
 
   const dateSet = new Set(
-    logs.map((b) => new Date(b.completedAt).toDateString()),
+    logs.map((b) => currentDayISO(new Date(b.completedAt))),
   );
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const todayISO = currentDayISO();
 
   // Allow grace: if today has no log yet but yesterday does, start from yesterday.
-  let cursor = new Date(today);
-  if (!dateSet.has(cursor.toDateString())) {
-    cursor.setDate(cursor.getDate() - 1);
-    if (!dateSet.has(cursor.toDateString())) return 0;
-  }
+  const [ty, tm, td] = todayISO.split("-").map(Number);
+  const todayDate = new Date(ty, tm - 1, td);
+  const yesterdayDate = new Date(todayDate);
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterdayISO = yesterdayDate.toISOString().slice(0, 10);
+
+  let cursorISO = dateSet.has(todayISO)
+    ? todayISO
+    : dateSet.has(yesterdayISO)
+      ? yesterdayISO
+      : null;
+
+  if (!cursorISO) return 0;
 
   let count = 0;
-  while (dateSet.has(cursor.toDateString())) {
+  const [cy, cm, cd] = cursorISO.split("-").map(Number);
+  const cursor = new Date(cy, cm - 1, cd);
+  while (dateSet.has(cursor.toISOString().slice(0, 10))) {
     count += 1;
     cursor.setDate(cursor.getDate() - 1);
   }
@@ -338,6 +346,16 @@ export function setPlanning(planning: PlanningProfile): StoreState {
   return writeStore({ ...current, planning });
 }
 
+// ── 日付ヘルパ（6時リセット） ────────────────
+// 06:00 未満は「前日」扱いにする。
+export function currentDayISO(now = new Date()): string {
+  const d = new Date(now);
+  if (d.getHours() < 6) {
+    d.setDate(d.getDate() - 1);
+  }
+  return d.toISOString().slice(0, 10);
+}
+
 // ── 日次気分ログ ──────────────────────────
 export function logDailyMood(log: DailyMoodLog): StoreState {
   const current = readStore();
@@ -350,7 +368,7 @@ export function logDailyMood(log: DailyMoodLog): StoreState {
 }
 
 export function getTodayMoodLog(today = new Date()): DailyMoodLog | undefined {
-  const dateISO = today.toISOString().slice(0, 10);
+  const dateISO = currentDayISO(today);
   return (readStore().dailyMoodLogs ?? []).find((l) => l.dateISO === dateISO);
 }
 

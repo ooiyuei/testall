@@ -19,6 +19,7 @@ const MOOD_LABEL: Record<Mood, string> = {
   normal: "並盛り",
   more: "大盛り",
   max: "特盛り",
+  "today-off": "完全休養",
 };
 
 function parseTimeToMinutes(hhmm: string): number {
@@ -43,6 +44,17 @@ export function calcAvailableMinutes(
 }
 
 export function adjustTodayBlocks(input: TodayBlocksInput): TodayBlocksResult {
+  if (input.mood === "today-off") {
+    return {
+      baseBlocks: input.baseBlocks,
+      moodDelta: 0,
+      requestedBlocks: 0,
+      availableBlocks: 0,
+      finalBlocks: 0,
+      reason: "今日は完全休養日です。しっかり休んで明日に備えましょう。",
+    };
+  }
+
   const blockMinutes = input.blockMinutes ?? 30; // 25 分学習 + 5 分休憩
   const moodDelta = MOOD_DELTA[input.mood];
   const requested = input.baseBlocks + moodDelta;

@@ -10,6 +10,7 @@ import { RefreshCw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lu
 import { cn } from "@/lib/cn";
 import { buildTodaySchedule } from "@/lib/planning/today-schedule";
 import type { ScheduleInput, ScheduleResult, ScheduleSlot } from "@/lib/planning/today-schedule";
+import { effectivePriority } from "@/lib/store";
 import type { StoredTask } from "@/lib/store";
 
 // ── 色マッピング ────────────────────────────
@@ -149,9 +150,10 @@ function buildScheduleInput(
   startTime: string,
   tasks: StoredTask[] | undefined,
 ): ScheduleInput {
+  // 期日迫りで優先度が自動UPする effectivePriority を使う
   const activeTasks = (tasks ?? [])
     .filter((t) => t.status !== "done")
-    .sort((a, b) => a.priority - b.priority);
+    .sort((a, b) => effectivePriority(a) - effectivePriority(b));
 
   let remaining = finalBlocks;
   const scheduleTasks: ScheduleInput["tasks"] = [];

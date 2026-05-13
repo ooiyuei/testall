@@ -21,6 +21,7 @@ import {
   Edit3,
   GraduationCap,
   Plus,
+  Search,
   Settings,
   Target,
   X,
@@ -48,6 +49,7 @@ import {
 import type { GradeId, SubjectAreaId } from "@/lib/master/subjects";
 import { RadarChart, type RadarPoint } from "@/components/me/RadarChart";
 import { BookshelfAddModal } from "@/components/me/BookshelfAddModal";
+import { HighschoolEditModal } from "@/components/me/HighschoolEditModal";
 import { LevelCard } from "@/components/me/LevelCard";
 import { DeviationTrend, type TrendSeries } from "@/components/me/DeviationTrend";
 import { ExpTrend, type ExpTrendPoint } from "@/components/me/ExpTrend";
@@ -228,6 +230,7 @@ function ProfileDetails({
   onEditToggle: () => void;
 }) {
   const [draft, setDraft] = useState<Partial<StoredProfile>>({});
+  const [highschoolModal, setHighschoolModal] = useState(false);
   const merged = { ...profile, ...draft };
 
   function save() {
@@ -235,6 +238,14 @@ function ProfileDetails({
     setProfile({ ...profile, ...draft });
     setDraft({});
     onEditToggle();
+  }
+
+  function handleHighschoolSelect(name: string) {
+    setDraft((d) => ({ ...d, schoolName: name }));
+    // 編集モード外でも即時保存
+    if (profile && !editing) {
+      setProfile({ ...profile, schoolName: name });
+    }
   }
 
   return (
@@ -295,13 +306,43 @@ function ProfileDetails({
           onChange={(v) => setDraft((d) => ({ ...d, prefecture: v }))}
           placeholder="例: 東京都"
         />
-        <FieldRow
-          label="高校"
-          value={merged.schoolName ?? ""}
-          editing={editing}
-          onChange={(v) => setDraft((d) => ({ ...d, schoolName: v }))}
-          placeholder="例: ○○高校"
-        />
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
+            高校
+          </div>
+          {editing ? (
+            <div className="mt-1 flex items-center gap-1">
+              <input
+                value={merged.schoolName ?? ""}
+                onChange={(e) => setDraft((d) => ({ ...d, schoolName: e.target.value }))}
+                placeholder="例: ○○高校"
+                className="h-9 flex-1 rounded-xl border border-cream-200 bg-cream-50 px-2 text-sm text-ink-900 outline-none focus:border-sky-400 focus:bg-white"
+              />
+              <button
+                type="button"
+                onClick={() => setHighschoolModal(true)}
+                className="flex h-9 w-9 flex-none items-center justify-center rounded-xl border border-cream-200 bg-cream-50 text-ink-500 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-600 transition"
+                aria-label="高校を検索"
+              >
+                <Search className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="mt-1 flex items-center gap-1">
+              <div className="flex-1 text-sm font-bold text-ink-900">
+                {merged.schoolName || "例: ○○高校"}
+              </div>
+              <button
+                type="button"
+                onClick={() => setHighschoolModal(true)}
+                className="flex h-7 w-7 flex-none items-center justify-center rounded-lg text-ink-400 hover:bg-cream-100 hover:text-ink-700 transition"
+                aria-label="高校を検索"
+              >
+                <Search className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 志望校1〜3 */}
@@ -339,6 +380,14 @@ function ProfileDetails({
           <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
+
+      {highschoolModal ? (
+        <HighschoolEditModal
+          currentName={merged.schoolName}
+          onSelect={handleHighschoolSelect}
+          onClose={() => setHighschoolModal(false)}
+        />
+      ) : null}
     </section>
   );
 }
