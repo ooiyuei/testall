@@ -114,6 +114,52 @@ function buildUserPrompt(input: TestInput): string {
     extraLines.push(`- 志望校:\n${list}`);
   }
 
+  // v0.5: 過去のテスト履歴 / 学習ログ / 本棚を活用
+  const history = input.history;
+  const historyLines: string[] = [];
+
+  if (history?.pastTests && history.pastTests.length > 0) {
+    const sorted = [...history.pastTests]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, 5);
+    historyLines.push(
+      `直近のテスト履歴 (新→古):`,
+      ...sorted.map((t) => {
+        const dev = t.deviation ? `偏差値${t.deviation}` : "";
+        const weak = t.weakUnits?.length ? ` / 苦手: ${t.weakUnits.slice(0, 3).join("・")}` : "";
+        return `- ${t.createdAt.slice(0, 10)} ${t.subject} ${t.testName}: ${t.scorePct}%${dev ? ` (${dev})` : ""}${weak}`;
+      }),
+    );
+    // トレンドを示唆
+    if (sorted.length >= 2) {
+      const newest = sorted[0].scorePct;
+      const previous = sorted[1].scorePct;
+      const delta = newest - previous;
+      if (Math.abs(delta) >= 5) {
+        historyLines.push(
+          `→ 直近2回の差: ${delta > 0 ? "+" : ""}${delta}% (${delta > 0 ? "改善傾向" : "下降傾向"})`,
+        );
+      }
+    }
+  }
+
+  if (history?.recentBlockLogs && history.recentBlockLogs.length > 0) {
+    const last14 = history.recentBlockLogs.slice(-14);
+    const days = new Set(last14.map((b) => b.date.slice(0, 10))).size;
+    const avgRating =
+      last14.reduce((s, b) => s + b.rating, 0) / last14.length;
+    historyLines.push(
+      `直近14日の学習ログ: ${last14.length}ブロック完了 (${days}日、平均自己評価 ${avgRating.toFixed(1)}/5)`,
+    );
+  }
+
+  if (history?.bookshelf && history.bookshelf.length > 0) {
+    historyLines.push(
+      `本棚 (UI に登録済み):`,
+      ...history.bookshelf.slice(0, 12).map((b) => `- ${b.name}${b.kind ? ` (${b.kind})` : ""}`),
+    );
+  }
+
   return `生徒データ:
 - 学年: ${input.grade}
 - 志望校レベル: ${input.target}
@@ -128,16 +174,20 @@ ${extraLines.join("\n")}
 - 単元別正答率 (全体 ${pct}%):
 ${unitLines}
 
-所有参考書:
-${input.textbooks.length === 0 ? "- 未入力（汎用ルートで提案）" : input.textbooks.map((t) => `- ${t}`).join("\n")}
+所有参考書 (旧形式):
+${input.textbooks.length === 0 ? "- 未入力（本棚 or 汎用ルートで提案）" : input.textbooks.map((t) => `- ${t}`).join("\n")}
 
+${historyLines.length > 0 ? historyLines.join("\n") + "\n" : ""}
 このデータをもとに、Testallの診断レポートを上記JSONスキーマで返してください。
 注意:
 - 志望校に複数候補がある場合、第1志望をベースに、第2・3志望も無理なくカバーできる作戦にする。
 - 偏差値と志望校最低ラインのギャップが大きい場合はそれを率直に書く（精神論ではなく作戦で埋める）。
 - 学年に応じた範囲で提案する（高1は基礎、高3は本番直結）。
+- 過去のテスト履歴が与えられている場合、トレンド (改善/停滞/悪化) を summary で言及する。
+- 本棚に登録された参考書を最優先で使い、未登録のものは推奨しない。
+- 直近14日のブロック数から「無理のないペース」を推定し、weekPlan に反映する。
 今日は${new Date().toLocaleDateString("ja-JP", { weekday: "long", month: "long", day: "numeric" })}です。
-todayBlocksは、今日の夕方17:00以降を想定して2-3個提案してください。`;
+todayBlocksは、今日の夕方17:00以降を想定して3-5個 (25分単位) 提案してください。`;
 }
 
 function labelCause(c: MissCause): string {

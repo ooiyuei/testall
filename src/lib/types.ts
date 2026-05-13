@@ -19,6 +19,22 @@ export type TestInput = {
   testKindId?: string;
   testDate?: string; // YYYY-MM-DD
   subjects?: SubjectInput[]; // 複数科目それぞれ点数・単元
+
+  // v0.5 拡張: 診断の文脈データ (AI 精度向上のため)
+  history?: {
+    pastTests?: PastTestSummary[]; // 直近 3〜5 回のテスト概要
+    recentBlockLogs?: { date: string; subject?: string; rating: number }[];
+    bookshelf?: { name: string; kind?: string }[];
+  };
+};
+
+export type PastTestSummary = {
+  testName: string;
+  subject: string;
+  scorePct: number;       // 0..100
+  deviation?: number;
+  createdAt: string;      // ISO date
+  weakUnits?: string[];
 };
 
 export type SubjectInput = {

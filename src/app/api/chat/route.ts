@@ -5,9 +5,48 @@ import type { ChatMessage } from "@/lib/store";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-const SYSTEM_PROMPT =
-  "あなたは Testall の AI 学習コーチ Sara です。受験生の計画調整・励まし・科目相談に答えます。" +
-  "回答は簡潔かつ具体的に、敬語で、200文字以内を目安にしてください。";
+const SYSTEM_PROMPT_BASE =
+  "あなたは Testall の AI 学習コーチ Sara です。受験生の計画調整・励まし・科目相談に答えます。\n" +
+  "回答は簡潔かつ具体的に、敬語で、200文字以内を目安にしてください。\n" +
+  "ユーザーの学年・志望校・直近テスト結果が与えられている場合は、それを踏まえて作戦を具体化します。\n" +
+  "精神論ではなく、具体的な参考書名や時間配分・25分ブロックでの行動を返してください。";
+
+type ChatContext = {
+  grade?: string;
+  deviation?: number;
+  targetUniversity?: string;
+  examDate?: string;
+  latestTest?: {
+    subject: string;
+    testName: string;
+    scorePct: number | null;
+    weakUnits: string[];
+  } | null;
+  recentBlocks14d?: number;
+};
+
+function buildSystemPrompt(ctx?: ChatContext): string {
+  if (!ctx) return SYSTEM_PROMPT_BASE;
+  const lines: string[] = [SYSTEM_PROMPT_BASE, "", "# ユーザーの最新状況"];
+  if (ctx.grade) lines.push(`- 学年: ${ctx.grade}`);
+  if (typeof ctx.deviation === "number")
+    lines.push(`- 現在の偏差値 (おおよそ): ${ctx.deviation}`);
+  if (ctx.targetUniversity) lines.push(`- 第1志望: ${ctx.targetUniversity}`);
+  if (ctx.examDate) lines.push(`- 本番日: ${ctx.examDate}`);
+  if (ctx.latestTest) {
+    const t = ctx.latestTest;
+    lines.push(
+      `- 直近テスト: ${t.subject} ${t.testName} ${
+        t.scorePct !== null ? `(${t.scorePct}%)` : ""
+      }`,
+    );
+    if (t.weakUnits.length > 0)
+      lines.push(`- 苦手単元: ${t.weakUnits.join("・")}`);
+  }
+  if (typeof ctx.recentBlocks14d === "number")
+    lines.push(`- 直近14日の完了ブロック: ${ctx.recentBlocks14d}`);
+  return lines.join("\n");
+}
 
 function fallbackReply(userMessage: string): string {
   const m = userMessage.toLowerCase();
@@ -28,11 +67,16 @@ function fallbackReply(userMessage: string): string {
 
 export async function POST(req: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  let body: { history: ChatMessage[]; userMessage: string } | null = null;
+  let body: {
+    history: ChatMessage[];
+    userMessage: string;
+    context?: ChatContext;
+  } | null = null;
   try {
     body = (await req.json()) as {
       history: ChatMessage[];
       userMessage: string;
+      context?: ChatContext;
     };
   } catch {
     return NextResponse.json({ ok: false, error: "invalid_body" }, { status: 400 });
@@ -61,7 +105,7 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
       model: "claude-sonnet-4-5",
       max_tokens: 512,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(body.context),
       messages,
     });
 

@@ -76,12 +76,40 @@ export function AiChat({ state }: { state: StoreState }) {
     setLoading(true);
 
     try {
+      // v0.5: 学習コンテキストを AI に渡してパーソナライズ
+      const profile = state.profile;
+      const latest = state.tests?.[0];
+      const recentBlocks = (state.blockLogs ?? []).slice(0, 14).length;
+      const context = {
+        grade: profile?.grade,
+        deviation: profile?.deviation,
+        targetUniversity: profile?.targetUniversities?.[0]?.universityId,
+        examDate: profile?.examDate,
+        latestTest: latest
+          ? {
+              subject: latest.input.subject,
+              testName: latest.input.testName,
+              scorePct:
+                latest.input.fullScore > 0
+                  ? Math.round(
+                      (latest.input.score / latest.input.fullScore) * 100,
+                    )
+                  : null,
+              weakUnits: (latest.diagnosis.weaknesses ?? [])
+                .slice(0, 3)
+                .map((w) => w.unit),
+            }
+          : null,
+        recentBlocks14d: recentBlocks,
+      };
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           history: messages,
           userMessage: text.trim(),
+          context,
         }),
       });
       const data = (await res.json()) as { ok: boolean; text?: string; error?: string };

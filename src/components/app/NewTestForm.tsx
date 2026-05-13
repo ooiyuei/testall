@@ -733,6 +733,8 @@ function ManualForm({ prefill }: { prefill?: VisionResult | null }) {
       testKindId: form.testKindId,
       testDate: form.testDate,
       subjects: subjectsPayload,
+      // v0.5: 過去のテスト履歴 / 学習ログ / 本棚を AI に渡してパーソナライズ
+      history: buildHistoryContext(),
     };
 
     try {
@@ -1238,6 +1240,36 @@ function UnitStep({
       })}
     </div>
   );
+}
+
+// 診断 AI に渡す履歴コンテキストを sessionStorage から組み立てる
+function buildHistoryContext(): TestInput["history"] {
+  const store = readStore();
+  const pastTests = (store.tests ?? []).slice(0, 5).map((t) => ({
+    testName: t.input.testName,
+    subject: t.input.subject,
+    scorePct:
+      t.input.fullScore > 0
+        ? Math.round((t.input.score / t.input.fullScore) * 100)
+        : 0,
+    deviation: t.input.deviation,
+    createdAt: t.createdAt,
+    weakUnits: (t.diagnosis.weaknesses ?? [])
+      .slice(0, 3)
+      .map((w) => w.unit),
+  }));
+  const cutoffMs = Date.now() - 14 * 24 * 60 * 60 * 1000;
+  const recentBlockLogs = (store.blockLogs ?? [])
+    .filter((b) => new Date(b.completedAt).getTime() >= cutoffMs)
+    .map((b) => ({
+      date: b.completedAt.slice(0, 10),
+      rating: b.rating,
+    }));
+  const bookshelf = (store.profile?.bookshelfItems ?? []).map((b) => ({
+    name: b.name,
+    kind: b.kind,
+  }));
+  return { pastTests, recentBlockLogs, bookshelf };
 }
 
 function ConfidenceBadge({ level }: { level: Confidence }) {
