@@ -24,6 +24,7 @@ function titleFromPath(path: string): { title?: string; back?: string; showAdd?:
   if (path === "/app/test/new")      return { title: "テスト追加", back: "/app/test", showAdd: false };
   if (path.startsWith("/app/test/")) return { title: "テスト詳細", back: "/app/test", showAdd: false };
   if (path === "/app/search")        return { title: "探す", back: "/app", showAdd: true };
+  if (path === "/app/help")          return { title: "ヘルプ", back: "/app/me/settings", showAdd: false };
   return { title: "Testall", showAdd: true };
 }
 
