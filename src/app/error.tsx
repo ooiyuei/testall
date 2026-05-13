@@ -6,6 +6,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, RotateCcw } from "lucide-react";
+import * as Sentry from "@sentry/nextjs";
 
 export default function GlobalError({
   error,
@@ -17,6 +18,8 @@ export default function GlobalError({
   useEffect(() => {
     if (typeof window !== "undefined") {
       console.error("[app error]", error);
+      // Sentry が設定されていれば自動的に送信される
+      Sentry.captureException(error);
     }
   }, [error]);
 

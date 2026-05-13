@@ -1,7 +1,16 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   /* config options here */
 };
 
-export default nextConfig;
+// Sentry 設定 (DSN が未設定なら sentry SDK 自体が no-op)
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  silent: !process.env.CI,
+  // 広告ブロッカー回避のため Sentry リクエストを /monitoring 経由でプロキシ
+  tunnelRoute: "/monitoring",
+  widenClientFileUpload: true,
+});
