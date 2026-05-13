@@ -377,7 +377,7 @@ function TaskModal({ onClose }: { onClose: () => void }) {
 
         <div className="mt-3 space-y-3">
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+            <label className="text-[10px] font-semibold tracking-[0.05em] text-ink-500">
               タイトル
             </label>
             <input
@@ -392,7 +392,7 @@ function TaskModal({ onClose }: { onClose: () => void }) {
 
           {/* 期日 */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+            <label className="text-[10px] font-semibold tracking-[0.05em] text-ink-500">
               期日 (優先度自動)
             </label>
             <ul className="mt-1 flex gap-1 rounded-xl bg-cream-100/70 p-1">
@@ -424,7 +424,7 @@ function TaskModal({ onClose }: { onClose: () => void }) {
 
           {/* ブロック */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+            <label className="text-[10px] font-semibold tracking-[0.05em] text-ink-500">
               ブロック数（1ブロック = 25分）
             </label>
             <div className="mt-1 flex items-center rounded-xl border border-ink-100/80 bg-white px-1">
@@ -450,7 +450,7 @@ function TaskModal({ onClose }: { onClose: () => void }) {
 
           {/* タグ */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+            <label className="text-[10px] font-semibold tracking-[0.05em] text-ink-500">
               タグ
             </label>
             <ul className="mt-1 flex flex-wrap gap-1">
@@ -473,7 +473,7 @@ function TaskModal({ onClose }: { onClose: () => void }) {
 
           {/* 教科 */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+            <label className="text-[10px] font-semibold tracking-[0.05em] text-ink-500">
               教科 (任意)
             </label>
             <ul className="mt-1 flex flex-wrap gap-1">
@@ -535,7 +535,7 @@ function Chips({
 }) {
   return (
     <div>
-      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+      <div className="text-[10px] font-semibold tracking-[0.05em] text-ink-500">
         {label}
       </div>
       <div className="mt-1.5 flex flex-wrap gap-1">
