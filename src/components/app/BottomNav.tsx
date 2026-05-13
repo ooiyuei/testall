@@ -23,6 +23,9 @@ const TABS: Tab[] = [
 export function BottomNav() {
   const pathname = usePathname();
 
+  // Hide bottom nav during immersive focus session
+  if (pathname.startsWith("/app/focus/run")) return null;
+
   return (
     <nav
       aria-label="メインナビゲーション"

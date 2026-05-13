@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -26,6 +26,9 @@ export const metadata: Metadata = {
       "テストを入れるだけ。AIがあなたの苦手を分析して、今日やる45分を整えます。",
     type: "website",
   },
+};
+
+export const viewport: Viewport = {
   themeColor: "#fdfbf6",
 };
 
