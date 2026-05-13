@@ -306,7 +306,7 @@ function PlanningEditor() {
   const [weekdayBlocks, setWeekdayBlocks] = useState(3);
   const [weekendBlocks, setWeekendBlocks] = useState(6);
   const [returnTime, setReturnTime] = useState("18:30");
-  const [bedtime, setBedtime] = useState("24:00");
+  const [bedtime, setBedtime] = useState("23:30");
   const [buffer, setBuffer] = useState(60);
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
@@ -316,12 +316,20 @@ function PlanningEditor() {
     if (planning) {
       setWeekdayBlocks(planning.weekdayBaseBlocks);
       setWeekendBlocks(planning.weekendBaseBlocks);
-      setReturnTime(planning.defaultReturnTime);
-      setBedtime(planning.defaultBedtime);
+      setReturnTime(normalizeForInput(planning.defaultReturnTime));
+      setBedtime(normalizeForInput(planning.defaultBedtime));
       setBuffer(planning.bufferMinutes);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
+
+  // HTML <input type="time"> は 24:00 を表示できないので 23:59 に丸める
+  function normalizeForInput(t: string): string {
+    if (t === "24:00") return "23:30";
+    const [h, m] = t.split(":").map(Number);
+    if (h >= 24) return "23:30";
+    return t;
+  }
 
   function save() {
     setPlanning({
