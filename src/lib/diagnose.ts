@@ -184,6 +184,10 @@ function extractJson<T>(text: string): T | null {
   }
 }
 
+export function fallbackDiagnosisPublic(input: TestInput): Diagnosis {
+  return fallbackDiagnosis(input);
+}
+
 function fallbackDiagnosis(input: TestInput): Diagnosis {
   const weakest = [...input.units].sort(
     (a, b) =>
