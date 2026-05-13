@@ -1,18 +1,28 @@
 "use client";
 
 // レベル & 経験値 カード — Apple HIG ベース
-// 山グラフは廃止。シンプルな進捗バー + 直近の獲得 EXP
+// 「本番まで / 1年で / 今Qで」3 タブ切替
 
+import { useMemo, useState } from "react";
 import { Sparkles, TrendingUp, Trophy } from "lucide-react";
+import { cn } from "@/lib/cn";
+
+type Horizon = "exam" | "year" | "quarter";
+
+const HORIZON_LABEL: Record<Horizon, string> = {
+  exam: "本番まで",
+  year: "1年",
+  quarter: "今Q",
+};
 
 type Props = {
   level: number;
   currentLevelExp: number;
   nextLevelExp: number;
   recentExpGain?: number;
-  blocksRemaining?: number;
-  blocksDone?: number;
-  goalLabel?: string;
+  // 各 horizon に対応するブロック数
+  blocksRemainingByHorizon?: Partial<Record<Horizon, number>>;
+  blocksDoneByHorizon?: Partial<Record<Horizon, number>>;
 };
 
 export function LevelCard({
@@ -20,19 +30,29 @@ export function LevelCard({
   currentLevelExp,
   nextLevelExp,
   recentExpGain = 0,
-  blocksRemaining,
-  blocksDone = 0,
-  goalLabel = "目標",
+  blocksRemainingByHorizon,
+  blocksDoneByHorizon,
 }: Props) {
+  const [horizon, setHorizon] = useState<Horizon>("exam");
   const pct = Math.max(0, Math.min(100, Math.round((currentLevelExp / nextLevelExp) * 100)));
-  const totalGoalBlocks = (blocksRemaining ?? 0) + blocksDone;
+  const remaining = blocksRemainingByHorizon?.[horizon];
+  const done = blocksDoneByHorizon?.[horizon] ?? 0;
+  const totalGoalBlocks = (remaining ?? 0) + done;
   const goalPct = totalGoalBlocks > 0
-    ? Math.max(0, Math.min(100, Math.round((blocksDone / totalGoalBlocks) * 100)))
+    ? Math.max(0, Math.min(100, Math.round((done / totalGoalBlocks) * 100)))
     : 0;
+
+  const showGoal = blocksRemainingByHorizon !== undefined;
+  const availableHorizons = useMemo<Horizon[]>(() => {
+    if (!blocksRemainingByHorizon) return [];
+    return (Object.keys(HORIZON_LABEL) as Horizon[]).filter(
+      (h) => blocksRemainingByHorizon[h] !== undefined,
+    );
+  }, [blocksRemainingByHorizon]);
 
   return (
     <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
-      {/* LV ヘッダー */}
+      {/* LV ヘッダ */}
       <div className="flex items-baseline justify-between gap-2">
         <div className="flex items-baseline gap-2">
           <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
@@ -68,24 +88,40 @@ export function LevelCard({
         </div>
       </div>
 
-      {/* 目標進捗 */}
-      {blocksRemaining !== undefined ? (
+      {/* 目標進捗 + horizon タブ */}
+      {showGoal ? (
         <div className="mt-4 rounded-xl bg-cream-50/80 p-3">
-          <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline justify-between gap-2">
             <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
               <Trophy className="h-3 w-3" />
-              {goalLabel}まで
+              ゴール
             </span>
-            <span className="text-[10px] font-medium text-ink-500 tabular-nums">
-              {goalPct}%
-            </span>
+            {availableHorizons.length > 1 ? (
+              <ul className="flex gap-0.5 rounded-lg bg-white p-0.5">
+                {availableHorizons.map((h) => (
+                  <li key={h}>
+                    <button
+                      type="button"
+                      onClick={() => setHorizon(h)}
+                      className={cn(
+                        "h-6 rounded-md px-2 text-[10px] font-bold transition",
+                        horizon === h ? "bg-ink-900 text-white" : "text-ink-500",
+                      )}
+                    >
+                      {HORIZON_LABEL[h]}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
+
           <div className="mt-1.5 flex items-baseline justify-between">
             <span className="text-2xl font-bold tabular-nums text-ink-900">
-              {blocksRemaining.toLocaleString()}
+              {remaining?.toLocaleString() ?? "—"}
             </span>
             <span className="text-[10px] font-medium text-ink-500">
-              ブロック残 / {blocksDone.toLocaleString()} 完了
+              ブロック残 / {done.toLocaleString()} 完了
             </span>
           </div>
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white">
@@ -93,6 +129,14 @@ export function LevelCard({
               className="h-full rounded-full bg-ink-900 transition-all"
               style={{ width: `${goalPct}%` }}
             />
+          </div>
+          <div className="mt-1 flex items-baseline justify-between">
+            <span className="text-[10px] font-medium text-ink-400">
+              {HORIZON_LABEL[horizon]}の達成率
+            </span>
+            <span className="text-[10px] font-medium text-ink-500 tabular-nums">
+              {goalPct}%
+            </span>
           </div>
         </div>
       ) : null}

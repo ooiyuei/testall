@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
@@ -16,6 +16,7 @@ import {
   UNIVERSITIES as MASTER_UNIVERSITIES,
 } from "@/lib/master/universities";
 import { searchHighschools } from "@/lib/master/highschools";
+import { remoteEnabled, remoteSearchHighschools } from "@/lib/master/remote";
 import { mergedHighschools, mergedUniversities } from "@/lib/master/userAdditions";
 import type { Highschool, University } from "@/lib/master";
 import {
@@ -437,29 +438,41 @@ function BucketPicker({
   onChange: (v: DeviationBucket) => void;
   tone?: "sky" | "peach";
 }) {
-  const toneActive =
-    tone === "sky" ? "bg-sky-500 text-white" : "bg-peach-200 text-peach-500";
+  // 5刻みスライダー版: DEVIATION_BUCKETS の index を扱う
+  const idx = Math.max(0, DEVIATION_BUCKETS.findIndex((b) => b.id === value));
+  const current = DEVIATION_BUCKETS[idx];
+  const max = DEVIATION_BUCKETS.length - 1;
+  const accentClass = tone === "sky" ? "accent-sky-500" : "accent-peach-400";
   return (
-    <div className="rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
-      <div className="text-[11px] font-bold uppercase tracking-widest text-ink-500">
-        {label}
+    <div className="rounded-2xl border border-ink-100/80 bg-white p-4">
+      <div className="flex items-baseline justify-between">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+          {label}
+        </div>
+        <div className="flex items-baseline gap-1">
+          <span className={cn(
+            "text-3xl font-bold tabular-nums",
+            tone === "sky" ? "text-sky-500" : "text-peach-400",
+          )}>
+            {current.label}
+          </span>
+        </div>
       </div>
-      <ul className="mt-2 grid grid-cols-4 gap-1.5">
+      <input
+        type="range"
+        min={0}
+        max={max}
+        step={1}
+        value={idx}
+        onChange={(e) => onChange(DEVIATION_BUCKETS[Number(e.target.value)].id)}
+        className={cn("mt-3 w-full", accentClass)}
+        aria-label={label}
+      />
+      <div className="mt-1 flex justify-between text-[9px] font-bold text-ink-400 tabular-nums">
         {DEVIATION_BUCKETS.map((b) => (
-          <li key={b.id}>
-            <button
-              type="button"
-              onClick={() => onChange(b.id)}
-              className={cn(
-                "flex h-11 w-full items-center justify-center rounded-xl text-xs font-black transition",
-                value === b.id ? `${toneActive} shadow-soft` : "bg-cream-50 text-ink-700",
-              )}
-            >
-              {b.label}
-            </button>
-          </li>
+          <span key={b.id}>{b.label.replace("〜", "")}</span>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
@@ -549,22 +562,46 @@ function SchoolStep({
   onAdd: () => void;
 }) {
   const [query, setQuery] = useState(value);
+  const [remoteResults, setRemoteResults] = useState<Highschool[]>([]);
+  const useRemote = remoteEnabled();
 
-  const results = useMemo((): Highschool[] => {
+  // ローカル即時検索
+  const localResults = useMemo((): Highschool[] => {
     if (!query.trim()) return [];
     const base = searchHighschools(query.trim(), 30);
     const merged = mergedHighschools([]);
     const userAdded = merged.filter((h) =>
       h.searchText?.includes(query.toLowerCase()),
     );
-    const combined = [...userAdded, ...base];
-    const seen = new Set<string>();
-    return combined.filter((h) => {
-      if (seen.has(h.id)) return false;
-      seen.add(h.id);
-      return true;
-    }).slice(0, 30);
+    return [...userAdded, ...base];
   }, [query]);
+
+  // Supabase に問い合わせ (300ms debounce)
+  useEffect(() => {
+    if (!useRemote) return;
+    const q = query.trim();
+    if (!q) {
+      setRemoteResults([]);
+      return;
+    }
+    const t = setTimeout(async () => {
+      const rs = await remoteSearchHighschools(q, 30);
+      setRemoteResults(rs);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [query, useRemote]);
+
+  // 統合 (id 重複除去)
+  const results = useMemo<Highschool[]>(() => {
+    const seen = new Set<string>();
+    const merged: Highschool[] = [];
+    for (const h of [...localResults, ...remoteResults]) {
+      if (seen.has(h.id)) continue;
+      seen.add(h.id);
+      merged.push(h);
+    }
+    return merged.slice(0, 30);
+  }, [localResults, remoteResults]);
 
   function pick(name: string) {
     onChange(name);
@@ -870,32 +907,62 @@ function TargetUnisStep({
 
   const allMerged = useMemo(() => mergedUniversities(MASTER_UNIVERSITIES), []);
 
-  const results = useMemo(() => {
-    const filtered = query.trim()
-      ? allMerged.filter((u) => u.searchText?.includes(query.toLowerCase()))
-      : univTypes.length > 0
-      ? allMerged.filter((u) => univTypes.includes(u.type))
-      : allMerged;
-
-    const tierWeight: Record<string, number> = { S: 0, A: 1, B: 2, C: 3, D: 4 };
-    return [...filtered]
-      .map((u) => {
-        const range = facultyDevRange(u);
-        const minDev = range?.min ?? 50;
-        const dist = Math.max(0, minDev - deviation);
-        return { u, minDev, range, dist };
-      })
-      .sort((a, b) => {
-        const selA = value.some((v) => v.universityId === a.u.id) ? 1 : 0;
-        const selB = value.some((v) => v.universityId === b.u.id) ? 1 : 0;
-        if (selA !== selB) return selA - selB;
-        const tA = a.u.tier ? tierWeight[a.u.tier] : 5;
-        const tB = b.u.tier ? tierWeight[b.u.tier] : 5;
-        if (tA !== tB) return tA - tB;
-        return a.dist - b.dist;
-      })
+  // 検索結果 (クエリあり時)
+  const searchResults = useMemo(() => {
+    if (!query.trim()) return [];
+    const filtered = allMerged.filter((u) => u.searchText?.includes(query.toLowerCase()));
+    return filtered
+      .map((u) => ({ u, range: facultyDevRange(u) }))
       .slice(0, 30);
-  }, [query, deviation, value, univTypes, allMerged]);
+  }, [query, allMerged]);
+
+  // おすすめ 6 個 (挑戦2 / やや上2 / 適正2) - 偏差値を基準に各カテゴリから抽出
+  const recommendations = useMemo(() => {
+    const byTypes =
+      univTypes.length > 0
+        ? allMerged.filter((u) => univTypes.includes(u.type))
+        : allMerged;
+    type Candidate = { u: University; minDev: number; range: ReturnType<typeof facultyDevRange> };
+    const candidates = byTypes
+      .map((u): Candidate | null => {
+        const range = facultyDevRange(u);
+        if (!range) return null;
+        return { u, minDev: range.min, range };
+      })
+      .filter((x): x is Candidate => x !== null);
+
+    // 各カテゴリの偏差値レンジ
+    function pickN(filter: (c: Candidate) => boolean, n: number): Candidate[] {
+      return candidates
+        .filter(filter)
+        .sort((a, b) => Math.abs(a.minDev - deviation) - Math.abs(b.minDev - deviation))
+        .slice(0, n);
+    }
+
+    const challenge = pickN(
+      (c) => c.minDev > deviation + 5 && c.minDev <= deviation + 12,
+      2,
+    );
+    const above = pickN((c) => c.minDev > deviation && c.minDev <= deviation + 5, 2);
+    const fit = pickN((c) => c.minDev > deviation - 5 && c.minDev <= deviation, 2);
+
+    const seen = new Set<string>();
+    const merged: { c: Candidate; label: "挑戦" | "やや上" | "適正" }[] = [];
+    for (const c of challenge) {
+      if (!seen.has(c.u.id)) { merged.push({ c, label: "挑戦" }); seen.add(c.u.id); }
+    }
+    for (const c of above) {
+      if (!seen.has(c.u.id)) { merged.push({ c, label: "やや上" }); seen.add(c.u.id); }
+    }
+    for (const c of fit) {
+      if (!seen.has(c.u.id)) { merged.push({ c, label: "適正" }); seen.add(c.u.id); }
+    }
+    return merged;
+  }, [allMerged, univTypes, deviation]);
+
+  const results = query.trim()
+    ? searchResults.map((r) => ({ u: r.u, minDev: r.range?.min ?? 50, range: r.range }))
+    : recommendations.map((r) => ({ u: r.c.u, minDev: r.c.minDev, range: r.c.range, recLabel: r.label }));
 
   function toggle(uniId: string) {
     if (value.some((v) => v.universityId === uniId)) {
@@ -1171,7 +1238,6 @@ function ScheduleStep({
         options={BED_OPTIONS}
         value={bed}
         onChange={onChangeBed}
-        note="26:00 = 翌2時"
       />
     </>
   );
@@ -1182,80 +1248,58 @@ function TimeScroller({
   options,
   value,
   onChange,
-  note,
 }: {
   label: string;
   options: string[];
   value: string;
   onChange: (v: string) => void;
-  note?: string;
 }) {
-  const selectedIdx = options.indexOf(value);
-  const midIdx = Math.floor(options.length / 2);
-  const [customMode, setCustomMode] = useState(false);
-
-  // segment: 朝/昼/夜 に相当するざっくり3区分をラベルとして表示
-  const segments = [
-    { label: options[0], idx: 0 },
-    { label: options[midIdx], idx: midIdx },
-    { label: options[options.length - 1], idx: options.length - 1 },
-  ];
+  // 5 個程度の代表時刻を抜粋して4-5択にする
+  const step = Math.max(1, Math.floor(options.length / 4));
+  const presets: string[] = [];
+  for (let i = 0; i < options.length; i += step) presets.push(options[i]);
+  if (presets[presets.length - 1] !== options[options.length - 1]) {
+    presets.push(options[options.length - 1]);
+  }
+  // 5 個に絞る
+  const display = presets.slice(0, 5);
 
   return (
-    <div className="rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-sm font-bold text-ink-700">{label}</span>
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-black tabular-nums text-ink-900">
-            {value}
-          </span>
-          {note ? (
-            <span className="text-[10px] text-ink-400">{note}</span>
-          ) : null}
-        </div>
+    <div className="rounded-2xl border border-ink-100/80 bg-white p-3">
+      <div className="mb-2 flex items-baseline justify-between">
+        <span className="text-[12px] font-bold text-ink-900">{label}</span>
+        <span className="text-[15px] font-bold tabular-nums text-ink-900">
+          {value}
+        </span>
       </div>
-
-      {customMode ? (
-        <div className="flex flex-col gap-2">
-          <input
-            type="time"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="w-full rounded-xl border border-cream-200 px-3 py-2 text-sm text-ink-900 outline-none focus:border-sky-400"
-          />
-          <button
-            type="button"
-            onClick={() => setCustomMode(false)}
-            className="text-xs text-ink-400 hover:text-ink-600"
-          >
-            プリセットから選ぶ
-          </button>
-        </div>
-      ) : (
-        <>
-          <input
-            type="range"
-            min={0}
-            max={options.length - 1}
-            step={1}
-            value={selectedIdx === -1 ? 0 : selectedIdx}
-            onChange={(e) => onChange(options[Number(e.target.value)])}
-            className="w-full accent-sky-500"
-          />
-          <div className="mt-1 flex justify-between text-[10px] font-bold text-ink-400 tabular-nums">
-            {segments.map((s) => (
-              <span key={s.idx}>{s.label}</span>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => setCustomMode(true)}
-            className="mt-2 text-xs text-ink-400 hover:text-ink-600"
-          >
-            詳細入力
-          </button>
-        </>
-      )}
+      <ul className="grid grid-cols-5 gap-1">
+        {display.map((t) => (
+          <li key={t}>
+            <button
+              type="button"
+              onClick={() => onChange(t)}
+              className={cn(
+                "h-9 w-full rounded-lg text-[11px] font-bold tabular-nums transition",
+                value === t
+                  ? "bg-ink-900 text-white"
+                  : "bg-cream-50 text-ink-700 hover:bg-cream-100",
+              )}
+            >
+              {t}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-2 flex items-center gap-2">
+        <input
+          type="time"
+          step={1800}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-8 flex-1 rounded-lg border border-ink-100/80 bg-cream-50 px-2 text-[12px] text-ink-900 outline-none focus:border-sky-400 focus:bg-white"
+        />
+        <span className="text-[10px] text-ink-400">詳細</span>
+      </div>
     </div>
   );
 }

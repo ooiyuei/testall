@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bell,
   ChevronRight,
@@ -301,18 +301,27 @@ function SettingsLink({
 // ── 1日の予定エディタ ────────────────────────
 function PlanningEditor() {
   const { state, hydrated } = useStore();
-  const initial = state.planning;
-  const [weekdayBlocks, setWeekdayBlocks] = useState(
-    initial?.weekdayBaseBlocks ?? 3,
-  );
-  const [weekendBlocks, setWeekendBlocks] = useState(
-    initial?.weekendBaseBlocks ?? 6,
-  );
-  const [returnTime, setReturnTime] = useState(
-    initial?.defaultReturnTime ?? "18:30",
-  );
-  const [bedtime, setBedtime] = useState(initial?.defaultBedtime ?? "24:00");
-  const [buffer, setBuffer] = useState(initial?.bufferMinutes ?? 90);
+  const planning = state.planning;
+
+  const [weekdayBlocks, setWeekdayBlocks] = useState(3);
+  const [weekendBlocks, setWeekendBlocks] = useState(6);
+  const [returnTime, setReturnTime] = useState("18:30");
+  const [bedtime, setBedtime] = useState("24:00");
+  const [buffer, setBuffer] = useState(60);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+
+  // hydrate 後に planning から値を同期 (初回マウント時の sessionStorage 反映)
+  useEffect(() => {
+    if (!hydrated) return;
+    if (planning) {
+      setWeekdayBlocks(planning.weekdayBaseBlocks);
+      setWeekendBlocks(planning.weekendBaseBlocks);
+      setReturnTime(planning.defaultReturnTime);
+      setBedtime(planning.defaultBedtime);
+      setBuffer(planning.bufferMinutes);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
 
   function save() {
     setPlanning({
@@ -322,6 +331,8 @@ function PlanningEditor() {
       defaultBedtime: bedtime,
       bufferMinutes: buffer,
     });
+    setSavedAt(Date.now());
+    setTimeout(() => setSavedAt(null), 2000);
   }
 
   if (!hydrated) return null;
@@ -364,7 +375,7 @@ function PlanningEditor() {
         value={buffer}
         min={0}
         max={300}
-        step={15}
+        step={30}
         suffix="分"
         onChange={setBuffer}
       />
@@ -372,9 +383,14 @@ function PlanningEditor() {
         <button
           type="button"
           onClick={save}
-          className="h-10 w-full rounded-xl bg-sky-500 text-sm font-black text-white"
+          className={cn(
+            "h-10 w-full rounded-xl text-sm font-bold transition",
+            savedAt
+              ? "bg-mint-500 text-white"
+              : "bg-ink-900 text-white",
+          )}
         >
-          保存
+          {savedAt ? "✓ 保存しました" : "保存"}
         </button>
       </li>
     </div>
@@ -449,6 +465,7 @@ function TimeRow({
       <span className="flex-1 text-sm font-bold text-ink-900">{label}</span>
       <input
         type="time"
+        step={1800}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="h-9 rounded-xl border border-cream-200 bg-cream-50 px-2 text-sm text-ink-900 outline-none focus:border-sky-400 focus:bg-white"
