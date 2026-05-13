@@ -130,7 +130,7 @@ export function PlanView() {
   const selectedEvents = selectedDate ? eventsForDate(selectedDate) : [];
 
   return (
-    <div className="px-4 pt-3 pb-32 space-y-5">
+    <div className="px-5 pb-8 pt-3 space-y-5">
       {/* 計画AI v0.1 — 週間目標カード */}
       <WeeklyGoalCard />
 
@@ -260,7 +260,7 @@ export function PlanView() {
 
       {/* Selected day's events */}
       {selectedDate ? (
-        <section className="rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
+        <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <CalendarDays className="h-3.5 w-3.5 text-ink-500" />

@@ -76,7 +76,7 @@ function ModeSelect({
   onPickPhoto: () => void;
 }) {
   return (
-    <div className="px-4 pt-3 pb-10">
+    <div className="px-5 pb-8 pt-3">
       <p className="text-sm text-ink-600">
         テスト1つに複数科目を一括で登録できます。AIが弱点と次の45分を整えます。
       </p>
@@ -132,7 +132,7 @@ function PhotoMode({ onBack }: { onBack: () => void }) {
   const [scope, setScope] = useState<"answer" | "question" | "both">("answer");
 
   return (
-    <div className="px-4 pt-3 pb-10">
+    <div className="px-5 pb-8 pt-3">
       <button
         type="button"
         onClick={onBack}
@@ -523,7 +523,7 @@ function ManualForm() {
   }
 
   return (
-    <div className="px-4 pt-3 pb-32">
+    <div className="px-5 pb-8 pt-3">
       <StepIndicator step={step} />
 
       {error ? (
@@ -999,7 +999,7 @@ function UnitStep({
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
+    <div className="rounded-2xl border border-ink-100/80 bg-white p-4">
       {children}
     </div>
   );

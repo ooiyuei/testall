@@ -39,7 +39,7 @@ export function SettingsView() {
   }
 
   return (
-    <div className="px-4 pt-3 pb-10 space-y-5">
+    <div className="px-5 pb-8 pt-3 space-y-5">
       {/* アプリ設定 */}
       <section>
         <SectionTitle>アプリ</SectionTitle>
@@ -224,7 +224,7 @@ function SectionTitle({
 
 function SettingsGroup({ children }: { children: React.ReactNode }) {
   return (
-    <ul className="mt-2 divide-y divide-cream-200 overflow-hidden rounded-3xl border border-cream-200 bg-white shadow-soft">
+    <ul className="mt-2 divide-y divide-ink-100/70 overflow-hidden rounded-2xl border border-ink-100/80 bg-white">
       {children}
     </ul>
   );
@@ -327,7 +327,7 @@ function PlanningEditor() {
   if (!hydrated) return null;
 
   return (
-    <div className="mt-2 divide-y divide-cream-200 overflow-hidden rounded-3xl border border-cream-200 bg-white shadow-soft">
+    <div className="mt-2 divide-y divide-ink-100/70 overflow-hidden rounded-2xl border border-ink-100/80 bg-white">
       <NumberRow
         icon={Clock}
         label="平日 基本ブロック"

@@ -183,7 +183,7 @@ export function SearchView() {
       : (examProvider !== "all" ? 1 : 0) + (examGrade !== "all" ? 1 : 0));
 
   return (
-    <div className="px-4 pt-3 pb-32">
+    <div className="px-5 pb-8 pt-3">
       {/* 検索バー */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />

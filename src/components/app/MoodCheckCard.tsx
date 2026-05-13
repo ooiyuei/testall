@@ -1,16 +1,12 @@
 "use client";
 
-// 今日の気分 + 帰宅時間 ピッカー
-// 計画AI v0.1 の §3〜§5 を実装
-// 結果は dailyMoodLogs に保存され、HomeView に「今日の最終ブロック数」を返す
+// 今日の準備カード — クリーン版
+// 気分セグメント + 帰宅セグメント → 今日のブロック計算結果
 
 import { useMemo, useState } from "react";
-import { Clock, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/cn";
-import {
-  logDailyMood,
-  setPlanning,
-} from "@/lib/store";
+import { logDailyMood, setPlanning } from "@/lib/store";
 import { useStore } from "@/lib/hooks/useStore";
 import {
   adjustTodayBlocks,
@@ -19,27 +15,28 @@ import {
 } from "@/lib/planning";
 import type { Mood } from "@/lib/planning";
 
-const MOOD_OPTIONS: { id: Mood; label: string; sub: string; tone: string }[] = [
-  { id: "less", label: "少なめ", sub: "−2", tone: "bg-cream-100 text-ink-700" },
-  { id: "normal", label: "並盛り", sub: "通常", tone: "bg-sky-500 text-white" },
-  { id: "more", label: "大盛り", sub: "+2", tone: "bg-peach-200 text-peach-500" },
-  { id: "max", label: "特盛り", sub: "+4", tone: "bg-sun-300 text-ink-900" },
+const MOODS: { id: Mood; label: string; delta: string }[] = [
+  { id: "less",   label: "少なめ", delta: "-2" },
+  { id: "normal", label: "並",     delta: "±0" },
+  { id: "more",   label: "大盛",   delta: "+2" },
+  { id: "max",    label: "特盛",   delta: "+4" },
 ];
 
-const RETURN_OPTIONS: { id: string; label: string; offset: number }[] = [
-  { id: "usual", label: "いつも通り", offset: 0 },
-  { id: "earlier", label: "予定より早い", offset: -60 },
-  { id: "later", label: "予定より遅い", offset: +60 },
+const RETURNS: { id: string; label: string; offset: number }[] = [
+  { id: "earlier", label: "早め",     offset: -60 },
+  { id: "usual",   label: "いつも",   offset: 0 },
+  { id: "later",   label: "遅め",     offset: +60 },
 ];
 
 function shiftTime(time: string, offsetMin: number): string {
   const [h, m] = time.split(":").map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) return time;
-  let total = h * 60 + m + offsetMin;
-  total = Math.max(0, Math.min(24 * 60, total));
-  const hh = Math.floor(total / 60).toString().padStart(2, "0");
-  const mm = (total % 60).toString().padStart(2, "0");
-  return `${hh}:${mm}`;
+  let total = Math.max(0, Math.min(24 * 60, h * 60 + m + offsetMin));
+  return (
+    String(Math.floor(total / 60)).padStart(2, "0") +
+    ":" +
+    String(total % 60).padStart(2, "0")
+  );
 }
 
 export function MoodCheckCard() {
@@ -50,7 +47,6 @@ export function MoodCheckCard() {
   const [customTime, setCustomTime] = useState("");
   const [decided, setDecided] = useState(false);
 
-  // 初期値（プランニング未設定なら平日3 / 休日6, 帰宅18:30 / 就寝24:00）
   const profile = useMemo(
     () =>
       planning ?? {
@@ -75,7 +71,7 @@ export function MoodCheckCard() {
       ? customTime || profile.defaultReturnTime
       : shiftTime(
           profile.defaultReturnTime,
-          RETURN_OPTIONS.find((r) => r.id === returnChoice)?.offset ?? 0,
+          RETURNS.find((r) => r.id === returnChoice)?.offset ?? 0,
         );
 
   const result = adjustTodayBlocks({
@@ -87,7 +83,6 @@ export function MoodCheckCard() {
   });
 
   function commit() {
-    // プランニング初期値を保存しておく（onboardingの後付け）
     if (!planning) setPlanning(profile);
     logDailyMood({
       dateISO: now.toISOString().slice(0, 10),
@@ -100,28 +95,31 @@ export function MoodCheckCard() {
     setDecided(true);
   }
 
+  // 確定後カード
   if (decided) {
     return (
-      <section className="mt-5 rounded-3xl border border-sky-200 bg-sky-50 p-4 shadow-soft">
+      <section className="rounded-2xl border border-sky-200/70 bg-gradient-to-br from-sky-50/80 to-mint-50/40 p-5">
         <div className="flex items-start gap-3">
-          <div className="flex h-9 w-9 flex-none items-center justify-center rounded-2xl bg-white text-sky-600">
-            <Sparkles className="h-4 w-4" />
+          <div className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-white text-sky-500">
+            <Sparkles className="h-[18px] w-[18px]" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-sky-700">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-600">
               今日の目標
             </div>
-            <div className="mt-0.5 text-2xl font-black text-ink-900">
-              {result.finalBlocks}
-              <span className="ml-1 text-sm font-bold text-ink-500">ブロック</span>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-[40px] font-bold leading-none tabular-nums text-ink-900">
+                {result.finalBlocks}
+              </span>
+              <span className="text-xs font-medium text-ink-500">ブロック</span>
             </div>
-            <p className="mt-1 text-[11px] leading-relaxed text-ink-700">
+            <p className="mt-2 text-[12px] leading-[1.6] text-ink-600">
               {result.reason}
             </p>
             <button
               type="button"
               onClick={() => setDecided(false)}
-              className="mt-2 text-[10px] font-bold text-sky-600 underline"
+              className="mt-2 text-[11px] font-medium text-sky-500 underline-offset-2 hover:underline"
             >
               気分を変更
             </button>
@@ -131,103 +129,132 @@ export function MoodCheckCard() {
     );
   }
 
+  // 入力カード
   return (
-    <section className="mt-5 rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
-      <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
+    <section className="rounded-2xl border border-ink-100/80 bg-white p-5">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
         今日の準備
       </div>
 
-      <div className="mt-2">
-        <div className="text-sm font-bold text-ink-900">気分は？</div>
-        <ul className="mt-2 grid grid-cols-4 gap-1.5">
-          {MOOD_OPTIONS.map((o) => (
-            <li key={o.id}>
-              <button
-                type="button"
-                onClick={() => setMood(o.id)}
-                className={cn(
-                  "flex h-14 w-full flex-col items-center justify-center rounded-xl text-[10px] font-bold transition",
-                  mood === o.id
-                    ? o.tone + " shadow-soft"
-                    : "bg-cream-50 text-ink-500",
-                )}
-              >
-                <span className="text-xs font-black">{o.label}</span>
-                <span className="text-[9px]">{o.sub}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-
       <div className="mt-3">
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-bold text-ink-900">今日の帰宅</div>
-          <div className="flex items-center gap-1 text-[10px] text-ink-500">
-            <Clock className="h-3 w-3" />
-            <span>{returnTime}</span>
-          </div>
-        </div>
-        <ul className="mt-2 grid grid-cols-4 gap-1.5">
-          {RETURN_OPTIONS.map((o) => (
-            <li key={o.id}>
-              <button
-                type="button"
-                onClick={() => setReturnChoice(o.id)}
-                className={cn(
-                  "flex h-10 w-full items-center justify-center rounded-xl text-[10px] font-bold transition",
-                  returnChoice === o.id
-                    ? "bg-ink-900 text-white"
-                    : "bg-cream-50 text-ink-700",
-                )}
-              >
-                {o.label}
-              </button>
-            </li>
-          ))}
-          <li>
-            <input
-              type="time"
-              value={customTime}
-              onChange={(e) => {
-                setCustomTime(e.target.value);
-                setReturnChoice("custom");
-              }}
-              className={cn(
-                "h-10 w-full rounded-xl text-center text-[10px] font-bold outline-none transition",
-                returnChoice === "custom"
-                  ? "bg-ink-900 text-white"
-                  : "bg-cream-50 text-ink-700",
-              )}
-            />
-          </li>
-        </ul>
+        <div className="text-[13px] font-bold text-ink-900">気分は？</div>
+        <SegmentRow
+          value={mood}
+          options={MOODS.map((m) => ({ id: m.id, label: m.label, sub: m.delta }))}
+          onChange={(v) => setMood(v as Mood)}
+        />
       </div>
 
-      <div className="mt-3 flex items-center justify-between rounded-2xl bg-cream-50 p-3">
+      <div className="mt-4">
+        <div className="flex items-baseline justify-between">
+          <div className="text-[13px] font-bold text-ink-900">今日の帰宅</div>
+          <span className="text-[11px] font-medium text-ink-400 tabular-nums">
+            {returnTime}
+          </span>
+        </div>
+        <SegmentRow
+          value={returnChoice}
+          options={RETURNS.map((r) => ({ id: r.id, label: r.label }))}
+          onChange={setReturnChoice}
+        />
+        <div className="mt-2 flex items-center gap-2">
+          <input
+            type="time"
+            value={customTime}
+            onChange={(e) => {
+              setCustomTime(e.target.value);
+              setReturnChoice("custom");
+            }}
+            className={cn(
+              "h-9 flex-1 rounded-xl border bg-cream-50 px-3 text-[13px] text-ink-900 outline-none transition",
+              returnChoice === "custom"
+                ? "border-sky-300 bg-white"
+                : "border-ink-100/80",
+            )}
+            placeholder="時刻を指定"
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 flex items-end justify-between rounded-xl bg-cream-50/80 px-4 py-3">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
+          <div className="text-[10px] font-medium text-ink-500">
             今日のブロック
           </div>
-          <div className="mt-0.5 text-xl font-black text-ink-900 tabular-nums">
-            {result.finalBlocks}
+          <div className="mt-0.5 flex items-baseline gap-1">
+            <span className="text-3xl font-bold leading-none tabular-nums text-ink-900">
+              {result.finalBlocks}
+            </span>
+            <span className="text-[10px] font-medium text-ink-500">blk</span>
           </div>
         </div>
-        <div className="text-right text-[10px] text-ink-500 leading-snug">
-          基本 {baseBlocks}・気分 {result.moodDelta >= 0 ? "+" : ""}
+        <div className="text-right text-[10px] leading-[1.6] text-ink-500">
+          基本 {baseBlocks} · 気分 {result.moodDelta >= 0 ? "+" : ""}
           {result.moodDelta}
           <br />
-          上限 {result.availableBlocks} （帰宅 {returnTime} → 就寝 {profile.defaultBedtime}）
+          物理上限 {result.availableBlocks}
         </div>
       </div>
 
       <button
         type="button"
         onClick={commit}
-        className="mt-3 flex h-12 w-full items-center justify-center rounded-2xl bg-sky-500 text-sm font-black text-white shadow-soft active:scale-[0.98] transition"
+        className="mt-3 flex h-11 w-full items-center justify-center gap-1 rounded-xl bg-ink-900 text-[13px] font-bold text-white active:scale-[0.98] transition"
       >
         この設定で進める
+        <ArrowRight className="h-4 w-4" strokeWidth={2.4} />
       </button>
     </section>
+  );
+}
+
+function SegmentRow({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: { id: string; label: string; sub?: string }[];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <ul className="mt-2 flex gap-1 rounded-xl bg-cream-100/70 p-1">
+      {options.map((o) => {
+        const active = value === o.id;
+        return (
+          <li key={o.id} className="flex-1">
+            <button
+              type="button"
+              onClick={() => onChange(o.id)}
+              className={cn(
+                "flex h-10 w-full flex-col items-center justify-center rounded-lg transition",
+                active
+                  ? "bg-white shadow-soft"
+                  : "bg-transparent active:bg-white/40",
+              )}
+            >
+              <span
+                className={cn(
+                  "text-[12px] font-bold",
+                  active ? "text-ink-900" : "text-ink-500",
+                )}
+              >
+                {o.label}
+              </span>
+              {o.sub ? (
+                <span
+                  className={cn(
+                    "text-[9px] font-medium tabular-nums",
+                    active ? "text-ink-400" : "text-ink-300",
+                  )}
+                >
+                  {o.sub}
+                </span>
+              ) : null}
+            </button>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

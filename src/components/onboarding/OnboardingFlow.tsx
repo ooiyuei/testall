@@ -136,7 +136,7 @@ export function OnboardingFlow() {
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col bg-cream-50">
-      <header className="sticky top-0 z-10 border-b border-cream-200 bg-cream-50/95 px-4 py-3 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-ink-100/60 bg-cream-50/85 px-4 py-3 backdrop-blur-xl">
         <div className="flex items-center justify-between">
           <button
             type="button"
@@ -207,13 +207,13 @@ export function OnboardingFlow() {
         ) : null}
       </main>
 
-      <footer className="sticky bottom-0 z-10 border-t border-cream-200 bg-cream-50/95 px-5 py-4 backdrop-blur">
+      <footer className="sticky bottom-0 z-10 border-t border-ink-100/60 bg-cream-50/85 px-5 py-4 backdrop-blur-xl">
         <button
           type="button"
           onClick={next}
           disabled={!canProceed()}
           className={cn(
-            "flex h-14 w-full items-center justify-center gap-1 rounded-2xl text-base font-black text-white shadow-soft transition active:scale-[0.98]",
+            "flex h-12 w-full items-center justify-center gap-1 rounded-xl text-[14px] font-bold text-white transition active:scale-[0.98]",
             canProceed() ? "bg-sky-500" : "bg-ink-300",
           )}
         >
@@ -244,7 +244,7 @@ function StepTitle({
 }) {
   return (
     <div className="mb-6">
-      <h1 className="text-[24px] font-black leading-tight text-ink-900">
+      <h1 className="text-[22px] font-bold leading-tight tracking-tight text-ink-900">
         {title}
       </h1>
       {subtitle ? (
