@@ -86,7 +86,7 @@ function ModeSelect({
   return (
     <div className="px-5 pb-8 pt-3">
       <p className="text-sm text-ink-600">
-        テスト1つに複数科目を一括で登録できます。AIが弱点と次の45分を整えます。
+        テスト1つに複数科目を一括で登録できます。AIが弱点と次の25分を整えます。
       </p>
 
       <div className="mt-5 grid gap-3">

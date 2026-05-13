@@ -52,7 +52,7 @@ export function FocusListView() {
             ブロックを使うにはテスト診断が必要
           </div>
           <p className="mt-1 text-xs text-ink-500">
-            テスト結果からAIが今日の45分を3つに分けます。
+            テスト結果からAIが今日の25分を整えます。
           </p>
           <Link
             href="/app/test/new"

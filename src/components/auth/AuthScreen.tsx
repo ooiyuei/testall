@@ -72,7 +72,7 @@ export function AuthScreen({ mode }: { mode: Mode }) {
         </h1>
         <p className="mt-2 text-sm text-ink-600">
           {isSignup
-            ? "テストを次の45分に変える、受験戦略OSへ。"
+            ? "テストを次の25分に変える、受験戦略OSへ。"
             : "サインインして続きから。"}
         </p>
 

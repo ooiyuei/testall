@@ -8,7 +8,7 @@ export function Footer() {
           <div className="max-w-sm">
             <Logo />
             <p className="mt-4 text-sm text-ink-500">
-              今日の45分を、一緒に整える。
+              今日の25分を、一緒に整える。
               <br />
               受験OS Testall。
             </p>
