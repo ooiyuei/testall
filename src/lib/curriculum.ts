@@ -3,6 +3,70 @@
 
 export type GradeId = "h1" | "h2" | "h3" | "ronin";
 
+// 5大カテゴリ — マイページの実力パラメーターと連動
+export type SubjectCategory =
+  | "japanese"
+  | "math"
+  | "english"
+  | "science"
+  | "social"
+  | "info";
+
+export const CATEGORY_DEFS: {
+  id: SubjectCategory;
+  name: string;
+  shortName: string;
+  tone: string; // tailwind utility
+  iconKey: "BookOpen" | "Calculator" | "MessageSquare" | "FlaskConical" | "Globe2" | "Cpu";
+}[] = [
+  {
+    id: "japanese",
+    name: "国語",
+    shortName: "国",
+    tone: "bg-peach-100 text-peach-500",
+    iconKey: "BookOpen",
+  },
+  {
+    id: "math",
+    name: "数学",
+    shortName: "数",
+    tone: "bg-sky-100 text-sky-700",
+    iconKey: "Calculator",
+  },
+  {
+    id: "english",
+    name: "英語",
+    shortName: "英",
+    tone: "bg-mint-100 text-mint-600",
+    iconKey: "MessageSquare",
+  },
+  {
+    id: "science",
+    name: "理科",
+    shortName: "理",
+    tone: "bg-sun-200 text-ink-900",
+    iconKey: "FlaskConical",
+  },
+  {
+    id: "social",
+    name: "社会",
+    shortName: "社",
+    tone: "bg-coral-300/50 text-coral-500",
+    iconKey: "Globe2",
+  },
+  {
+    id: "info",
+    name: "情報",
+    shortName: "情",
+    tone: "bg-ink-200 text-ink-700",
+    iconKey: "Cpu",
+  },
+];
+
+export function getCategoryDef(id: SubjectCategory) {
+  return CATEGORY_DEFS.find((c) => c.id === id) ?? CATEGORY_DEFS[0];
+}
+
 export type SubjectId =
   | "math1a"
   | "math2bc"
@@ -33,11 +97,20 @@ export type SubjectDef = {
   id: SubjectId;
   name: string;
   shortName: string;
-  category: "math" | "english" | "japanese" | "science" | "social" | "info";
+  category: SubjectCategory;
   // 通常履修される学年（メイン）
   grades: GradeId[];
   units: string[];
 };
+
+export function subjectsForCategory(
+  category: SubjectCategory,
+  grade?: GradeId,
+): SubjectDef[] {
+  return SUBJECTS_V2.filter(
+    (s) => s.category === category && (!grade || s.grades.includes(grade)),
+  );
+}
 
 export const SUBJECTS_V2: SubjectDef[] = [
   // ── 数学 ──

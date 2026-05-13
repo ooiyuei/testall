@@ -15,6 +15,20 @@ export type TestInput = {
   weekdayMinutes?: number;
   weekendMinutes?: number;
   targetUniversities?: { universityId: string; faculty?: string }[];
+  // v0.4 拡張：複数科目を1テストで管理
+  testKindId?: string;
+  testDate?: string; // YYYY-MM-DD
+  subjects?: SubjectInput[]; // 複数科目それぞれ点数・単元
+};
+
+export type SubjectInput = {
+  subjectId: string;
+  subjectName: string;
+  score: number;
+  fullScore: number;
+  units: UnitInput[];
+  // 配点や計算問題区分などの任意詳細
+  partition?: { label: string; score: number; fullScore: number }[];
 };
 
 export type UnitInput = {

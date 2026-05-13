@@ -4,7 +4,7 @@ import { MeView } from "@/components/app/MeView";
 export default function MePage() {
   return (
     <>
-      <AppHeader title="マイ" />
+      <AppHeader title="マイページ" />
       <MeView />
     </>
   );
