@@ -50,6 +50,7 @@ import { RadarChart, type RadarPoint } from "@/components/me/RadarChart";
 import { BookshelfAddModal } from "@/components/me/BookshelfAddModal";
 import { LevelCard } from "@/components/me/LevelCard";
 import { DeviationTrend, type TrendSeries } from "@/components/me/DeviationTrend";
+import { ExpTrend, type ExpTrendPoint } from "@/components/me/ExpTrend";
 import { computeTotalExp, levelFromExp } from "@/lib/exp";
 import { defaultRemainingMonths, estimateGoalGap, estimateRequiredBlocks } from "@/lib/planning";
 import { HOURS_PER_BLOCK } from "@/lib/planning/constants";
@@ -138,6 +139,9 @@ export function MeView() {
 
       {/* ── 偏差値の推移 ── */}
       <DeviationTrendSection />
+
+      {/* ── 経験値の推移 ── */}
+      <ExpTrendSection />
 
       {/* ── 本棚 ── */}
       <section>
@@ -760,6 +764,95 @@ function DeviationTrendSection() {
       <div className="mt-3">
         <DeviationTrend series={series} />
       </div>
+    </section>
+  );
+}
+
+// ─── 経験値推移 ───
+function ExpTrendSection() {
+  const { state, hydrated } = useStore();
+  if (!hydrated) return null;
+
+  const points = useMemo((): ExpTrendPoint[] => {
+    const dailyMap = new Map<string, number>();
+
+    // ログイン: +10/日
+    for (const log of state.dailyMoodLogs ?? []) {
+      const d = log.dateISO;
+      dailyMap.set(d, (dailyMap.get(d) ?? 0) + 10);
+    }
+
+    // 集中ブロック: +50/完了
+    for (const bl of state.blockLogs ?? []) {
+      const d = bl.completedAt.slice(0, 10);
+      dailyMap.set(d, (dailyMap.get(d) ?? 0) + 50);
+    }
+
+    // タスク完了: +30 × blocks
+    for (const task of state.tasks ?? []) {
+      if (task.status === "done" && task.completedAt) {
+        const d = task.completedAt.slice(0, 10);
+        const gain = 30 * Math.max(1, task.blocks ?? 1);
+        dailyMap.set(d, (dailyMap.get(d) ?? 0) + gain);
+      }
+    }
+
+    // テスト登録: +200
+    for (const test of state.tests ?? []) {
+      const d = test.createdAt.slice(0, 10);
+      dailyMap.set(d, (dailyMap.get(d) ?? 0) + 200);
+    }
+
+    if (dailyMap.size === 0) return [];
+
+    // 直近 30 日のウィンドウ内のデータのみ
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 29);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+
+    const sortedDays = [...dailyMap.entries()]
+      .filter(([d]) => d >= cutoffStr)
+      .sort(([a], [b]) => a.localeCompare(b));
+
+    // 全期間の累計ベースを計算（cutoff 以前の分も合算）
+    let baseExp = 0;
+    for (const [d, gain] of [...dailyMap.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+      if (d < cutoffStr) baseExp += gain;
+    }
+
+    const result: ExpTrendPoint[] = [];
+    let cumExp = baseExp;
+    for (const [date, gain] of sortedDays) {
+      cumExp += gain;
+      result.push({ date, cumExp });
+    }
+    return result;
+  }, [state.dailyMoodLogs, state.blockLogs, state.tasks, state.tests]);
+
+  const totalTests = (state.tests ?? []).length;
+  const totalBlocks = (state.blockLogs ?? []).length;
+  const hasData = points.length > 0;
+
+  return (
+    <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
+      <div className="flex items-baseline justify-between">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+          経験値の推移
+        </div>
+        {hasData ? (
+          <span className="text-[10px] font-medium text-ink-500 tabular-nums">
+            累計 {points[points.length - 1].cumExp.toLocaleString()} EXP
+          </span>
+        ) : null}
+      </div>
+      <div className="mt-3">
+        <ExpTrend points={points} />
+      </div>
+      {hasData ? (
+        <p className="mt-1.5 text-[10px] text-ink-400">
+          テスト {totalTests}回 · ブロック {totalBlocks}回
+        </p>
+      ) : null}
     </section>
   );
 }
