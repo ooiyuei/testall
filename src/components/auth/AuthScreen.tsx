@@ -1,26 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { signInWithGoogle } from "@/lib/auth";
 
 type Mode = "signin" | "signup";
 
 export function AuthScreen({ mode }: { mode: Mode }) {
-  const router = useRouter();
   const [submitting, setSubmitting] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const isSignup = mode === "signup";
 
-  function continueAs(method: string) {
-    // 認証はまだ実装していないので、サインアップならオンボーディング、サインインならアプリへ。
-    // TODO: 実データに置き換え（Supabase Auth / OAuth）
+  async function continueAs(method: string) {
+    setErrorMsg(null);
     setSubmitting(method);
-    setTimeout(() => {
-      if (isSignup) router.push("/onboarding");
-      else router.push("/app");
-    }, 350);
+    try {
+      if (method === "google") {
+        await signInWithGoogle();
+        // signInWithGoogle redirects; no further action needed here
+      }
+    } catch (err) {
+      setErrorMsg("ログインに失敗しました。もう一度お試しください。");
+      setSubmitting(null);
+    }
   }
 
   return (
@@ -53,8 +57,10 @@ export function AuthScreen({ mode }: { mode: Mode }) {
           />
           <AuthButton
             provider="apple"
-            submitting={submitting === "apple"}
-            onClick={() => continueAs("apple")}
+            submitting={false}
+            disabled
+            label="Appleで続ける（準備中）"
+            onClick={() => {}}
           />
 
           <div className="flex items-center gap-3 py-1">
@@ -67,11 +73,18 @@ export function AuthScreen({ mode }: { mode: Mode }) {
 
           <AuthButton
             provider="email"
-            submitting={submitting === "email"}
-            onClick={() => continueAs("email")}
-            label={isSignup ? "メールで登録" : "メールでサインイン"}
+            submitting={false}
+            disabled
+            label={isSignup ? "メールで登録（近日対応）" : "メールでサインイン（近日対応）"}
+            onClick={() => {}}
           />
         </div>
+
+        {errorMsg ? (
+          <p className="mt-4 rounded-xl bg-coral-300/10 px-4 py-3 text-sm font-bold text-coral-500">
+            {errorMsg}
+          </p>
+        ) : null}
 
         <div className="mt-auto pt-12 text-center text-xs text-ink-500">
           {isSignup ? (
@@ -111,11 +124,13 @@ function AuthButton({
   submitting,
   onClick,
   label,
+  disabled,
 }: {
   provider: "google" | "apple" | "email";
   submitting: boolean;
   onClick: () => void;
   label?: string;
+  disabled?: boolean;
 }) {
   const meta = {
     google: {
@@ -139,11 +154,11 @@ function AuthButton({
     <button
       type="button"
       onClick={onClick}
-      disabled={submitting}
+      disabled={submitting || disabled}
       className={cn(
         "flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-sm font-black shadow-soft transition active:scale-[0.98]",
         meta.bg,
-        submitting && "opacity-60",
+        (submitting || disabled) && "opacity-50 cursor-not-allowed",
       )}
     >
       {meta.icon}

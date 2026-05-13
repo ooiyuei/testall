@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Bell,
   ChevronRight,
@@ -19,10 +20,24 @@ import {
 import { cn } from "@/lib/cn";
 import { clearAll, setPlanning } from "@/lib/store";
 import { useStore } from "@/lib/hooks/useStore";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 export function SettingsView() {
   const { state, hydrated } = useStore();
+  const { user, signOut } = useAuth();
+  const router = useRouter();
   const [confirmStep, setConfirmStep] = useState<0 | 1 | 2>(0);
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    try {
+      await signOut();
+      router.push("/signin");
+    } catch {
+      setSigningOut(false);
+    }
+  }
 
   function handleDelete() {
     if (confirmStep === 0) {
@@ -122,14 +137,28 @@ export function SettingsView() {
       {/* アカウント / 危険ゾーン */}
       <section>
         <SectionTitle danger>アカウント</SectionTitle>
+        {user ? (
+          <p className="mb-2 px-1 text-[11px] text-ink-500">{user.email}</p>
+        ) : null}
         <SettingsGroup>
-          <SettingsRow
-            icon={LogOut}
-            tone="bg-cream-100 text-ink-700"
-            label="サインアウト"
-            value="未実装"
-            disabled
-          />
+          <li>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              disabled={signingOut}
+              className={cn(
+                "flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-cream-100",
+                signingOut && "opacity-60",
+              )}
+            >
+              <span className="flex h-8 w-8 flex-none items-center justify-center rounded-xl bg-cream-100 text-ink-700">
+                <LogOut className="h-4 w-4" />
+              </span>
+              <span className="flex-1 text-sm font-bold text-ink-900">
+                {signingOut ? "サインアウト中…" : "サインアウト"}
+              </span>
+            </button>
+          </li>
         </SettingsGroup>
 
         <details className="mt-3 rounded-3xl border border-coral-300/40 bg-coral-300/5 p-1">

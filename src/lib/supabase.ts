@@ -18,7 +18,7 @@ export function getSupabase(): SupabaseClient | null {
     return null;
   }
   client = createClient(url, key, {
-    auth: { persistSession: false },
+    auth: { persistSession: true },
   });
   return client;
 }
