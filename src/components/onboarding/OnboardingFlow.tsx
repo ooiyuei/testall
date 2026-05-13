@@ -469,9 +469,13 @@ function BucketPicker({
         aria-label={label}
       />
       <div className="mt-1 flex justify-between text-[9px] font-bold text-ink-400 tabular-nums">
-        {DEVIATION_BUCKETS.map((b) => (
-          <span key={b.id}>{b.label.replace("〜", "")}</span>
-        ))}
+        <span>~45</span>
+        <span>50</span>
+        <span>55</span>
+        <span>60</span>
+        <span>65</span>
+        <span>70</span>
+        <span>75~</span>
       </div>
     </div>
   );
