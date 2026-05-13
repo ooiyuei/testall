@@ -144,6 +144,8 @@ export function MoodCheckCard() {
         <TodaySchedule
           finalBlocks={result.finalBlocks}
           bedtime={profile.defaultBedtime}
+          wakeupTime={state.profile?.wakeupTime ?? "07:00"}
+          returnTime={profile.defaultReturnTime}
           tasks={state.tasks}
           onReset={() => setDecided(false)}
         />

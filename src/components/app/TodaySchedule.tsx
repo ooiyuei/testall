@@ -1,11 +1,12 @@
 "use client";
 
-// 今日のタイムスケジュール表示
-// MoodCheckCard で「この設定で進める」を押した後に表示される。
-// 縦方向 15分刻みタイムライン。
+// 今日のタイムスケジュール表示 v2.0
+// 朝0時〜翌0時の全日タイムライン
+// 4ゾーン（深夜・学校・夕方・深夜後）アコーディオン表示
+// 日付ナビ付き（今日/翌日/翌々日）
 
 import { useEffect, useRef, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { buildTodaySchedule } from "@/lib/planning/today-schedule";
 import type { ScheduleInput, ScheduleResult, ScheduleSlot } from "@/lib/planning/today-schedule";
@@ -36,7 +37,7 @@ const KIND_LABEL: Record<ScheduleSlot["kind"], string> = {
   "sleep-soon": "就寝準備",
 };
 
-// ── 現在時刻を "HH:MM" で ────────────────────
+// ── 時刻ユーティリティ ─────────────────────
 function nowHHmm(): string {
   const d = new Date();
   return (
@@ -52,25 +53,106 @@ function timeToMin(hhmm: string): number {
   return Number(m[1]) * 60 + Number(m[2]);
 }
 
+function minToHHmm(totalMin: number): string {
+  const h = Math.floor(totalMin / 60) % 24;
+  const m = totalMin % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function formatDateLabel(offsetDays: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  if (offsetDays === 0) return "今日";
+  if (offsetDays === 1) return "明日";
+  const mm = d.getMonth() + 1;
+  const dd = d.getDate();
+  const days = ["日", "月", "火", "水", "木", "金", "土"];
+  return `${mm}/${dd}(${days[d.getDay()]})`;
+}
+
+// ── ゾーン定義 ─────────────────────────────
+type ZoneId = "midnight" | "school" | "evening" | "latenight";
+
+type Zone = {
+  id: ZoneId;
+  label: string;
+  startMin: number;
+  endMin: number;
+};
+
+// ゾーンを動的に生成（起床/帰宅/就寝に応じて）
+function buildZones(wakeupMin: number, returnMin: number, bedMin: number): Zone[] {
+  return [
+    { id: "midnight", label: "深夜・早朝", startMin: 0, endMin: wakeupMin },
+    { id: "school",   label: "学校",       startMin: wakeupMin, endMin: returnMin },
+    { id: "evening",  label: "夕方〜夜",   startMin: returnMin, endMin: bedMin },
+    { id: "latenight", label: "就寝後",    startMin: bedMin, endMin: 24 * 60 },
+  ];
+}
+
+// ── タイムラインアイテム ───────────────────
+type CompressedBlock = {
+  type: "compressed";
+  startTime: string;
+  endTime: string;
+  label: string;
+};
+
+// 圧縮ゾーン用: 60分単位で1行にまとめる
+function buildMidnightItems(
+  wakeupMin: number,
+  isToday: boolean,
+): CompressedBlock[] {
+  if (wakeupMin <= 0) return [];
+  const items: CompressedBlock[] = [];
+  // 60分単位で1行に圧縮
+  for (let min = 0; min < wakeupMin; min += 60) {
+    const end = Math.min(min + 60, wakeupMin);
+    items.push({
+      type: "compressed",
+      startTime: minToHHmm(min),
+      endTime: minToHHmm(end),
+      label: isToday && min < timeToMin(nowHHmm()) ? "睡眠中（過去）" : "睡眠中",
+    });
+  }
+  return items;
+}
+
+function buildLatenightItems(bedMin: number, _isToday: boolean): CompressedBlock[] {
+  if (bedMin >= 24 * 60) return [];
+  const items: CompressedBlock[] = [];
+  for (let min = bedMin; min < 24 * 60; min += 60) {
+    const end = Math.min(min + 60, 24 * 60);
+    items.push({
+      type: "compressed",
+      startTime: minToHHmm(min),
+      endTime: minToHHmm(end),
+      label: "就寝中",
+    });
+  }
+  return items;
+}
+
 // ── Props ──────────────────────────────────
 type TodayScheduleProps = {
   finalBlocks: number;
   bedtime: string;
+  wakeupTime?: string;       // "07:00"
+  returnTime?: string;       // "18:00"
   tasks?: StoredTask[];
   onReset?: () => void;
 };
 
-function buildInput(
+function buildScheduleInput(
   finalBlocks: number,
   bedtime: string,
+  startTime: string,
   tasks: StoredTask[] | undefined,
 ): ScheduleInput {
-  // 優先度順に未完了タスクを取り出し、finalBlocks まで割り当て
   const activeTasks = (tasks ?? [])
     .filter((t) => t.status !== "done")
     .sort((a, b) => a.priority - b.priority);
 
-  // ブロック数の累計が finalBlocks を超えないようにトリム
   let remaining = finalBlocks;
   const scheduleTasks: ScheduleInput["tasks"] = [];
   for (const t of activeTasks) {
@@ -85,35 +167,28 @@ function buildInput(
     remaining -= take;
   }
 
-  return {
-    startTime: nowHHmm(),
-    bedtime,
-    finalBlocks,
-    tasks: scheduleTasks,
-  };
+  return { startTime, bedtime, finalBlocks, tasks: scheduleTasks };
 }
 
 // ── スロット1行 ────────────────────────────
 function SlotRow({
   slot,
   isCurrent,
+  isPast,
 }: {
   slot: ScheduleSlot;
   isCurrent: boolean;
+  isPast: boolean;
 }) {
-  const isStudy = slot.kind === "study";
   const heightClass = slot.durationMin >= 30 ? "min-h-[60px]" : "min-h-[36px]";
 
   return (
-    <div className="flex gap-2">
-      {/* 時刻軸 */}
+    <div className={cn("flex gap-2", isPast && "opacity-40")}>
       <div className="w-12 shrink-0 pt-1 text-right">
         <span className="text-[10px] font-medium tabular-nums text-ink-400">
           {slot.startTime}
         </span>
       </div>
-
-      {/* インジケーター */}
       <div className="flex shrink-0 flex-col items-center">
         <div
           className={cn(
@@ -123,8 +198,6 @@ function SlotRow({
         />
         <div className="flex-1 border-l border-dashed border-ink-100" />
       </div>
-
-      {/* カード */}
       <div
         className={cn(
           "mb-1.5 flex-1 rounded-xl border px-3 py-2",
@@ -149,60 +222,223 @@ function SlotRow({
         {slot.kind !== "study" && (
           <span className="text-[10px] text-ink-400">{KIND_LABEL[slot.kind]}</span>
         )}
-        {isStudy && slot.blockIdx !== undefined && (
-          <span className="text-[10px] text-sky-600">
-            ブロック {slot.blockIdx + 1}
-          </span>
+        {slot.kind === "study" && slot.blockIdx !== undefined && (
+          <span className="text-[10px] text-sky-600">ブロック {slot.blockIdx + 1}</span>
         )}
       </div>
     </div>
   );
 }
 
+// ── 圧縮行 ────────────────────────────────
+function CompressedRow({ item, isPast }: { item: CompressedBlock; isPast: boolean }) {
+  return (
+    <div className={cn("flex gap-2", isPast && "opacity-30")}>
+      <div className="w-12 shrink-0 pt-1 text-right">
+        <span className="text-[10px] font-medium tabular-nums text-ink-300">
+          {item.startTime}
+        </span>
+      </div>
+      <div className="flex shrink-0 flex-col items-center">
+        <div className="mt-1.5 h-2 w-2 rounded-full bg-ink-100" />
+        <div className="flex-1 border-l border-dashed border-ink-100/60" />
+      </div>
+      <div className="mb-1 flex-1 rounded-xl border border-ink-100/40 bg-ink-50/30 px-3 py-1.5 min-h-[32px]">
+        <div className="flex items-center justify-between gap-1">
+          <span className="text-[11px] font-medium text-ink-300">{item.label}</span>
+          <span className="text-[10px] text-ink-200">{item.startTime}〜{item.endTime}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── 学校バンド ────────────────────────────
+function SchoolBand({ wakeupTime, returnTime, isPast }: {
+  wakeupTime: string;
+  returnTime: string;
+  isPast: boolean;
+}) {
+  return (
+    <div className={cn("flex gap-2", isPast && "opacity-40")}>
+      <div className="w-12 shrink-0 pt-1 text-right">
+        <span className="text-[10px] font-medium tabular-nums text-ink-400">
+          {wakeupTime}
+        </span>
+      </div>
+      <div className="flex shrink-0 flex-col items-center">
+        <div className="mt-1.5 h-2 w-2 rounded-full bg-amber-300" />
+        <div className="flex-1 border-l border-dashed border-ink-100" />
+      </div>
+      <div className="mb-1.5 flex-1 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 min-h-[48px]">
+        <div className="flex items-center justify-between gap-1">
+          <span className="text-[12px] font-bold text-amber-900">在学校</span>
+          <span className="text-[10px] font-medium text-amber-600">
+            {wakeupTime}〜{returnTime}
+          </span>
+        </div>
+        <span className="text-[10px] text-amber-600">学校・授業</span>
+      </div>
+    </div>
+  );
+}
+
+// ── ゾーンアコーディオン ──────────────────
+function ZoneSection({
+  zone,
+  children,
+  isOpen,
+  onToggle,
+  itemCount,
+}: {
+  zone: Zone;
+  children: React.ReactNode;
+  isOpen: boolean;
+  onToggle: () => void;
+  itemCount: number;
+}) {
+  const zoneColor: Record<ZoneId, string> = {
+    midnight: "text-ink-400",
+    school: "text-amber-600",
+    evening: "text-sky-600",
+    latenight: "text-ink-300",
+  };
+
+  return (
+    <div className="border-b border-ink-100/60 last:border-b-0">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between px-4 py-2.5 transition hover:bg-ink-50/40 active:scale-[0.99]"
+      >
+        <span className={cn("text-[11px] font-semibold", zoneColor[zone.id])}>
+          {zone.label}
+          <span className="ml-1.5 font-normal text-ink-300">
+            {zone.id === "school" ? "" : `${minToHHmm(zone.startMin)}〜${minToHHmm(Math.min(zone.endMin, 24 * 60))}`}
+          </span>
+        </span>
+        <div className="flex items-center gap-1.5">
+          {itemCount > 0 && (
+            <span className="rounded-full bg-ink-100 px-1.5 py-0.5 text-[9px] font-bold text-ink-500">
+              {itemCount}
+            </span>
+          )}
+          {isOpen
+            ? <ChevronUp className="h-3.5 w-3.5 text-ink-300" />
+            : <ChevronDown className="h-3.5 w-3.5 text-ink-300" />
+          }
+        </div>
+      </button>
+      {isOpen && (
+        <div className="px-4 pb-3 pt-1">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── メインコンポーネント ────────────────────
-export function TodaySchedule({ finalBlocks, bedtime, tasks, onReset }: TodayScheduleProps) {
+export function TodaySchedule({
+  finalBlocks,
+  bedtime,
+  wakeupTime = "07:00",
+  returnTime,
+  tasks,
+  onReset,
+}: TodayScheduleProps) {
   const [result, setResult] = useState<ScheduleResult | null>(null);
   const [currentNow, setCurrentNow] = useState(nowHHmm());
+  const [dayOffset, setDayOffset] = useState(0); // 0=今日, 1=明日, ...
+  const [openZones, setOpenZones] = useState<Set<ZoneId>>(new Set(["evening"]));
   const currentRowRef = useRef<HTMLDivElement>(null);
 
-  // 初回 + 「途中復帰」で再計算
+  // 帰宅時間: prop優先、なければwakeupTimeの2時間後または18:30
+  const effectiveReturnTime = returnTime ?? "18:30";
+
+  const wakeupMin = timeToMin(wakeupTime);
+  const returnMin = timeToMin(effectiveReturnTime);
+  const bedMin = timeToMin(bedtime);
+
+  // 学校帯が有効かどうか（平日のみ）
+  const isWeekday = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + dayOffset);
+    const dow = d.getDay();
+    return dow >= 1 && dow <= 5;
+  })();
+
+  const hasSchool = isWeekday && wakeupMin < returnMin;
+
+  const zones = buildZones(wakeupMin, returnMin, bedMin);
+
+  // 翌日以降: ブロック生成しない
+  const isToday = dayOffset === 0;
+
   const recalculate = () => {
     const nowStr = nowHHmm();
     setCurrentNow(nowStr);
-    setResult(buildTodaySchedule(buildInput(finalBlocks, bedtime, tasks)));
+    if (!isToday) {
+      setResult({ slots: [], finalBlocks: 0, fitsInTime: true });
+      return;
+    }
+    // 今日: 帰宅時間か現在時刻の遅い方から開始
+    const startMin = Math.max(timeToMin(nowStr), returnMin);
+    const startTime = minToHHmm(startMin);
+    setResult(buildTodaySchedule(buildScheduleInput(finalBlocks, bedtime, startTime, tasks)));
   };
 
   useEffect(() => {
     recalculate();
-    // 5分ごとに現在位置を更新
-    const timer = setInterval(() => {
-      setCurrentNow(nowHHmm());
-    }, 60_000);
+    const timer = setInterval(() => setCurrentNow(nowHHmm()), 60_000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [finalBlocks, bedtime]);
+  }, [finalBlocks, bedtime, dayOffset, wakeupTime, returnTime]);
 
-  // 現在スロットへスクロール
   useEffect(() => {
     if (currentRowRef.current) {
       currentRowRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
     }
   }, [result]);
 
-  if (!result) return null;
+  function toggleZone(zoneId: ZoneId) {
+    setOpenZones((prev) => {
+      const next = new Set(prev);
+      if (next.has(zoneId)) {
+        next.delete(zoneId);
+      } else {
+        next.add(zoneId);
+      }
+      return next;
+    });
+  }
 
   const nowMin = timeToMin(currentNow);
+  const slots = result?.slots ?? [];
 
-  // 現在時刻が含まれるスロットを検出
-  const currentSlotIdx = result.slots.findIndex((s, i) => {
-    const start = timeToMin(s.startTime);
-    const next = result.slots[i + 1]
-      ? timeToMin(result.slots[i + 1].startTime)
-      : start + s.durationMin;
-    return nowMin >= start && nowMin < next;
-  });
+  const currentSlotIdx = isToday
+    ? slots.findIndex((s, i) => {
+        const start = timeToMin(s.startTime);
+        const next = slots[i + 1]
+          ? timeToMin(slots[i + 1].startTime)
+          : start + s.durationMin;
+        return nowMin >= start && nowMin < next;
+      })
+    : -1;
 
-  const studyCount = result.slots.filter((s) => s.kind === "study").length;
+  const studyCount = slots.filter((s) => s.kind === "study").length;
+
+  // 各ゾーンのアイテム数（バッジ用）
+  function getZoneItemCount(zone: Zone): number {
+    if (zone.id === "midnight") return buildMidnightItems(wakeupMin, isToday).length;
+    if (zone.id === "school") return hasSchool ? 1 : 0;
+    if (zone.id === "latenight") return buildLatenightItems(bedMin, isToday).length;
+    // evening: スロット数
+    return slots.filter((s) => {
+      const sMin = timeToMin(s.startTime);
+      return sMin >= zone.startMin && sMin < zone.endMin;
+    }).length;
+  }
 
   return (
     <section className="mt-5 rounded-2xl border border-ink-100/80 bg-white overflow-hidden">
@@ -210,32 +446,58 @@ export function TodaySchedule({ finalBlocks, bedtime, tasks, onReset }: TodaySch
       <div className="flex items-center justify-between px-5 py-4 border-b border-ink-100/60">
         <div>
           <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
-            今日のスケジュール
+            タイムライン
           </div>
-          <div className="mt-0.5 flex items-baseline gap-1.5">
-            <span className="text-[22px] font-bold tabular-nums text-ink-900">
-              {studyCount}
-            </span>
-            <span className="text-xs font-medium text-ink-500">
-              ブロック / 就寝 {bedtime}
-            </span>
-            {!result.fitsInTime && (
-              <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-700">
-                時間不足
+          <div className="mt-0.5 flex items-center gap-3">
+            {/* 日付ナビ */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setDayOffset((d) => Math.max(0, d - 1))}
+                disabled={dayOffset === 0}
+                className="flex h-7 w-7 items-center justify-center rounded-full border border-ink-100 bg-white text-ink-400 disabled:opacity-30 transition active:scale-95"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </button>
+              <span className="min-w-[56px] text-center text-[13px] font-bold text-ink-900">
+                {formatDateLabel(dayOffset)}
               </span>
+              <button
+                type="button"
+                onClick={() => setDayOffset((d) => Math.min(6, d + 1))}
+                disabled={dayOffset >= 6}
+                className="flex h-7 w-7 items-center justify-center rounded-full border border-ink-100 bg-white text-ink-400 disabled:opacity-30 transition active:scale-95"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            {isToday && (
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-[22px] font-bold tabular-nums text-ink-900">
+                  {studyCount}
+                </span>
+                <span className="text-xs font-medium text-ink-500">ブロック</span>
+                {result && !result.fitsInTime && (
+                  <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-700">
+                    時間不足
+                  </span>
+                )}
+              </div>
             )}
           </div>
         </div>
 
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={recalculate}
-            className="flex h-8 items-center gap-1 rounded-full border border-ink-100/80 bg-white px-3 text-[11px] font-medium text-ink-600 transition active:scale-[0.97]"
-          >
-            <RefreshCw className="h-3 w-3" />
-            途中復帰
-          </button>
+          {isToday && (
+            <button
+              type="button"
+              onClick={recalculate}
+              className="flex h-8 items-center gap-1 rounded-full border border-ink-100/80 bg-white px-3 text-[11px] font-medium text-ink-600 transition active:scale-[0.97]"
+            >
+              <RefreshCw className="h-3 w-3" />
+              途中復帰
+            </button>
+          )}
           {onReset && (
             <button
               type="button"
@@ -248,16 +510,107 @@ export function TodaySchedule({ finalBlocks, bedtime, tasks, onReset }: TodaySch
         </div>
       </div>
 
-      {/* タイムライン */}
-      <div className="max-h-[480px] overflow-y-auto px-4 py-3">
-        {result.slots.map((slot, i) => {
-          const isCurrent = i === currentSlotIdx;
-          return (
-            <div key={`${slot.startTime}-${i}`} ref={isCurrent ? currentRowRef : undefined}>
-              <SlotRow slot={slot} isCurrent={isCurrent} />
+      {/* 翌日以降: プレースホルダー */}
+      {!isToday && (
+        <div className="px-5 py-3 bg-ink-50/30">
+          <p className="text-[11px] text-ink-400 text-center">
+            {formatDateLabel(dayOffset)} の予定構造（ブロック未生成）
+          </p>
+        </div>
+      )}
+
+      {/* ゾーン表示 */}
+      <div className="overflow-y-auto" style={{ maxHeight: "520px" }}>
+
+        {/* ゾーン1: 深夜・早朝（起床前） */}
+        {wakeupMin > 0 && (
+          <ZoneSection
+            zone={zones[0]}
+            isOpen={openZones.has("midnight")}
+            onToggle={() => toggleZone("midnight")}
+            itemCount={getZoneItemCount(zones[0])}
+          >
+            {buildMidnightItems(wakeupMin, isToday).map((item, i) => (
+              <CompressedRow
+                key={`midnight-${i}`}
+                item={item}
+                isPast={isToday && timeToMin(item.endTime) <= nowMin}
+              />
+            ))}
+          </ZoneSection>
+        )}
+
+        {/* ゾーン2: 学校（起床〜帰宅） */}
+        <ZoneSection
+          zone={zones[1]}
+          isOpen={openZones.has("school")}
+          onToggle={() => toggleZone("school")}
+          itemCount={getZoneItemCount(zones[1])}
+        >
+          {hasSchool ? (
+            <SchoolBand
+              wakeupTime={wakeupTime}
+              returnTime={effectiveReturnTime}
+              isPast={isToday && returnMin <= nowMin}
+            />
+          ) : (
+            <div className="py-2 text-center text-[11px] text-ink-300">
+              本日は学校なし（週末）
             </div>
-          );
-        })}
+          )}
+        </ZoneSection>
+
+        {/* ゾーン3: 夕方〜夜（帰宅〜就寝） — メインゾーン */}
+        <ZoneSection
+          zone={zones[2]}
+          isOpen={openZones.has("evening")}
+          onToggle={() => toggleZone("evening")}
+          itemCount={getZoneItemCount(zones[2])}
+        >
+          {isToday && slots.length > 0 ? (
+            slots.map((slot, i) => {
+              const sMin = timeToMin(slot.startTime);
+              if (sMin < zones[2].startMin || sMin >= zones[2].endMin) return null;
+              const isCurrent = i === currentSlotIdx;
+              const isPast = sMin + slot.durationMin <= nowMin;
+              return (
+                <div
+                  key={`${slot.startTime}-${i}`}
+                  ref={isCurrent ? currentRowRef : undefined}
+                >
+                  <SlotRow slot={slot} isCurrent={isCurrent} isPast={isPast} />
+                </div>
+              );
+            })
+          ) : isToday && slots.length === 0 ? (
+            <div className="py-3 text-center text-[11px] text-ink-300">
+              時間内にブロックを収められませんでした
+            </div>
+          ) : (
+            <div className="py-3 text-center text-[11px] text-ink-300">
+              翌日のブロックは当日に生成されます
+            </div>
+          )}
+        </ZoneSection>
+
+        {/* ゾーン4: 就寝後〜翌0時 */}
+        {bedMin < 24 * 60 && (
+          <ZoneSection
+            zone={zones[3]}
+            isOpen={openZones.has("latenight")}
+            onToggle={() => toggleZone("latenight")}
+            itemCount={getZoneItemCount(zones[3])}
+          >
+            {buildLatenightItems(bedMin, isToday).map((item, i) => (
+              <CompressedRow
+                key={`latenight-${i}`}
+                item={item}
+                isPast={isToday && timeToMin(item.endTime) <= nowMin}
+              />
+            ))}
+          </ZoneSection>
+        )}
+
       </div>
     </section>
   );
