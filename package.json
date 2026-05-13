@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sync:isbns": "tsx scripts/seed-isbns.ts",
+    "sync:textbooks": "tsx scripts/bulk-textbooks.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.2",
@@ -31,7 +33,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "fast-xml-parser": "^5.8.0",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

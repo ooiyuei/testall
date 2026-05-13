@@ -9,6 +9,7 @@ import { TEXTBOOKS as RAW_TEXTBOOKS } from "../../textbooks";
 import type { Textbook as LegacyBook } from "../../textbooks";
 import type { Textbook, TextbookUsageTag } from "../types";
 import { buildSearchText } from "../types";
+import { TEXTBOOKS_BULK } from "../textbooks-bulk";
 
 export type { Textbook, TextbookUsageTag };
 
@@ -104,4 +105,23 @@ export function listBySubject(subject: string): Textbook[] {
 
 export function listByLevel(level: Textbook["level"]): Textbook[] {
   return TEXTBOOKS.filter((t) => t.level === level);
+}
+
+// ─── Bulk 取得分とのマージ ────────────────────────────────
+// scripts/bulk-textbooks.ts が生成する textbooks-bulk.ts を取り込み、
+// ISBN ベースで手書きエントリと重複しないものだけ追加する。
+
+export function getAllTextbooks(): Textbook[] {
+  const handIsbns = new Set(
+    TEXTBOOKS.map((t) => t.isbn).filter(
+      (isbn): isbn is string => typeof isbn === "string" && isbn.length > 0,
+    ),
+  );
+  const additions = TEXTBOOKS_BULK.filter(
+    (t) => !t.isbn || !handIsbns.has(t.isbn),
+  ).map((t) => {
+    if (t.searchText) return t;
+    return { ...t, searchText: buildSearchText(t) };
+  });
+  return [...TEXTBOOKS, ...additions];
 }
