@@ -19,6 +19,7 @@ import { useStore } from "@/lib/hooks/useStore";
 import { deleteEvent, saveEvent } from "@/lib/store";
 import type { CalendarEvent, CalendarEventKind } from "@/lib/store";
 import { WeeklyGoalCard } from "./WeeklyGoalCard";
+import { WeeklyTaskBoard } from "./WeeklyTaskBoard";
 
 const WEEKDAYS = ["月", "火", "水", "木", "金", "土", "日"];
 
@@ -133,6 +134,9 @@ export function PlanView() {
     <div className="px-5 pb-8 pt-3 space-y-5">
       {/* 計画AI v0.1 — 週間目標カード */}
       <WeeklyGoalCard />
+
+      {/* 今週のタスクボード — DnD カンバン */}
+      <WeeklyTaskBoard tasks={state.tasks ?? []} />
 
       {/* Today goal card */}
       {latest ? (

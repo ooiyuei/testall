@@ -137,6 +137,7 @@ export type StoredTask = {
   priority: 1 | 2 | 3;    // 1=高
   due?: DueBucket;        // 期日カテゴリ
   dueDate?: string;       // 具体日 (任意, YYYY-MM-DD)
+  assignedDate?: string;  // カンバン割り当て日 (任意, YYYY-MM-DD)
   status: "todo" | "doing" | "done";
   createdAt: string;
   completedAt?: string;
