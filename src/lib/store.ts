@@ -120,6 +120,11 @@ export type BookshelfItem = {
   subjectArea?: string;
   progressPct?: number;
   reps?: number;
+  // バーコードスキャンで追加した書籍向けの拡張フィールド
+  isbn?: string;
+  publisher?: string;
+  author?: string;
+  coverUrl?: string;
 };
 
 // ── タスク（TODO） ─────────────────────────

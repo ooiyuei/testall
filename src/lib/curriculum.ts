@@ -74,6 +74,9 @@ export type SubjectId =
   | "english-comm"
   | "english-logic"
   | "japanese-modern"
+  | "japanese-classical"
+  | "japanese-chinese"
+  // 旧 ID (互換用、後方互換のため残す)
   | "japanese-classic"
   | "physics-basic"
   | "physics"
@@ -205,7 +208,7 @@ export const SUBJECTS_V2: SubjectDef[] = [
   // ── 国語 ──
   {
     id: "japanese-modern",
-    name: "現代の国語・論理国語・文学国語",
+    name: "現代文",
     shortName: "現代文",
     category: "japanese",
     grades: ["h1", "h2", "h3", "ronin"],
@@ -219,9 +222,9 @@ export const SUBJECTS_V2: SubjectDef[] = [
     ],
   },
   {
-    id: "japanese-classic",
-    name: "言語文化・古典探究",
-    shortName: "古典",
+    id: "japanese-classical",
+    name: "古文",
+    shortName: "古文",
     category: "japanese",
     grades: ["h1", "h2", "h3", "ronin"],
     units: [
@@ -229,11 +232,28 @@ export const SUBJECTS_V2: SubjectDef[] = [
       "古文文法（用言）",
       "古文文法（助動詞）",
       "古文文法（敬語）",
-      "古文読解",
+      "古文文法（助詞）",
+      "古文読解（物語）",
+      "古文読解（説話・随筆）",
+      "古文読解（日記・紀行）",
       "和歌・俳句",
-      "漢文句法",
+      "古典常識",
+    ],
+  },
+  {
+    id: "japanese-chinese",
+    name: "漢文",
+    shortName: "漢文",
+    category: "japanese",
+    grades: ["h2", "h3", "ronin"],
+    units: [
+      "漢文句法（基本）",
+      "漢文句法（応用）",
       "漢文単語",
-      "漢文読解",
+      "返り点・送り仮名",
+      "漢詩",
+      "漢文読解（思想）",
+      "漢文読解（史伝）",
     ],
   },
   // ── 理科 基礎 ──

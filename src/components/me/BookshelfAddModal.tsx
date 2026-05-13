@@ -4,9 +4,20 @@
 // - 種類タブ (参考書/教科書/問題集/過去問/その他)
 // - 人気セクション + 検索 + 絞り込み (科目・難易度・出版社)
 // - ヒットなし → 手入力にフォールバック
+// - バーコードスキャン → ISBN → /api/isbn-lookup で書籍情報を解決
 
-import { useMemo, useState } from "react";
-import { BookOpen, Check, Filter, Plus, Search, X } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import {
+  BookOpen,
+  Check,
+  Filter,
+  Loader2,
+  Plus,
+  ScanLine,
+  Search,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/cn";
 import { addBookshelfItem } from "@/lib/store";
 import type { BookshelfItem } from "@/lib/store";
@@ -14,6 +25,29 @@ import { TEXTBOOKS } from "@/lib/master/textbooks";
 import type { Textbook, TextbookLevel } from "@/lib/master";
 import { PUBLISHERS, SUBJECT_AREAS } from "@/lib/master/subjects";
 import type { SubjectAreaId } from "@/lib/master/subjects";
+
+// SSR で getUserMedia を触ると壊れるので client-only にする
+const BarcodeScanner = dynamic(
+  () => import("./BarcodeScanner").then((m) => m.BarcodeScanner),
+  { ssr: false },
+);
+
+type LookupCustom = {
+  isbn: string;
+  title: string;
+  author?: string;
+  publisher?: string;
+  pubdate?: string;
+  coverUrl?: string;
+};
+
+type LookupOk =
+  | { ok: true; source: "local"; textbook: Textbook }
+  | { ok: true; source: "openbd"; custom: LookupCustom };
+
+type LookupFail = { ok: false; error: string };
+
+type LookupResponse = LookupOk | LookupFail;
 
 const KIND_LABEL: Record<BookshelfItem["kind"], string> = {
   textbook: "参考書",
@@ -45,6 +79,71 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
   const [filterLevel, setFilterLevel] = useState<"all" | TextbookLevel>("all");
   const [filterPub, setFilterPub] = useState<string>("all");
   const [manual, setManual] = useState(false);
+
+  // バーコードスキャン関連
+  const [scanOpen, setScanOpen] = useState(false);
+  const [lookupState, setLookupState] = useState<
+    | { phase: "idle" }
+    | { phase: "loading"; isbn: string }
+    | { phase: "found"; isbn: string; result: LookupOk }
+    | { phase: "miss"; isbn: string; reason: string }
+  >({ phase: "idle" });
+
+  const handleDetect = useCallback(async (isbn: string) => {
+    setScanOpen(false);
+    setLookupState({ phase: "loading", isbn });
+    try {
+      const res = await fetch(
+        `/api/isbn-lookup?isbn=${encodeURIComponent(isbn)}`,
+      );
+      const body = (await res.json()) as LookupResponse;
+      if (body.ok) {
+        setLookupState({ phase: "found", isbn, result: body });
+      } else {
+        setLookupState({ phase: "miss", isbn, reason: body.error });
+      }
+    } catch (e) {
+      setLookupState({
+        phase: "miss",
+        isbn,
+        reason: e instanceof Error ? e.message : "network_error",
+      });
+    }
+  }, []);
+
+  function confirmAddFromLookup() {
+    if (lookupState.phase !== "found") return;
+    const r = lookupState.result;
+    if (r.source === "local") {
+      const b = r.textbook;
+      addBookshelfItem({
+        id: `bk-${Date.now().toString(36)}-${b.id}`,
+        name: b.name,
+        kind,
+        subjectArea: b.subject,
+        isbn: b.isbn ?? lookupState.isbn,
+        publisher: b.publisher,
+        author: b.author,
+        coverUrl: b.coverUrl,
+      });
+    } else {
+      const c = r.custom;
+      addBookshelfItem({
+        id: `bk-${Date.now().toString(36)}-isbn-${c.isbn}`,
+        name: c.title,
+        kind,
+        isbn: c.isbn,
+        publisher: c.publisher,
+        author: c.author,
+        coverUrl: c.coverUrl,
+      });
+    }
+    onClose();
+  }
+
+  function dismissLookup() {
+    setLookupState({ phase: "idle" });
+  }
 
   const filtered = useMemo(() => {
     let list = TEXTBOOKS;
@@ -147,6 +246,14 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
                 className="h-10 w-full rounded-xl border border-ink-100/80 bg-white pl-8 pr-3 text-[13px] text-ink-900 outline-none focus:border-sky-400"
               />
             </div>
+            <button
+              type="button"
+              onClick={() => setScanOpen(true)}
+              aria-label="バーコードでスキャン"
+              className="flex h-10 w-10 flex-none items-center justify-center rounded-xl border border-ink-100/80 bg-white text-ink-700 active:bg-cream-50"
+            >
+              <ScanLine className="h-4 w-4" />
+            </button>
             <button
               type="button"
               onClick={() => setFilterOpen((v) => !v)}
@@ -296,6 +403,190 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
             </button>
           )}
         </div>
+      </div>
+
+      {/* バーコードスキャナー */}
+      {scanOpen ? (
+        <BarcodeScanner
+          onDetect={handleDetect}
+          onCancel={() => setScanOpen(false)}
+          onManualFallback={() => {
+            setScanOpen(false);
+            setManual(true);
+          }}
+        />
+      ) : null}
+
+      {/* ISBN ルックアップ結果 */}
+      {lookupState.phase !== "idle" ? (
+        <LookupSheet
+          state={lookupState}
+          onCancel={dismissLookup}
+          onConfirm={confirmAddFromLookup}
+          onRetry={() => {
+            setLookupState({ phase: "idle" });
+            setScanOpen(true);
+          }}
+          onManual={() => {
+            setLookupState({ phase: "idle" });
+            setManual(true);
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function LookupSheet({
+  state,
+  onCancel,
+  onConfirm,
+  onRetry,
+  onManual,
+}: {
+  state:
+    | { phase: "loading"; isbn: string }
+    | { phase: "found"; isbn: string; result: LookupOk }
+    | { phase: "miss"; isbn: string; reason: string };
+  onCancel: () => void;
+  onConfirm: () => void;
+  onRetry: () => void;
+  onManual: () => void;
+}) {
+  const display = (() => {
+    if (state.phase === "found") {
+      if (state.result.source === "local") {
+        const b = state.result.textbook;
+        return {
+          title: b.name,
+          publisher: b.publisher,
+          author: b.author,
+          coverUrl: b.coverUrl,
+          badge: "DB登録済み",
+        };
+      }
+      const c = state.result.custom;
+      return {
+        title: c.title,
+        publisher: c.publisher,
+        author: c.author,
+        coverUrl: c.coverUrl,
+        badge: "OpenBD",
+      };
+    }
+    return null;
+  })();
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-end bg-ink-900/50 backdrop-blur-sm">
+      <button
+        type="button"
+        aria-label="閉じる"
+        className="absolute inset-0 cursor-default"
+        onClick={onCancel}
+      />
+      <div className="sheet-in relative z-10 mx-auto w-full max-w-[480px] rounded-t-3xl bg-cream-50 p-5 shadow-pop">
+        <div className="mx-auto h-1 w-9 rounded-full bg-ink-200" />
+
+        {state.phase === "loading" ? (
+          <div className="mt-6 mb-4 flex flex-col items-center gap-3 text-center">
+            <Loader2 className="h-6 w-6 animate-spin text-ink-500" />
+            <p className="text-[13px] font-bold text-ink-900">書籍情報を検索中…</p>
+            <p className="text-[11px] text-ink-500 tabular-nums">
+              ISBN: {state.isbn}
+            </p>
+          </div>
+        ) : null}
+
+        {state.phase === "found" && display ? (
+          <div className="mt-4">
+            <div className="flex items-start gap-3 rounded-2xl border border-ink-100/80 bg-white p-3">
+              {display.coverUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={display.coverUrl}
+                  alt=""
+                  className="h-20 w-14 flex-none rounded-md object-cover shadow-soft"
+                />
+              ) : (
+                <div className="flex h-20 w-14 flex-none items-center justify-center rounded-md bg-cream-100 text-ink-400">
+                  <BookOpen className="h-5 w-5" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <span className="inline-flex h-4 items-center rounded-full bg-mint-50 px-1.5 text-[9px] font-bold text-mint-600">
+                  {display.badge}
+                </span>
+                <h3 className="mt-1 line-clamp-2 text-[14px] font-bold text-ink-900">
+                  {display.title}
+                </h3>
+                {display.author ? (
+                  <p className="mt-0.5 line-clamp-1 text-[11px] text-ink-600">
+                    {display.author}
+                  </p>
+                ) : null}
+                {display.publisher ? (
+                  <p className="mt-0.5 line-clamp-1 text-[11px] text-ink-500">
+                    {display.publisher}
+                  </p>
+                ) : null}
+                <p className="mt-1 text-[10px] text-ink-400 tabular-nums">
+                  ISBN: {state.isbn}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="h-10 flex-1 rounded-xl bg-cream-100 text-[12px] font-bold text-ink-700"
+              >
+                キャンセル
+              </button>
+              <button
+                type="button"
+                onClick={onConfirm}
+                className="h-10 flex-1 rounded-xl bg-ink-900 text-[12px] font-bold text-white"
+              >
+                本棚に追加
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {state.phase === "miss" ? (
+          <div className="mt-6 text-center">
+            <h3 className="text-[14px] font-bold text-ink-900">
+              書籍が見つかりません
+            </h3>
+            <p className="mt-1 text-[11px] text-ink-500">
+              ISBN {state.isbn} は OpenBD・社内DBで未登録でした。
+            </p>
+            <div className="mt-4 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={onRetry}
+                className="h-10 rounded-xl bg-ink-900 text-[12px] font-bold text-white"
+              >
+                もう一度スキャン
+              </button>
+              <button
+                type="button"
+                onClick={onManual}
+                className="h-10 rounded-xl bg-cream-100 text-[12px] font-bold text-ink-700"
+              >
+                手入力で追加
+              </button>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="h-9 text-[11px] font-bold text-ink-500"
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -413,12 +413,49 @@ function PhotoMode({
 
 type Step = 0 | 1 | 2;
 
+// 出題形式 (科目カテゴリ別)
+export type QuestionFormat =
+  // 数学
+  | "math-calc"     // 計算
+  | "math-essay"    // 文章題
+  | "math-proof"    // 証明
+  | "math-choice"   // 記号選択
+  // 英語
+  | "eng-vocab"     // 単語・熟語
+  | "eng-grammar"   // 文法
+  | "eng-reading"   // 読解
+  | "eng-listening" // リスニング
+  | "eng-writing"   // 英作文
+  // 国語
+  | "jp-reading"    // 読解
+  | "jp-desc"       // 記述
+  | "jp-choice"     // 選択
+  | "jp-summary"    // 要約
+  | "jp-knowledge"  // 漢字・語彙
+  // 理科
+  | "sci-calc"      // 計算
+  | "sci-desc"      // 記述
+  | "sci-experiment" // 実験考察
+  | "sci-choice"    // 選択
+  // 社会
+  | "soc-shortans"  // 一問一答
+  | "soc-desc"      // 記述
+  | "soc-essay"     // 論述
+  | "soc-choice";   // 選択
+
+// UnitInput を拡張 (詳細フィールドを optional で追加)
+type UnitInputExt = UnitInput & {
+  format?: QuestionFormat;
+  pointValue?: number;     // 1配点あたりの点数 (1-10)
+};
+
 type SubjectEntry = {
   category: SubjectCategory;
   subjectId: string;
   score: string;
   fullScore: string;
-  units: UnitInput[];
+  deviation?: string;      // 偏差値 (任意)
+  units: UnitInputExt[];
 };
 
 type FormState = {
@@ -541,52 +578,75 @@ function ManualForm({ prefill }: { prefill?: VisionResult | null }) {
     });
   }
 
-  function changeSubjectInCategory(
+  // 同カテゴリ内のサブ科目をトグル選択 (複数選択可)
+  // 例: 数学カテゴリで数Ⅰ・A と 数Ⅱ・B を両方記録
+  function toggleSubjectInCategory(
     category: SubjectCategory,
     subjectId: string,
   ) {
-    const list = subjectsForCategory(category, form.grade);
-    const def = list.find((s) => s.id === subjectId) ?? list[0];
-    if (!def) return;
-    setForm((prev) => ({
-      ...prev,
-      subjects: prev.subjects.map((s) =>
-        s.category === category
-          ? {
-              ...s,
-              subjectId: def.id,
-              units: def.units.slice(0, 3).map((u) => ({
-                unit: u,
-                correct: 0,
-                total: 0,
-              })),
-            }
-          : s,
-      ),
-    }));
+    setForm((prev) => {
+      const existing = prev.subjects.find(
+        (s) => s.category === category && s.subjectId === subjectId,
+      );
+      if (existing) {
+        // 既に選択済 → 削除 (ただしそのカテゴリの最後の1つなら維持)
+        const sameCategoryCount = prev.subjects.filter(
+          (s) => s.category === category,
+        ).length;
+        if (sameCategoryCount <= 1) return prev;
+        return {
+          ...prev,
+          subjects: prev.subjects.filter(
+            (s) => !(s.category === category && s.subjectId === subjectId),
+          ),
+        };
+      }
+      // 未選択 → 追加
+      const def = subjectsForCategory(category, prev.grade).find(
+        (s) => s.id === subjectId,
+      );
+      if (!def) return prev;
+      const newEntry: SubjectEntry = {
+        category,
+        subjectId: def.id,
+        score: "",
+        fullScore: "100",
+        units: def.units.slice(0, 3).map((u) => ({
+          unit: u,
+          correct: 0,
+          total: 0,
+        })),
+      };
+      return { ...prev, subjects: [...prev.subjects, newEntry] };
+    });
   }
 
+  // 同一カテゴリ + サブ科目で一意に SubjectEntry を更新
   function updateSubject(
     category: SubjectCategory,
+    subjectId: string,
     next: Partial<SubjectEntry>,
   ) {
     setForm((prev) => ({
       ...prev,
       subjects: prev.subjects.map((s) =>
-        s.category === category ? { ...s, ...next } : s,
+        s.category === category && s.subjectId === subjectId
+          ? { ...s, ...next }
+          : s,
       ),
     }));
   }
 
   function setUnit(
     category: SubjectCategory,
+    subjectId: string,
     idx: number,
-    next: Partial<UnitInput>,
+    next: Partial<UnitInputExt>,
   ) {
     setForm((prev) => ({
       ...prev,
       subjects: prev.subjects.map((s) =>
-        s.category === category
+        s.category === category && s.subjectId === subjectId
           ? {
               ...s,
               units: s.units.map((u, i) =>
@@ -598,26 +658,33 @@ function ManualForm({ prefill }: { prefill?: VisionResult | null }) {
     }));
   }
 
-  function addUnit(category: SubjectCategory) {
-    const entry = form.subjects.find((s) => s.category === category);
+  function addUnit(category: SubjectCategory, subjectId: string) {
+    const entry = form.subjects.find(
+      (s) => s.category === category && s.subjectId === subjectId,
+    );
     if (!entry) return;
     const def = subjectsForCategory(category, form.grade).find(
-      (s) => s.id === entry.subjectId,
+      (s) => s.id === subjectId,
     );
     const remaining =
       def?.units.filter(
         (u) => !entry.units.some((cur) => cur.unit === u),
       ) ?? [];
     const next = remaining[0] ?? "新しい単元";
-    updateSubject(category, {
-      units: [...entry.units, { unit: next, correct: 0, total: 0 }],
+    updateSubject(category, subjectId, {
+      units: [
+        ...entry.units,
+        { unit: next, correct: 0, total: 0 },
+      ],
     });
   }
 
-  function removeUnit(category: SubjectCategory, idx: number) {
-    const entry = form.subjects.find((s) => s.category === category);
+  function removeUnit(category: SubjectCategory, subjectId: string, idx: number) {
+    const entry = form.subjects.find(
+      (s) => s.category === category && s.subjectId === subjectId,
+    );
     if (!entry) return;
-    updateSubject(category, {
+    updateSubject(category, subjectId, {
       units: entry.units.filter((_, i) => i !== idx),
     });
   }
@@ -631,24 +698,35 @@ function ManualForm({ prefill }: { prefill?: VisionResult | null }) {
         return "科目を1つ以上選んでください";
     }
     if (s === 1) {
+      if (form.subjects.length === 0)
+        return "詳細科目を1つ以上選んでください";
       for (const entry of form.subjects) {
-        const cat = getCategoryDef(entry.category).name;
+        const def = subjectsForCategory(entry.category, form.grade).find(
+          (sd) => sd.id === entry.subjectId,
+        );
+        const subjLabel = def?.shortName ?? getCategoryDef(entry.category).name;
         const score = Number(entry.score);
         const full = Number(entry.fullScore);
-        if (Number.isNaN(score) || score < 0) return `${cat}の点数を入れてください`;
-        if (Number.isNaN(full) || full <= 0) return `${cat}の満点を入れてください`;
-        if (score > full) return `${cat}の点数が満点を超えています`;
+        if (Number.isNaN(score) || score < 0) return `${subjLabel}の点数を入れてください`;
+        if (Number.isNaN(full) || full <= 0) return `${subjLabel}の満点を入れてください`;
+        if (score > full) return `${subjLabel}の点数が満点を超えています`;
+        if (entry.deviation && entry.deviation.trim()) {
+          const dev = Number(entry.deviation);
+          if (Number.isNaN(dev) || dev < 20 || dev > 90) {
+            return `${subjLabel}の偏差値は 20〜90 の範囲で入れてください`;
+          }
+        }
       }
     }
     if (s === 2) {
       const allEmpty = form.subjects.every((entry) =>
-        entry.units.every((u) => u.total === 0),
+        entry.units.every((u) => (u.total ?? 0) === 0),
       );
       // 単元は任意。空でもOK。
       if (allEmpty) return null;
       for (const entry of form.subjects) {
         for (const u of entry.units) {
-          if (u.correct > u.total)
+          if ((u.correct ?? 0) > (u.total ?? 0))
             return `「${u.unit}」の正答数が出題数を超えています`;
         }
       }
@@ -687,18 +765,22 @@ function ManualForm({ prefill }: { prefill?: VisionResult | null }) {
       const def = subjectsForCategory(entry.category, form.grade).find(
         (s) => s.id === entry.subjectId,
       );
+      const dev = entry.deviation ? Number(entry.deviation) : undefined;
       return {
         subjectId: entry.subjectId,
         subjectName: def?.name ?? entry.subjectId,
         score: Number(entry.score) || 0,
         fullScore: Number(entry.fullScore) || 100,
+        deviation: Number.isFinite(dev) && dev! > 0 ? dev : undefined,
         units: entry.units
-          .filter((u) => u.total > 0)
+          .filter((u) => (u.total ?? 0) > 0)
           .map((u) => ({
             unit: u.unit,
             correct: Number(u.correct),
             total: Number(u.total),
             cause: u.cause,
+            format: u.format,
+            pointValue: u.pointValue,
           })),
       };
     });
@@ -789,7 +871,7 @@ function ManualForm({ prefill }: { prefill?: VisionResult | null }) {
         {step === 1 ? (
           <ScoreStep
             form={form}
-            changeSubject={changeSubjectInCategory}
+            toggleSubject={toggleSubjectInCategory}
             updateSubject={updateSubject}
           />
         ) : null}
@@ -1000,23 +1082,28 @@ function BasicStep({
 
 function ScoreStep({
   form,
-  changeSubject,
+  toggleSubject,
   updateSubject,
 }: {
   form: FormState;
-  changeSubject: (cat: SubjectCategory, subjectId: string) => void;
-  updateSubject: (cat: SubjectCategory, next: Partial<SubjectEntry>) => void;
+  toggleSubject: (cat: SubjectCategory, subjectId: string) => void;
+  updateSubject: (
+    cat: SubjectCategory,
+    subjectId: string,
+    next: Partial<SubjectEntry>,
+  ) => void;
 }) {
   return (
     <div className="space-y-3">
       <p className="text-xs text-ink-500">
-        科目ごとの点数を入れてください。詳細単元は次のステップで（任意）。
+        記録する科目を選んで、点数を入れてください。1テストで複数記録 OK。
       </p>
-      {form.subjects.map((entry) => {
-        const cat = getCategoryDef(entry.category);
-        const list = subjectsForCategory(entry.category, form.grade);
+      {form.selectedCategories.map((catId) => {
+        const cat = getCategoryDef(catId);
+        const list = subjectsForCategory(catId, form.grade);
+        const entries = form.subjects.filter((s) => s.category === catId);
         return (
-          <Card key={entry.category}>
+          <Card key={catId}>
             <div className="flex items-center gap-2">
               <span
                 className={cn(
@@ -1027,61 +1114,48 @@ function ScoreStep({
                 {cat.shortName}
               </span>
               <span className="text-sm font-black text-ink-900">{cat.name}</span>
+              <span className="ml-auto text-[10px] font-medium text-ink-400">
+                {entries.length} 科目
+              </span>
             </div>
 
+            {/* サブ科目: 複数選択可能 */}
             {list.length > 1 ? (
-              <div className="mt-2">
-                <Label>詳細科目</Label>
+              <div className="mt-2.5">
+                <Label>記録する科目（複数選択可）</Label>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {list.map((s) => (
-                    <Chip
-                      key={s.id}
-                      active={entry.subjectId === s.id}
-                      onClick={() => changeSubject(entry.category, s.id)}
-                    >
-                      {s.shortName}
-                    </Chip>
-                  ))}
+                  {list.map((s) => {
+                    const active = entries.some((e) => e.subjectId === s.id);
+                    return (
+                      <Chip
+                        key={s.id}
+                        active={active}
+                        onClick={() => toggleSubject(catId, s.id)}
+                      >
+                        {active ? "✓ " : ""}{s.shortName}
+                      </Chip>
+                    );
+                  })}
                 </div>
               </div>
             ) : null}
 
-            <div className="mt-3">
-              <Label>点数</Label>
-              <div className="mt-1.5 flex items-baseline gap-2">
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  value={entry.score}
-                  onChange={(e) =>
-                    updateSubject(entry.category, { score: e.target.value })
-                  }
-                  placeholder="0"
-                  className="h-12 w-24 flex-none rounded-xl border border-cream-200 bg-white px-3 text-right text-lg font-black text-ink-900 outline-none focus:border-sky-400"
-                />
-                <span className="text-sm font-bold text-ink-500">/</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  value={entry.fullScore}
-                  onChange={(e) =>
-                    updateSubject(entry.category, {
-                      fullScore: e.target.value,
-                    })
-                  }
-                  placeholder="100"
-                  className="h-12 w-24 flex-none rounded-xl border border-cream-200 bg-white px-3 text-right text-lg font-black text-ink-900 outline-none focus:border-sky-400"
-                />
-                <span className="text-sm font-bold text-ink-500">点</span>
-                {Number(entry.score) > 0 && Number(entry.fullScore) > 0 ? (
-                  <span className="ml-auto rounded-full bg-cream-100 px-2.5 py-0.5 text-[11px] font-bold text-ink-700 tabular-nums">
-                    {Math.round(
-                      (Number(entry.score) / Number(entry.fullScore)) * 100,
-                    )}
-                    %
-                  </span>
-                ) : null}
-              </div>
+            {/* 選択中の各サブ科目の点数入力 */}
+            <div className="mt-3 space-y-3">
+              {entries.map((entry) => {
+                const def = list.find((s) => s.id === entry.subjectId);
+                return (
+                  <SubjectScoreInput
+                    key={entry.subjectId}
+                    title={def?.name ?? def?.shortName ?? entry.subjectId}
+                    entry={entry}
+                    showTitle={entries.length > 1 || list.length > 1}
+                    onChange={(next) =>
+                      updateSubject(entry.category, entry.subjectId, next)
+                    }
+                  />
+                );
+              })}
             </div>
           </Card>
         );
@@ -1090,6 +1164,148 @@ function ScoreStep({
   );
 }
 
+// 1サブ科目の点数 + 偏差値 (任意) 入力
+function SubjectScoreInput({
+  title,
+  entry,
+  showTitle,
+  onChange,
+}: {
+  title: string;
+  entry: SubjectEntry;
+  showTitle: boolean;
+  onChange: (next: Partial<SubjectEntry>) => void;
+}) {
+  const score = Number(entry.score) || 0;
+  const fullScore = Number(entry.fullScore) || 100;
+  const pct = fullScore > 0 ? Math.round((score / fullScore) * 100) : 0;
+
+  return (
+    <div className="rounded-xl bg-cream-50/60 p-3">
+      {showTitle ? (
+        <div className="mb-2 text-[12px] font-bold text-ink-900">{title}</div>
+      ) : null}
+
+      {/* 満点設定 (コンパクト) */}
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] font-medium text-ink-500">満点</span>
+        <input
+          type="number"
+          inputMode="numeric"
+          value={entry.fullScore}
+          onChange={(e) => onChange({ fullScore: e.target.value })}
+          className="h-8 w-16 rounded-lg border border-cream-200 bg-white px-2 text-right text-sm font-bold text-ink-900 outline-none focus:border-sky-400"
+        />
+        <span className="text-[10px] font-medium text-ink-500">点</span>
+      </div>
+
+      {/* 点数スライダー + 数値 */}
+      <div className="mt-2.5">
+        <div className="flex items-baseline justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
+            得点
+          </span>
+          <span className="text-[10px] font-medium tabular-nums text-ink-500">
+            {pct > 0 ? `${pct}%` : ""}
+          </span>
+        </div>
+        <div className="mt-1 flex items-center gap-2.5">
+          <input
+            type="range"
+            min={0}
+            max={fullScore}
+            step={1}
+            value={score}
+            onChange={(e) => onChange({ score: e.target.value })}
+            className="flex-1 accent-sky-500"
+          />
+          <input
+            type="number"
+            inputMode="numeric"
+            value={entry.score}
+            onChange={(e) => onChange({ score: e.target.value })}
+            placeholder="0"
+            className="h-9 w-16 flex-none rounded-lg border border-cream-200 bg-white px-2 text-right text-sm font-bold text-ink-900 outline-none focus:border-sky-400"
+          />
+        </div>
+      </div>
+
+      {/* 偏差値 (任意) */}
+      <div className="mt-3 border-t border-cream-200/60 pt-2.5">
+        <div className="flex items-baseline justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
+            偏差値 <span className="font-medium normal-case tracking-normal text-ink-400">(任意)</span>
+          </span>
+          <span className="text-[10px] font-medium tabular-nums text-ink-500">
+            {entry.deviation ? `${entry.deviation}` : "—"}
+          </span>
+        </div>
+        <div className="mt-1 flex items-center gap-2.5">
+          <input
+            type="range"
+            min={30}
+            max={80}
+            step={1}
+            value={Number(entry.deviation) || 50}
+            onChange={(e) => onChange({ deviation: e.target.value })}
+            className="flex-1 accent-mint-500"
+          />
+          <input
+            type="number"
+            inputMode="numeric"
+            value={entry.deviation ?? ""}
+            onChange={(e) => onChange({ deviation: e.target.value })}
+            placeholder="—"
+            min={20}
+            max={90}
+            className="h-9 w-16 flex-none rounded-lg border border-cream-200 bg-white px-2 text-right text-sm font-bold text-ink-900 outline-none focus:border-sky-400"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// カテゴリ別の出題形式オプション
+const FORMAT_OPTIONS: Record<SubjectCategory, { id: QuestionFormat; label: string }[]> = {
+  math: [
+    { id: "math-calc", label: "計算" },
+    { id: "math-essay", label: "文章題" },
+    { id: "math-proof", label: "証明" },
+    { id: "math-choice", label: "記号" },
+  ],
+  english: [
+    { id: "eng-vocab", label: "単語・熟語" },
+    { id: "eng-grammar", label: "文法" },
+    { id: "eng-reading", label: "読解" },
+    { id: "eng-listening", label: "リスニング" },
+    { id: "eng-writing", label: "英作文" },
+  ],
+  japanese: [
+    { id: "jp-reading", label: "読解" },
+    { id: "jp-desc", label: "記述" },
+    { id: "jp-choice", label: "選択" },
+    { id: "jp-summary", label: "要約" },
+    { id: "jp-knowledge", label: "漢字・語彙" },
+  ],
+  science: [
+    { id: "sci-calc", label: "計算" },
+    { id: "sci-desc", label: "記述" },
+    { id: "sci-experiment", label: "実験考察" },
+    { id: "sci-choice", label: "選択" },
+  ],
+  social: [
+    { id: "soc-shortans", label: "一問一答" },
+    { id: "soc-desc", label: "記述" },
+    { id: "soc-essay", label: "論述" },
+    { id: "soc-choice", label: "選択" },
+  ],
+  info: [
+    { id: "math-calc", label: "計算" },
+    { id: "math-choice", label: "選択" },
+  ],
+};
+
 function UnitStep({
   form,
   setUnit,
@@ -1097,24 +1313,33 @@ function UnitStep({
   removeUnit,
 }: {
   form: FormState;
-  setUnit: (cat: SubjectCategory, idx: number, next: Partial<UnitInput>) => void;
-  addUnit: (cat: SubjectCategory) => void;
-  removeUnit: (cat: SubjectCategory, idx: number) => void;
+  setUnit: (
+    cat: SubjectCategory,
+    subjectId: string,
+    idx: number,
+    next: Partial<UnitInputExt>,
+  ) => void;
+  addUnit: (cat: SubjectCategory, subjectId: string) => void;
+  removeUnit: (cat: SubjectCategory, subjectId: string, idx: number) => void;
 }) {
   return (
     <div className="space-y-4">
-      <p className="text-xs text-ink-500">
-        単元別の正答数や原因を入れると、AIの診断精度が上がります。空欄でもOK。
-      </p>
+      <div className="rounded-2xl bg-sky-50/60 px-3 py-2.5 text-[11px] leading-[1.6] text-sky-700">
+        <span className="font-bold">スキップしてOK。</span>
+        単元・出題形式・配点まで入れると AI の弱点分析がぐっと正確になります。
+      </div>
+
       {form.subjects.map((entry) => {
         const cat = getCategoryDef(entry.category);
         const def = subjectsForCategory(entry.category, form.grade).find(
           (s) => s.id === entry.subjectId,
         );
-        const units = def?.units ?? [];
+        const unitOptions = def?.units ?? [];
+        const formats = FORMAT_OPTIONS[entry.category] ?? [];
+
         return (
           <section
-            key={entry.category}
+            key={`${entry.category}:${entry.subjectId}`}
             className="rounded-3xl border border-cream-200 bg-white p-3 shadow-soft"
           >
             <header className="flex items-center gap-2 pb-2">
@@ -1127,7 +1352,7 @@ function UnitStep({
                 {cat.shortName}
               </span>
               <span className="text-sm font-black text-ink-900">
-                {def?.shortName ?? cat.name}
+                {def?.name ?? def?.shortName ?? cat.name}
               </span>
             </header>
 
@@ -1137,28 +1362,31 @@ function UnitStep({
                   key={idx}
                   className="rounded-xl border border-cream-200 bg-cream-50 p-3"
                 >
+                  {/* 単元 + 削除 */}
                   <div className="flex items-start gap-2">
                     <select
                       value={u.unit}
                       onChange={(e) =>
-                        setUnit(entry.category, idx, {
+                        setUnit(entry.category, entry.subjectId, idx, {
                           unit: e.target.value,
                         })
                       }
                       className="h-9 flex-1 rounded-lg border border-cream-200 bg-white px-2 text-xs font-bold text-ink-900 outline-none focus:border-sky-400"
                     >
-                      {units.map((opt) => (
+                      {unitOptions.map((opt) => (
                         <option key={opt} value={opt}>
                           {opt}
                         </option>
                       ))}
-                      {!units.includes(u.unit) ? (
+                      {!unitOptions.includes(u.unit) ? (
                         <option value={u.unit}>{u.unit}</option>
                       ) : null}
                     </select>
                     <button
                       type="button"
-                      onClick={() => removeUnit(entry.category, idx)}
+                      onClick={() =>
+                        removeUnit(entry.category, entry.subjectId, idx)
+                      }
                       className="flex h-9 w-9 flex-none items-center justify-center rounded-lg text-ink-400 hover:bg-cream-100"
                       aria-label="削除"
                     >
@@ -1166,49 +1394,93 @@ function UnitStep({
                     </button>
                   </div>
 
-                  <div className="mt-2 flex items-baseline gap-1.5">
-                    <input
-                      type="number"
-                      inputMode="numeric"
+                  {/* 出題形式 (科目別、複数選択ではなく1つだけ) */}
+                  {formats.length > 0 ? (
+                    <div className="mt-2">
+                      <div className="text-[9px] font-bold uppercase tracking-widest text-ink-500">
+                        出題形式
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {formats.map((f) => (
+                          <button
+                            type="button"
+                            key={f.id}
+                            onClick={() =>
+                              setUnit(entry.category, entry.subjectId, idx, {
+                                format: u.format === f.id ? undefined : f.id,
+                              })
+                            }
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-[10px] font-bold transition",
+                              u.format === f.id
+                                ? "bg-sky-500 text-white"
+                                : "bg-white text-ink-500 hover:bg-cream-100",
+                            )}
+                          >
+                            {f.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* 問題数 / 正答数 (スライダー) */}
+                  <div className="mt-2.5 space-y-1.5">
+                    <SliderRow
+                      label="問題数"
+                      value={u.total ?? 0}
                       min={0}
-                      value={u.correct || ""}
-                      onChange={(e) =>
-                        setUnit(entry.category, idx, {
-                          correct: Number(e.target.value),
+                      max={10}
+                      onChange={(v) =>
+                        setUnit(entry.category, entry.subjectId, idx, {
+                          total: v,
+                          correct: Math.min(u.correct ?? 0, v),
                         })
                       }
-                      placeholder="0"
-                      className="h-10 w-16 flex-none rounded-lg border border-cream-200 bg-white px-2 text-right text-sm font-black text-ink-900 outline-none focus:border-sky-400"
+                      suffix="問"
                     />
-                    <span className="text-[11px] font-bold text-ink-500">/</span>
-                    <input
-                      type="number"
-                      inputMode="numeric"
+                    <SliderRow
+                      label="正答数"
+                      value={u.correct ?? 0}
                       min={0}
-                      value={u.total || ""}
-                      onChange={(e) =>
-                        setUnit(entry.category, idx, {
-                          total: Number(e.target.value),
+                      max={Math.max(1, u.total ?? 0)}
+                      disabled={(u.total ?? 0) === 0}
+                      onChange={(v) =>
+                        setUnit(entry.category, entry.subjectId, idx, {
+                          correct: v,
                         })
                       }
-                      placeholder="0"
-                      className="h-10 w-16 flex-none rounded-lg border border-cream-200 bg-white px-2 text-right text-sm font-black text-ink-900 outline-none focus:border-sky-400"
+                      suffix="正答"
                     />
-                    <span className="text-[11px] font-bold text-ink-500">問</span>
-                    {u.total > 0 ? (
-                      <span className="ml-auto text-[11px] font-bold text-ink-500 tabular-nums">
-                        {Math.round((u.correct / u.total) * 100)}%
-                      </span>
-                    ) : null}
+                    <SliderRow
+                      label="1問の配点"
+                      value={u.pointValue ?? 0}
+                      min={0}
+                      max={10}
+                      onChange={(v) =>
+                        setUnit(entry.category, entry.subjectId, idx, {
+                          pointValue: v,
+                        })
+                      }
+                      suffix="点"
+                    />
                   </div>
 
+                  {/* 正答率表示 */}
+                  {u.total && u.total > 0 ? (
+                    <div className="mt-2 text-right text-[10px] font-bold text-ink-500 tabular-nums">
+                      正答率 {Math.round(((u.correct ?? 0) / u.total) * 100)}%
+                    </div>
+                  ) : null}
+
+                  {/* ミスの原因 */}
                   <div className="mt-2 flex flex-wrap gap-1">
                     {CAUSE_OPTIONS.map((c) => (
                       <button
                         type="button"
                         key={c.id}
                         onClick={() =>
-                          setUnit(entry.category, idx, {
+                          setUnit(entry.category, entry.subjectId, idx, {
                             cause: u.cause === c.id ? undefined : c.id,
                           })
                         }
@@ -1229,7 +1501,7 @@ function UnitStep({
 
             <button
               type="button"
-              onClick={() => addUnit(entry.category)}
+              onClick={() => addUnit(entry.category, entry.subjectId)}
               className="mt-2 flex h-9 w-full items-center justify-center gap-1 rounded-xl border border-dashed border-cream-300 text-[11px] font-bold text-ink-500 hover:bg-cream-50"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -1238,6 +1510,51 @@ function UnitStep({
           </section>
         );
       })}
+    </div>
+  );
+}
+
+// 共通スライダー (1〜10 系の数値入力)
+function SliderRow({
+  label,
+  value,
+  min,
+  max,
+  onChange,
+  suffix,
+  disabled,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (v: number) => void;
+  suffix?: string;
+  disabled?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2",
+        disabled && "opacity-50 pointer-events-none",
+      )}
+    >
+      <span className="w-16 flex-none text-[10px] font-bold text-ink-500">
+        {label}
+      </span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={1}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="flex-1 accent-sky-500"
+      />
+      <span className="flex-none w-12 text-right text-[11px] font-bold tabular-nums text-ink-900">
+        {value || 0}
+        {suffix ? <span className="ml-0.5 text-[9px] font-medium text-ink-500">{suffix}</span> : null}
+      </span>
     </div>
   );
 }

@@ -42,6 +42,8 @@ export type SubjectInput = {
   subjectName: string;
   score: number;
   fullScore: number;
+  // v0.5 拡張: 科目別偏差値 (任意)
+  deviation?: number;
   units: UnitInput[];
   // 配点や計算問題区分などの任意詳細
   partition?: { label: string; score: number; fullScore: number }[];
@@ -52,6 +54,9 @@ export type UnitInput = {
   correct: number;
   total: number;
   cause?: MissCause;
+  // v0.5 拡張: 出題形式 + 1問の配点
+  format?: string;       // QuestionFormat (NewTestForm 側で定義)
+  pointValue?: number;   // 1問あたり配点
 };
 
 export type MissCause =
