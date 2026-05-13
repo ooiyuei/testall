@@ -16,6 +16,9 @@ export type TargetUniversity = {
   examType?: string; // 一般 / 共通テスト / 総合型 / 推薦
 };
 
+// 5大教科ID
+export type SubjectAreaId = "japanese" | "math" | "english" | "science" | "social";
+
 export type StoredProfile = {
   // 識別
   name?: string;
@@ -28,15 +31,25 @@ export type StoredProfile = {
   grade: string;
   deviation?: number;       // 全国偏差値（おおよそ）
   deviationBucket?: DeviationBucket; // 5刻み入力
+  deviationByArea?: Partial<Record<SubjectAreaId, DeviationBucket>>; // 教科別偏差値帯
   // 志望校
   target: string;           // 旧フィールド（互換維持）。新規は targetUniversities を使う。
   targetUniversities?: TargetUniversity[];
   targetDeviationBucket?: DeviationBucket; // 5刻みの目標偏差値帯
+  universityTypes?: ("national" | "public" | "private")[];           // 国立/公立/私立
+  interestedFacultyCategories?: string[];                            // 学部カテゴリ複数
   examDate: string;
   // 勉強時間
   availableMinutesPerDay: number; // 旧フィールド（平均）。新規は weekday/weekend で取る。
   weekdayMinutes?: number;
   weekendMinutes?: number;
+  // スケジュール
+  wakeupTime?: string;       // "07:00"
+  bedTime?: string;          // "23:00"
+  returnTime?: string;       // "18:00" 帰宅時刻
+  weekendDays?: ("sat" | "sat-half" | "sun" | "sun-half")[];
+  // 得意・苦手
+  proficiencyByArea?: Partial<Record<SubjectAreaId, "good" | "fair" | "weak" | "bad">>;
   // 所有資材
   textbooks: string[];      // 互換: テキスト名で保持
   bookshelfItems?: BookshelfItem[]; // 拡張版

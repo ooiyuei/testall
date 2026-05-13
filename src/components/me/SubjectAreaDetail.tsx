@@ -20,6 +20,7 @@ import {
   type GradeId,
   type SubjectAreaId,
 } from "@/lib/master/subjects/hierarchy";
+import { guessArea } from "@/lib/master/subjects/guessArea";
 import { DeviationTrend, type TrendSeries } from "./DeviationTrend";
 
 const PROFICIENCY_LEVELS = [
@@ -30,11 +31,8 @@ const PROFICIENCY_LEVELS = [
 ] as const;
 type Proficiency = (typeof PROFICIENCY_LEVELS)[number]["id"];
 
-// 提案レベル → カラー
-function recommendedProficiency(): Proficiency {
-  // TODO: テスト結果と能力タグから自動推定
-  return "fair";
-}
+// TODO: テスト結果と能力タグから自動推定する関数に置き換える
+const DEFAULT_PROFICIENCY: Proficiency = "fair";
 
 export function SubjectAreaDetail({ area }: { area: SubjectAreaId }) {
   const { state, hydrated } = useStore();
@@ -192,7 +190,7 @@ export function SubjectAreaDetail({ area }: { area: SubjectAreaId }) {
                     </div>
                     <ul className="mt-1 flex flex-wrap gap-1">
                       {d.units.map((u) => {
-                        const prof = proficiency[u.id] ?? recommendedProficiency();
+                        const prof = proficiency[u.id] ?? DEFAULT_PROFICIENCY;
                         const def = PROFICIENCY_LEVELS.find((p) => p.id === prof)!;
                         return (
                           <li key={u.id}>
@@ -277,13 +275,4 @@ function Stat({
   );
 }
 
-function guessArea(name: string): SubjectAreaId {
-  if (/数学|数IA|数IIBC|数IIIC|数Ⅰ|数Ⅱ|数Ⅲ|数A|数B|数C/.test(name)) return "math";
-  if (/英語|英コミュ|英表現|リーディング|リスニング|英作|英解/.test(name)) return "english";
-  if (/国語|現代文|古文|古典|漢文/.test(name)) return "japanese";
-  if (/物理|化学|生物|地学|理科/.test(name)) return "science";
-  if (/日本史|世界史|地理|歴総|地総/.test(name)) return "history";
-  if (/公共|倫理|政治経済|政経|社会/.test(name)) return "civics";
-  if (/情報/.test(name)) return "info";
-  return "math";
-}
+// guessArea は @/lib/master/subjects/guessArea から import 済み
