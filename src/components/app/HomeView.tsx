@@ -26,6 +26,7 @@ import { WeeklyReviewCard } from "./WeeklyReviewCard";
 import { AiChat } from "./AiChat";
 import { StreakHeatmap } from "./StreakHeatmap";
 import { LoginBonus } from "./LoginBonus";
+import { InstallPrompt } from "./InstallPrompt";
 
 const WEEKDAY_LABEL = ["月", "火", "水", "木", "金", "土", "日"];
 
@@ -150,6 +151,7 @@ export function HomeView() {
     <div className="px-5 pb-8 pt-3">
       {hydrated && state.profile?.onboardedAt ? <GuideTour /> : null}
       {hydrated && state.profile?.onboardedAt ? <LoginBonus /> : null}
+      {hydrated && state.profile?.onboardedAt ? <InstallPrompt /> : null}
       {/* Hero greeting */}
       <section className="mb-5 flex items-start justify-between gap-3">
         <div>
