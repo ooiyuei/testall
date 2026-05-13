@@ -21,6 +21,7 @@ import { GRADES, TARGET_LEVELS } from "@/lib/subjects";
 import { findUniversity } from "@/lib/universities";
 import { CATEGORY_DEFS, getCategoryDef } from "@/lib/curriculum";
 import type { SubjectCategory } from "@/lib/curriculum";
+import { GapCard } from "./GapCard";
 
 export function MeView() {
   const { state, hydrated } = useStore();
@@ -102,6 +103,9 @@ export function MeView() {
           </div>
         ) : null}
       </section>
+
+      {/* 計画AI v0.1 — 志望校ギャップ */}
+      <GapCard />
 
       {/* Stats */}
       <ul className="grid grid-cols-3 gap-2.5">

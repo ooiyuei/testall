@@ -14,6 +14,7 @@ import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
 import { getStreak } from "@/lib/store";
 import type { Block } from "@/lib/types";
+import { MoodCheckCard } from "./MoodCheckCard";
 
 const WEEKDAYS = ["月", "火", "水", "木", "金", "土", "日"];
 
@@ -99,6 +100,9 @@ export function HomeView() {
       </div>
 
       {needsOnboarding ? <OnboardingPrompt /> : null}
+
+      {/* 今日の気分 + 帰宅時間 */}
+      {hydrated ? <MoodCheckCard /> : null}
 
       {/* Today progress */}
       <section className="mt-5 overflow-hidden rounded-3xl bg-gradient-to-br from-sky-50 to-peach-50 p-5 shadow-soft">
