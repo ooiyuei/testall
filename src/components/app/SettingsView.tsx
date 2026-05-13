@@ -7,8 +7,10 @@ import {
   Bell,
   ChevronRight,
   Clock,
+  Download,
   FileText,
   Globe,
+  HelpCircle,
   Home as HomeIcon,
   Lock,
   LogOut,
@@ -16,13 +18,16 @@ import {
   Shield,
   Trash2,
   TriangleAlert,
+  Upload,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
   clearAll,
   deleteFixedSlot,
+  readStore,
   saveFixedSlot,
   setPlanning,
+  writeStore,
 } from "@/lib/store";
 import type { FixedSlot } from "@/lib/store";
 import { nanoid } from "nanoid";
@@ -121,10 +126,22 @@ export function SettingsView() {
         <PlanningEditor />
       </section>
 
+      {/* データ */}
+      <section>
+        <SectionTitle>データ</SectionTitle>
+        <DataExportImport />
+      </section>
+
       {/* 法務 */}
       <section>
         <SectionTitle>サポート</SectionTitle>
         <SettingsGroup>
+          <SettingsLink
+            href="/app/help"
+            icon={HelpCircle}
+            tone="bg-sky-100 text-sky-600"
+            label="ヘルプ・使い方"
+          />
           <SettingsLink
             href="/terms"
             icon={FileText}
@@ -703,6 +720,126 @@ function FixedSlotsEditor() {
           ＋ 固定の予定を追加
         </button>
       )}
+    </div>
+  );
+}
+
+// ─── データ Export / Import ─────────────────
+function DataExportImport() {
+  const [status, setStatus] = useState<"idle" | "exported" | "imported" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState<string>("");
+
+  function handleExport() {
+    try {
+      const state = readStore();
+      const payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        state,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `testall-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setStatus("exported");
+      setTimeout(() => setStatus("idle"), 3000);
+    } catch (e) {
+      setStatus("error");
+      setErrorMsg(e instanceof Error ? e.message : "エクスポートに失敗しました");
+    }
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as { state?: unknown };
+      if (!parsed.state || typeof parsed.state !== "object") {
+        throw new Error("ファイル形式が正しくありません");
+      }
+      const ok = confirm(
+        "現在のデータを上書きします。元に戻せません。よろしいですか？",
+      );
+      if (!ok) return;
+      // @ts-expect-error - 動的な復元なので型はチェック済み
+      writeStore(parsed.state);
+      setStatus("imported");
+      setTimeout(() => {
+        if (typeof window !== "undefined") window.location.reload();
+      }, 800);
+    } catch (err) {
+      setStatus("error");
+      setErrorMsg(err instanceof Error ? err.message : "読み込みに失敗しました");
+    } finally {
+      e.target.value = "";
+    }
+  }
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-ink-100/80 bg-white">
+      <button
+        type="button"
+        onClick={handleExport}
+        className="flex w-full items-center gap-3 border-b border-ink-100/60 px-4 py-3 text-left active:bg-cream-100"
+      >
+        <span className="flex h-8 w-8 flex-none items-center justify-center rounded-xl bg-mint-100 text-mint-600">
+          <Download className="h-4 w-4" />
+        </span>
+        <div className="flex-1">
+          <div className="text-[13px] font-bold text-ink-900">
+            データをエクスポート
+          </div>
+          <div className="text-[10px] text-ink-500">
+            JSON ファイルとして端末に保存
+          </div>
+        </div>
+        <ChevronRight className="h-4 w-4 text-ink-400" />
+      </button>
+
+      <label className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left active:bg-cream-100">
+        <span className="flex h-8 w-8 flex-none items-center justify-center rounded-xl bg-peach-100 text-peach-500">
+          <Upload className="h-4 w-4" />
+        </span>
+        <div className="flex-1">
+          <div className="text-[13px] font-bold text-ink-900">
+            データをインポート
+          </div>
+          <div className="text-[10px] text-ink-500">
+            バックアップから復元 (上書き)
+          </div>
+        </div>
+        <ChevronRight className="h-4 w-4 text-ink-400" />
+        <input
+          type="file"
+          accept="application/json"
+          className="hidden"
+          onChange={handleImport}
+        />
+      </label>
+
+      {status === "exported" ? (
+        <div className="border-t border-mint-200 bg-mint-50 px-4 py-2 text-[11px] font-bold text-mint-600">
+          ✓ エクスポートしました
+        </div>
+      ) : null}
+      {status === "imported" ? (
+        <div className="border-t border-sky-200 bg-sky-50 px-4 py-2 text-[11px] font-bold text-sky-600">
+          ✓ 読み込みました。ページを再読み込みします…
+        </div>
+      ) : null}
+      {status === "error" ? (
+        <div className="border-t border-coral-300 bg-coral-300/10 px-4 py-2 text-[11px] font-bold text-coral-500">
+          ⚠ {errorMsg}
+        </div>
+      ) : null}
     </div>
   );
 }
