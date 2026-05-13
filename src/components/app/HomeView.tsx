@@ -364,19 +364,46 @@ function SectionLabel({
 
 function EmptyTodayCard() {
   return (
-    <section className="mt-5 rounded-2xl border border-ink-100/80 bg-white p-5 text-center">
-      <div className="text-[15px] font-bold text-ink-900">
-        テストを追加すると、今日の25分が決まります
+    <section className="mt-5 space-y-2.5">
+      {/* 即・25分タイマー */}
+      <div className="rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50/80 to-mint-50/40 p-5">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-white text-sky-500">
+            <Play className="h-5 w-5" strokeWidth={2.3} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[14px] font-bold text-ink-900">
+              まず25分、集中してみる
+            </div>
+            <p className="mt-0.5 text-[11px] leading-[1.7] text-ink-500">
+              テストがなくても、タイマーはすぐ使えます。
+            </p>
+            <Link
+              href="/app/focus/run"
+              className="mt-3 inline-flex h-10 items-center gap-1 rounded-full bg-sky-500 px-4 text-[12px] font-bold text-white active:scale-[0.97] transition"
+            >
+              <Play className="h-3.5 w-3.5" strokeWidth={2.4} />
+              25分はじめる
+            </Link>
+          </div>
+        </div>
       </div>
-      <p className="mt-1.5 text-[12px] leading-[1.7] text-ink-500">
-        模試・校内テストの結果からAIが弱点と次の手を出します。
-      </p>
-      <Link
-        href="/app/test/new"
-        className="mt-4 inline-flex h-10 items-center gap-1 rounded-full bg-ink-900 px-5 text-[12px] font-bold text-white active:scale-[0.97] transition"
-      >
-        最初のテストを追加
-      </Link>
+
+      {/* テスト追加で AI 診断 */}
+      <div className="rounded-2xl border border-ink-100/80 bg-white p-5 text-center">
+        <div className="text-[13px] font-bold text-ink-900">
+          テストを追加すると、今日の25分をAIが整えてくれます
+        </div>
+        <p className="mt-1.5 text-[11px] leading-[1.7] text-ink-500">
+          模試・校内テストの結果から弱点と次の手を出します。
+        </p>
+        <Link
+          href="/app/test/new"
+          className="mt-3 inline-flex h-9 items-center gap-1 rounded-full bg-ink-900 px-4 text-[11px] font-bold text-white active:scale-[0.97] transition"
+        >
+          最初のテストを追加
+        </Link>
+      </div>
     </section>
   );
 }
