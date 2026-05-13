@@ -58,6 +58,7 @@ import { defaultRemainingMonths, estimateGoalGap, estimateRequiredBlocks } from 
 import { HOURS_PER_BLOCK } from "@/lib/planning/constants";
 import { bucketMid } from "@/lib/store";
 import { guessArea, PRIMARY_AREAS } from "@/lib/master/subjects/guessArea";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 export function MeView() {
   const { state, hydrated } = useStore();
@@ -66,7 +67,7 @@ export function MeView() {
   const [bookshelfModal, setBookshelfModal] = useState(false);
 
   if (!hydrated) {
-    return <div className="px-4 pt-10 text-sm text-ink-500">読み込み中…</div>;
+    return <LoadingState />;
   }
 
   const profile = state.profile;

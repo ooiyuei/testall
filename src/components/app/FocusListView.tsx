@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
 import type { Block } from "@/lib/types";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 function parseHHmm(s: string): number {
   const [h, m] = s.split(":").map((n) => Number(n));
@@ -22,9 +23,7 @@ export function FocusListView() {
   const { state, hydrated } = useStore();
 
   if (!hydrated) {
-    return (
-      <div className="px-4 pt-10 text-sm text-ink-500">読み込み中…</div>
-    );
+    return <LoadingState />;
   }
 
   const latest = state.tests[0];

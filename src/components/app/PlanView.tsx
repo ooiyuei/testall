@@ -20,6 +20,7 @@ import { deleteEvent, saveEvent } from "@/lib/store";
 import type { CalendarEvent, CalendarEventKind } from "@/lib/store";
 import { WeeklyGoalCard } from "./WeeklyGoalCard";
 import { WeeklyTaskBoard } from "./WeeklyTaskBoard";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 const WEEKDAYS = ["月", "火", "水", "木", "金", "土", "日"];
 
@@ -120,7 +121,7 @@ export function PlanView() {
   }
 
   if (!hydrated) {
-    return <div className="px-4 pt-10 text-sm text-ink-500">読み込み中…</div>;
+    return <LoadingState />;
   }
 
   const latest = state.tests[0];

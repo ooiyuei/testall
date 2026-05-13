@@ -17,6 +17,7 @@ import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
 import { deleteTest } from "@/lib/store";
 import type { MissCause, Weakness } from "@/lib/types";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 const CAUSE_LABEL: Record<MissCause, string> = {
   knowledge: "知識不足",
@@ -49,7 +50,7 @@ export function TestDetail({ id }: { id: string }) {
   const { state, hydrated } = useStore();
 
   if (!hydrated) {
-    return <div className="px-4 pt-10 text-sm text-ink-500">読み込み中…</div>;
+    return <LoadingState />;
   }
 
   const test = state.tests.find((t) => t.id === id);

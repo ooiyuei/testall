@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
+import { LoadingState } from "@/components/ui/LoadingState";
 import {
   cleanupCompletedTasks,
   deleteTask,
@@ -110,7 +111,7 @@ export function TodoView() {
   const filterCount = (priorityFilter !== "all" ? 1 : 0) + (tagFilter !== "all" ? 1 : 0);
 
   if (!hydrated) {
-    return <div className="px-5 pt-8 text-sm text-ink-500">読み込み中…</div>;
+    return <LoadingState />;
   }
 
   return (

@@ -23,6 +23,7 @@ import {
 } from "@/lib/master/subjects/hierarchy";
 import { guessArea } from "@/lib/master/subjects/guessArea";
 import { DeviationTrend, type TrendSeries } from "./DeviationTrend";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 const PROFICIENCY_LEVELS = [
   { id: "good", label: "得意",         tone: "bg-mint-100 text-mint-600" },
@@ -92,7 +93,7 @@ export function SubjectAreaDetail({ area }: { area: SubjectAreaId }) {
   }, [visibleSubjects]);
 
   if (!hydrated) {
-    return <div className="px-5 pt-8 text-sm text-ink-500">読み込み中…</div>;
+    return <LoadingState />;
   }
   if (!areaDef) {
     return (

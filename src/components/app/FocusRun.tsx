@@ -16,6 +16,7 @@ import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
 import { logBlock } from "@/lib/store";
 import type { Block } from "@/lib/types";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 const DEFAULT_DURATION_SEC = 25 * 60; // ポモドーロ 25分
 
@@ -124,9 +125,7 @@ export function FocusRun() {
   }
 
   if (!hydrated) {
-    return (
-      <div className="px-4 pt-10 text-sm text-ink-500">読み込み中…</div>
-    );
+    return <LoadingState />;
   }
 
   const elapsedRatio = 1 - remaining / DEFAULT_DURATION_SEC;

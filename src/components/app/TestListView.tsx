@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { ChevronRight, Plus } from "lucide-react";
 import { useStore } from "@/lib/hooks/useStore";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 export function TestListView() {
   const { state, hydrated } = useStore();
 
   if (!hydrated) {
-    return (
-      <div className="px-4 pt-10 text-sm text-ink-500">読み込み中…</div>
-    );
+    return <LoadingState />;
   }
 
   const tests = state.tests;
