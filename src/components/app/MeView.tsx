@@ -821,9 +821,10 @@ function DeviationTrendSection() {
 // ─── 経験値推移 ───
 function ExpTrendSection() {
   const { state, hydrated } = useStore();
-  if (!hydrated) return null;
 
+  // ⚠️ useMemo は必ず early-return より前に呼ぶ (Rules of Hooks)
   const points = useMemo((): ExpTrendPoint[] => {
+    if (!hydrated) return [];
     const dailyMap = new Map<string, number>();
 
     // ログイン: +10/日
@@ -877,7 +878,9 @@ function ExpTrendSection() {
       result.push({ date, cumExp });
     }
     return result;
-  }, [state.dailyMoodLogs, state.blockLogs, state.tasks, state.tests]);
+  }, [hydrated, state.dailyMoodLogs, state.blockLogs, state.tasks, state.tests]);
+
+  if (!hydrated) return null;
 
   const totalTests = (state.tests ?? []).length;
   const totalBlocks = (state.blockLogs ?? []).length;
