@@ -156,6 +156,32 @@ export function AiChat({ state }: { state: StoreState }) {
         )}
       </div>
 
+      {/* クイックプロンプト (初回表示) */}
+      {messages.length === 0 && !loading && (
+        <div className="mb-3 rounded-2xl border border-mint-200/70 bg-mint-50/40 p-3">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-mint-600">
+            こんなこと聞けます
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {[
+              "次の25分は何をやる？",
+              "苦手な単元を教えて",
+              "今週の作戦は？",
+              "志望校までのギャップは？",
+            ].map((q) => (
+              <button
+                key={q}
+                type="button"
+                onClick={() => void sendMessage(q)}
+                className="rounded-full bg-white px-3 py-1.5 text-[11px] font-medium text-ink-700 transition active:scale-95 hover:bg-mint-100"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 会話履歴 */}
       {messages.length > 0 && (
         <div className="mb-3 max-h-72 overflow-y-auto rounded-2xl border border-ink-100/80 bg-white p-4 space-y-3">
