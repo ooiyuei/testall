@@ -43,7 +43,7 @@ export function calcAvailableMinutes(
 }
 
 export function adjustTodayBlocks(input: TodayBlocksInput): TodayBlocksResult {
-  const blockMinutes = input.blockMinutes ?? 55;
+  const blockMinutes = input.blockMinutes ?? 30; // 25 分学習 + 5 分休憩
   const moodDelta = MOOD_DELTA[input.mood];
   const requested = input.baseBlocks + moodDelta;
   const available = Math.floor(

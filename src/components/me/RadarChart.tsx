@@ -80,16 +80,14 @@ export function RadarChart({ data, size = 240, onPick }: Props) {
         strokeWidth={2}
         strokeLinejoin="round"
       />
-      {/* 値の点 */}
+      {/* 値の点（小さめ） */}
       {valuePts.map(([x, y], i) => (
         <circle
           key={i}
           cx={x}
           cy={y}
-          r={4.5}
-          fill="white"
-          stroke="rgb(56 132 209)"
-          strokeWidth={2}
+          r={2.5}
+          fill="rgb(56 132 209)"
           onClick={() => onPick?.(i)}
           style={{ cursor: onPick ? "pointer" : "default" }}
         />

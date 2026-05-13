@@ -46,6 +46,10 @@ import {
 } from "@/lib/master/subjects/hierarchy";
 import type { GradeId, SubjectAreaId } from "@/lib/master/subjects";
 import { RadarChart, type RadarPoint } from "@/components/me/RadarChart";
+import { BookshelfAddModal } from "@/components/me/BookshelfAddModal";
+import { LevelMountain } from "@/components/me/LevelMountain";
+import { computeTotalExp, levelFromExp } from "@/lib/exp";
+import { defaultRemainingMonths, estimateGoalGap, estimateRequiredBlocks } from "@/lib/planning";
 
 // 主要5科目（五角形）
 const PRIMARY_AREAS: SubjectAreaId[] = [
@@ -135,6 +139,9 @@ export function MeView() {
         />
       ) : null}
 
+      {/* ── LV/経験値/山グラフ ── */}
+      <LevelSection />
+
       {/* ── 本棚 ── */}
       <section>
         <div className="flex items-center justify-between">
@@ -187,68 +194,15 @@ export function MeView() {
         )}
       </section>
 
-      {/* ── ステータス（五角形） ── */}
-      <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
-        <SectionTitle icon={Target} title="ステータス（主要5科目）" />
-        <div className="mt-2">
-          <RadarChart
-            data={statusPoints}
-            onPick={(idx) => setFocusedArea(PRIMARY_AREAS[idx])}
-          />
-        </div>
-        <p className="mt-1 text-[10px] text-ink-400 text-center">
-          科目をタップすると詳細が見られます
-        </p>
-      </section>
-
-      {/* ── 9教科一覧（クリックで展開） ── */}
-      <section>
-        <SectionTitle icon={ChevronRight} title="全教科" />
-        <ul className="mt-2 grid grid-cols-3 gap-2">
-          {SUBJECT_AREAS.map((a) => {
-            const focused = focusedArea === a.id;
-            return (
-              <li key={a.id}>
-                <button
-                  type="button"
-                  onClick={() => setFocusedArea(focused ? null : a.id)}
-                  className={cn(
-                    "flex w-full flex-col items-center gap-1.5 rounded-2xl border p-3 transition",
-                    focused
-                      ? "border-ink-900 bg-ink-900 text-white"
-                      : "border-ink-100/80 bg-white text-ink-900 hover:bg-cream-50",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-xl text-[12px] font-bold",
-                      focused ? "bg-white/15 text-white" : a.tone,
-                    )}
-                  >
-                    {a.shortName}
-                  </span>
-                  <span className={cn(
-                    "text-[10px] font-bold",
-                    focused ? "text-white" : "text-ink-700",
-                  )}>
-                    {a.name}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-
-      {/* ── 教科詳細（領域・単元・能力値） ── */}
-      {focusedArea ? (
-        <AreaDetail
-          area={focusedArea}
-          gradeToggle={gradeToggle}
-          onGradeChange={setGradeToggle}
-          onClose={() => setFocusedArea(null)}
-        />
-      ) : null}
+      {/* ── ステータス（五角形 + 9教科 + 偏差値/スコア） ── */}
+      <StatusCard
+        profile={profile}
+        statusPoints={statusPoints}
+        focusedArea={focusedArea}
+        onFocus={setFocusedArea}
+        gradeToggle={gradeToggle}
+        onGradeChange={setGradeToggle}
+      />
 
       {/* ── メニュー ── */}
       <ul className="divide-y divide-ink-100/70 overflow-hidden rounded-2xl border border-ink-100/80 bg-white">
@@ -256,11 +210,6 @@ export function MeView() {
           href="/app/me/settings"
           icon={<Settings className="h-4 w-4" />}
           label="設定"
-        />
-        <MenuLink
-          href="/onboarding"
-          icon={<Edit3 className="h-4 w-4" />}
-          label="学年・志望校・偏差値を編集"
         />
       </ul>
 
@@ -589,90 +538,7 @@ function AreaDetail({
   );
 }
 
-// ─── 本棚追加 ───
-function BookshelfAddModal({ onClose }: { onClose: () => void }) {
-  const [name, setName] = useState("");
-  const [kind, setKind] = useState<BookshelfItem["kind"]>("textbook");
-
-  function handle(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
-    addBookshelfItem({
-      id: `bk-${Date.now().toString(36)}`,
-      name: name.trim(),
-      kind,
-    });
-    onClose();
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end bg-black/40">
-      <button
-        type="button"
-        className="absolute inset-0 cursor-default"
-        aria-label="閉じる"
-        onClick={onClose}
-      />
-      <form
-        onSubmit={handle}
-        className="relative z-10 w-full max-w-[480px] mx-auto rounded-t-3xl bg-white p-4 shadow-2xl"
-      >
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-black text-ink-900">本棚に追加</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-ink-500"
-            aria-label="閉じる"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="mt-3">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
-            種類
-          </div>
-          <ul className="mt-1 grid grid-cols-3 gap-1.5">
-            {(Object.keys(KIND_LABEL) as BookshelfItem["kind"][]).map((k) => (
-              <li key={k}>
-                <button
-                  type="button"
-                  onClick={() => setKind(k)}
-                  className={cn(
-                    "h-9 w-full rounded-xl text-[10px] font-bold",
-                    kind === k
-                      ? "bg-sky-500 text-white"
-                      : "bg-cream-50 text-ink-700",
-                  )}
-                >
-                  {KIND_LABEL[k]}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="mt-3">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
-            書名
-          </div>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="例: 黄チャート"
-            className="mt-1 h-10 w-full rounded-xl border border-cream-200 bg-cream-50 px-3 text-sm text-ink-900 outline-none focus:border-sky-400 focus:bg-white"
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          className="mt-3 h-12 w-full rounded-2xl bg-sky-500 text-sm font-black text-white"
-        >
-          追加
-        </button>
-      </form>
-    </div>
-  );
-}
+// ─── 本棚追加 ─── (新しい検索・絞り込み付きモーダルを使う)
 
 const KIND_LABEL: Record<BookshelfItem["kind"], string> = {
   textbook: "参考書",
@@ -682,9 +548,174 @@ const KIND_LABEL: Record<BookshelfItem["kind"], string> = {
   other: "その他",
 };
 
-// ─── ステータス計算 ───
+// ─── ステータスカード ─────────────────────────
+function StatusCard({
+  profile,
+  statusPoints,
+  focusedArea,
+  onFocus,
+  gradeToggle,
+  onGradeChange,
+}: {
+  profile?: StoredProfile;
+  statusPoints: RadarPoint[];
+  focusedArea: SubjectAreaId | null;
+  onFocus: (a: SubjectAreaId | null) => void;
+  gradeToggle: GradeId;
+  onGradeChange: (g: GradeId) => void;
+}) {
+  // アプリスコア (暫定): 直近テスト得点率の平均
+  const appScore = useMemo(() => {
+    if (statusPoints.length === 0) return 0;
+    const vals = statusPoints.map((p) => p.value);
+    return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+  }, [statusPoints]);
+
+  const deviation = profile?.deviation;
+
+  return (
+    <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
+      <div className="flex items-baseline justify-between">
+        <SectionTitle icon={Target} title="ステータス" />
+        <span className="text-[10px] text-ink-400">タップで詳細</span>
+      </div>
+
+      {/* 数字 (偏差値 / アプリスコア) + 五角形 */}
+      <div className="mt-2 flex items-center gap-3">
+        <div className="flex-1 space-y-2">
+          <div className="rounded-xl bg-cream-50/70 p-2.5">
+            <div className="text-[10px] font-medium text-ink-500">偏差値</div>
+            <div className="mt-0.5 flex items-baseline gap-1">
+              <span className="text-2xl font-bold leading-none tabular-nums text-ink-900">
+                {deviation ?? "—"}
+              </span>
+            </div>
+          </div>
+          <div className="rounded-xl bg-cream-50/70 p-2.5">
+            <div className="text-[10px] font-medium text-ink-500">アプリスコア</div>
+            <div className="mt-0.5 flex items-baseline gap-1">
+              <span className="text-2xl font-bold leading-none tabular-nums text-ink-900">
+                {appScore}
+              </span>
+              <span className="text-[10px] font-medium text-ink-400">/ 100</span>
+            </div>
+          </div>
+        </div>
+        {/* 五角形（コンパクト） */}
+        <div className="w-[150px] flex-none">
+          <RadarChart
+            data={statusPoints}
+            size={150}
+            onPick={(idx) => onFocus(PRIMARY_AREAS[idx])}
+          />
+        </div>
+      </div>
+
+      {/* 9教科グリッド（タップで詳細展開） */}
+      <ul className="mt-4 grid grid-cols-3 gap-1.5">
+        {SUBJECT_AREAS.map((a) => {
+          const focused = focusedArea === a.id;
+          return (
+            <li key={a.id}>
+              <button
+                type="button"
+                onClick={() => onFocus(focused ? null : a.id)}
+                className={cn(
+                  "flex w-full items-center gap-1.5 rounded-lg px-2 py-2 transition",
+                  focused
+                    ? "bg-ink-900 text-white"
+                    : "bg-cream-50/80 text-ink-900 hover:bg-cream-100",
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-6 w-6 flex-none items-center justify-center rounded-md text-[10px] font-bold",
+                    focused ? "bg-white/15 text-white" : a.tone,
+                  )}
+                >
+                  {a.shortName}
+                </span>
+                <span className="text-[11px] font-bold">{a.name}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      {/* 教科詳細 */}
+      {focusedArea ? (
+        <div className="mt-3">
+          <AreaDetail
+            area={focusedArea}
+            gradeToggle={gradeToggle}
+            onGradeChange={onGradeChange}
+            onClose={() => onFocus(null)}
+          />
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 type TestRecord = ReturnType<typeof useStore>["state"]["tests"][number];
 
+// ─── LV / 経験値 / 山グラフ ─────────────────
+function LevelSection() {
+  const { state, hydrated } = useStore();
+  if (!hydrated) return null;
+  const totalExp = computeTotalExp({
+    tasks: state.tasks ?? [],
+    tests: state.tests ?? [],
+    blockLogs: state.blockLogs ?? [],
+    loginDays: (state.dailyMoodLogs ?? []).length,
+  });
+  const lv = levelFromExp(totalExp);
+
+  // 目標 (border 偏差値) までの残りブロック数を概算
+  const profile = state.profile;
+  let remainingBlocks: number | undefined;
+  let overallProgress = Math.min(1, lv.totalExp / 50000);
+  let goalLabel = "目標";
+  if (profile?.deviation && profile.targetUniversities?.length) {
+    const grade = (profile.grade as "h1" | "h2" | "h3" | "ronin") ?? "h2";
+    const months = defaultRemainingMonths(grade);
+    const remainingWeeks = Math.max(1, Math.round((months * 30) / 7));
+    const border = 65;
+    const gap = estimateGoalGap({
+      targets: [
+        {
+          universityId: profile.targetUniversities[0].universityId,
+          priority: 1,
+          borderDeviation: border,
+          safeDeviation: border + 3,
+          stretchDeviation: border + 5,
+        },
+      ],
+      currentTotal: profile.deviation,
+      currentByArea: {},
+      remainingWeeks,
+    });
+    const req = estimateRequiredBlocks({ gap, remainingWeeks });
+    const future = req.futureRequiredHours.upper / (25 / 60);
+    const done = (state.blockLogs ?? []).length;
+    remainingBlocks = Math.max(0, Math.round(future - done));
+    overallProgress = Math.min(1, done / Math.max(1, future));
+    goalLabel = "本番";
+  }
+
+  return (
+    <LevelMountain
+      level={lv.level}
+      currentLevelExp={lv.currentLevelExp}
+      nextLevelExp={lv.nextLevelExp}
+      goalLabel={goalLabel}
+      overallProgress={overallProgress}
+      blocksRemaining={remainingBlocks}
+    />
+  );
+}
+
+// ─── ステータス計算 ───
 function buildStatusPoints(
   tests: TestRecord[],
   areas: SubjectAreaId[],

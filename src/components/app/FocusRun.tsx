@@ -17,7 +17,7 @@ import { useStore } from "@/lib/hooks/useStore";
 import { logBlock } from "@/lib/store";
 import type { Block } from "@/lib/types";
 
-const DEFAULT_DURATION_SEC = 45 * 60;
+const DEFAULT_DURATION_SEC = 25 * 60; // ポモドーロ 25分
 
 type Phase = "idle" | "running" | "paused" | "finished";
 
@@ -232,7 +232,7 @@ function TimerView({
           </>
         ) : (
           <div className="text-sm font-bold">
-            自由学習 45分。終わったら自己評価してください。
+            自由学習 25分。終わったら自己評価してください。
           </div>
         )}
       </section>
@@ -389,7 +389,7 @@ function FinishView({
           お疲れさま
         </div>
         <h2 className="mt-1 text-lg font-black text-ink-900">
-          45分、走り切りました
+          25分、走り切りました
         </h2>
         {block ? (
           <div className="mt-3 rounded-2xl bg-sky-50 p-3">

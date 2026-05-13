@@ -3,8 +3,10 @@
 // ヘッダーの "+" ボタンから開く追加メニュー (ボトムシート)
 // Apple HIG: 角丸 16px / 影なし背景 / 高コントラスト不要のホワイト
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  BookOpen,
   ClipboardList,
   Clock3,
   FileText,
@@ -12,51 +14,78 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { BookshelfAddModal } from "@/components/me/BookshelfAddModal";
 
 type Props = {
   open: boolean;
   onClose: () => void;
 };
 
-const ITEMS = [
+type FabItem = {
+  icon: typeof ClipboardList;
+  tone: string;
+  title: string;
+  sub: string;
+  action: { kind: "route"; href: string } | { kind: "bookshelf" };
+};
+
+const ITEMS: FabItem[] = [
   {
     icon: ClipboardList,
     tone: "bg-sky-100 text-sky-600",
     title: "タスクを追加",
     sub: "今日やることを1つ登録",
-    href: "/app/todo?new=1",
+    action: { kind: "route", href: "/app/todo?new=1" },
+  },
+  {
+    icon: BookOpen,
+    tone: "bg-mint-100 text-mint-600",
+    title: "参考書・教科書を追加",
+    sub: "本棚に登録 (検索・人気から選択)",
+    action: { kind: "bookshelf" },
   },
   {
     icon: Clock3,
-    tone: "bg-mint-100 text-mint-600",
+    tone: "bg-peach-100 text-peach-500",
     title: "勉強時間を記録",
     sub: "集中したブロックを後から記録",
-    href: "/app/focus",
+    action: { kind: "route", href: "/app/focus" },
   },
   {
     icon: FileText,
-    tone: "bg-peach-100 text-peach-500",
+    tone: "bg-coral-200 text-coral-400",
     title: "定期テストを追加",
     sub: "校内の中間・期末・実力",
-    href: "/app/test/new?kind=regular",
+    action: { kind: "route", href: "/app/test/new?kind=regular" },
   },
   {
     icon: ScrollText,
     tone: "bg-sun-200 text-ink-900",
     title: "模試を追加",
     sub: "河合・駿台・東進・代ゼミ・進研",
-    href: "/app/test/new?kind=mock",
+    action: { kind: "route", href: "/app/test/new?kind=mock" },
   },
 ];
 
 export function AddFabSheet({ open, onClose }: Props) {
   const router = useRouter();
-  if (!open) return null;
+  const [bookshelfOpen, setBookshelfOpen] = useState(false);
+  if (!open && !bookshelfOpen) return null;
 
-  function go(href: string) {
+  function go(item: FabItem) {
     onClose();
-    router.push(href);
+    if (item.action.kind === "route") {
+      router.push(item.action.href);
+    } else {
+      setBookshelfOpen(true);
+    }
   }
+
+  if (bookshelfOpen) {
+    return <BookshelfAddModal onClose={() => setBookshelfOpen(false)} />;
+  }
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-ink-900/40 backdrop-blur-[2px]">
@@ -86,7 +115,7 @@ export function AddFabSheet({ open, onClose }: Props) {
               <li key={it.title}>
                 <button
                   type="button"
-                  onClick={() => go(it.href)}
+                  onClick={() => go(it)}
                   className="flex w-full items-center gap-3 rounded-2xl border border-ink-100/80 bg-white px-3 py-3 text-left active:scale-[0.985] active:bg-cream-50 transition"
                 >
                   <span

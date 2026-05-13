@@ -34,7 +34,7 @@ export function FocusListView() {
       <div className="px-4 pt-6">
         <div className="rounded-2xl border border-ink-100/80 bg-white p-5">
           <div className="text-sm font-bold text-ink-900">
-            45分タイマーをすぐ使う
+            25分タイマーをすぐ使う
           </div>
           <p className="mt-1 text-[11px] text-ink-500">
             テストなしでもタイマーは使えます。
@@ -44,7 +44,7 @@ export function FocusListView() {
             className="mt-3 inline-flex h-12 items-center gap-2 rounded-full bg-sky-500 px-5 text-sm font-black text-white shadow-soft"
           >
             <Play className="h-4 w-4" />
-            45分はじめる
+            25分はじめる
           </Link>
         </div>
 
@@ -119,7 +119,7 @@ export function FocusListView() {
           className="mt-4 flex h-14 items-center justify-center gap-2 rounded-full bg-sky-500 text-base font-black text-white shadow-[0_8px_20px_-8px_var(--color-sky-500)] active:scale-[0.98] transition"
         >
           <Play className="h-5 w-5" />
-          45分はじめる
+          25分はじめる
         </Link>
       </section>
 

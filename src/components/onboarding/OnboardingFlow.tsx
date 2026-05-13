@@ -153,9 +153,28 @@ export function OnboardingFlow() {
           <span className="text-xs font-bold text-ink-500 tabular-nums">
             {stepIdx + 1} / {STEPS.length}
           </span>
-          <Link href="/" className="text-xs font-bold text-ink-400">
-            やめる
-          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              // SKIP: 最低限の情報だけ確定してアプリへ
+              const existing = readStore().profile;
+              setProfile({
+                ...(existing ?? {}),
+                grade: form.grade,
+                target: existing?.target ?? "private-top",
+                examDate: existing?.examDate ?? defaultExamDate(form.grade),
+                textbooks: existing?.textbooks ?? [],
+                onboardedAt: existing?.onboardedAt ?? new Date().toISOString(),
+                userId:
+                  existing?.userId ??
+                  String(10000 + Math.floor(Math.random() * 90000)),
+              } as StoredProfile);
+              router.push("/app");
+            }}
+            className="text-xs font-bold text-ink-400 hover:text-ink-700"
+          >
+            スキップ
+          </button>
         </div>
         <div className="mt-3 flex gap-1.5">
           {STEPS.map((_, i) => (

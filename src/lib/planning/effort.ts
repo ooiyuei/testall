@@ -19,7 +19,7 @@ import {
   type StudyQuality,
 } from "./effort-table";
 
-const HOURS_PER_BLOCK = 0.75;
+import { HOURS_PER_BLOCK } from "./constants";
 
 export type PastSession = {
   area?: SubjectAreaId;
