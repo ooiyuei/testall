@@ -89,18 +89,30 @@ export function RadarChart({ data, size = 260, onPick }: Props) {
           style={{ cursor: onPick ? "pointer" : "default" }}
         />
       ))}
-      {/* ラベル (外側) */}
+      {/* ラベル (外側) — クリッカブル時はキーボード操作対応 */}
       {data.map((d, i) => {
-        // ラベルは軸の頂点(100%)から少し外側
         const ratio = 1.18;
         const angle = -Math.PI / 2 + (i * 2 * Math.PI) / n;
         const lx = cx + r * ratio * Math.cos(angle);
         const ly = cy + r * ratio * Math.sin(angle);
+        const interactive = !!onPick;
         return (
           <g
             key={i}
             onClick={() => onPick?.(i)}
-            style={{ cursor: onPick ? "pointer" : "default" }}
+            onKeyDown={(e) => {
+              if (interactive && (e.key === "Enter" || e.key === " ")) {
+                e.preventDefault();
+                onPick?.(i);
+              }
+            }}
+            role={interactive ? "button" : undefined}
+            tabIndex={interactive ? 0 : undefined}
+            aria-label={interactive ? `${d.label}の詳細を開く` : undefined}
+            style={{
+              cursor: interactive ? "pointer" : "default",
+              outline: "none",
+            }}
           >
             <text
               x={lx}
