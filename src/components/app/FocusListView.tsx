@@ -32,7 +32,7 @@ export function FocusListView() {
   if (!latest || latest.diagnosis.todayBlocks.length === 0) {
     return (
       <div className="px-4 pt-6">
-        <div className="rounded-3xl border border-cream-200 bg-white p-5 shadow-soft">
+        <div className="rounded-2xl border border-ink-100/80 bg-white p-5">
           <div className="text-sm font-bold text-ink-900">
             45分タイマーをすぐ使う
           </div>
@@ -88,7 +88,7 @@ export function FocusListView() {
   const active = blocks[activeIdx];
 
   return (
-    <div className="px-4 pt-3 pb-10">
+    <div className="px-5 pb-8 pt-3">
       {/* Hero */}
       <section className="rounded-3xl border border-sky-200 bg-white p-5 shadow-soft">
         <div className="flex items-center justify-between">

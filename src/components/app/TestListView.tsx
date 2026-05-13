@@ -16,10 +16,10 @@ export function TestListView() {
   const tests = state.tests;
 
   return (
-    <div className="px-4 pt-3 pb-10">
+    <div className="px-5 pb-8 pt-3">
       {tests.length > 0 ? (
-        <div className="rounded-3xl border border-cream-200 bg-white shadow-soft">
-          <ul className="divide-y divide-cream-200">
+        <div className="rounded-2xl border border-ink-100/80 bg-white">
+          <ul className="divide-y divide-ink-100/70">
             {tests.map((t) => {
               const pct = Math.round((t.input.score / t.input.fullScore) * 100);
               const done = state.blockLogs.filter(

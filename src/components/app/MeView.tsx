@@ -88,33 +88,33 @@ export function MeView() {
   const allBookshelf: BookshelfItem[] = profile?.bookshelfItems ?? [];
 
   return (
-    <div className="px-4 pt-3 pb-32 space-y-5">
+    <div className="px-5 pb-8 pt-3 space-y-5">
       {/* ── ヘッダ ── */}
       <button
         type="button"
         onClick={() => setProfileOpen((v) => !v)}
-        className="w-full overflow-hidden rounded-3xl border border-cream-200 bg-white p-4 shadow-soft text-left active:scale-[0.99] transition"
+        className="w-full overflow-hidden rounded-2xl border border-ink-100/80 bg-white p-4 text-left active:scale-[0.99] transition"
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-14 w-14 flex-none items-center justify-center rounded-full bg-sky-500 text-xl font-black text-white">
+          <div className="flex h-12 w-12 flex-none items-center justify-center rounded-full bg-ink-900 text-base font-bold text-white">
             {profile?.name?.[0] ?? "あ"}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-base font-black text-ink-900 truncate">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[15px] font-bold text-ink-900 truncate">
                 {profile?.name ?? "あなた"}
               </span>
-              <span className="flex items-center text-[10px] font-bold text-ink-400">
-                <AtSign className="h-3 w-3" />
+              <span className="flex items-center text-[10px] font-medium text-ink-400">
+                <AtSign className="h-2.5 w-2.5" />
                 {userId}
               </span>
             </div>
             <div className="mt-0.5 flex items-center gap-1 text-[11px] text-ink-500">
               <GraduationCap className="h-3 w-3" />
               {gradeLabel}
-              <span className="mx-1">·</span>
+              <span className="mx-0.5 text-ink-300">·</span>
               <Target className="h-3 w-3" />
-              {firstUniName}
+              <span className="truncate">{firstUniName}</span>
             </div>
           </div>
           <ChevronDown
@@ -157,7 +157,7 @@ export function MeView() {
             {allBookshelf.map((b) => (
               <li
                 key={b.id}
-                className="relative rounded-2xl border border-cream-200 bg-white p-3 shadow-soft"
+                className="relative rounded-2xl border border-ink-100/80 bg-white p-3"
               >
                 <div className="text-[9px] font-bold uppercase tracking-widest text-ink-500">
                   {KIND_LABEL[b.kind]}
@@ -188,7 +188,7 @@ export function MeView() {
       </section>
 
       {/* ── ステータス（五角形） ── */}
-      <section className="rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
+      <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
         <SectionTitle icon={Target} title="ステータス（主要5科目）" />
         <div className="mt-2">
           <RadarChart
@@ -213,21 +213,24 @@ export function MeView() {
                   type="button"
                   onClick={() => setFocusedArea(focused ? null : a.id)}
                   className={cn(
-                    "flex w-full flex-col items-center gap-1 rounded-2xl border p-3 transition",
+                    "flex w-full flex-col items-center gap-1.5 rounded-2xl border p-3 transition",
                     focused
-                      ? "border-sky-400 bg-sky-50"
-                      : "border-cream-200 bg-white hover:bg-cream-50",
+                      ? "border-ink-900 bg-ink-900 text-white"
+                      : "border-ink-100/80 bg-white text-ink-900 hover:bg-cream-50",
                   )}
                 >
                   <span
                     className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-xl text-xs font-black",
-                      a.tone,
+                      "flex h-8 w-8 items-center justify-center rounded-xl text-[12px] font-bold",
+                      focused ? "bg-white/15 text-white" : a.tone,
                     )}
                   >
                     {a.shortName}
                   </span>
-                  <span className="text-[10px] font-bold text-ink-900">
+                  <span className={cn(
+                    "text-[10px] font-bold",
+                    focused ? "text-white" : "text-ink-700",
+                  )}>
                     {a.name}
                   </span>
                 </button>
@@ -248,7 +251,7 @@ export function MeView() {
       ) : null}
 
       {/* ── メニュー ── */}
-      <ul className="divide-y divide-cream-200 overflow-hidden rounded-3xl border border-cream-200 bg-white shadow-soft">
+      <ul className="divide-y divide-ink-100/70 overflow-hidden rounded-2xl border border-ink-100/80 bg-white">
         <MenuLink
           href="/app/me/settings"
           icon={<Settings className="h-4 w-4" />}
@@ -292,7 +295,7 @@ function ProfileDetails({
   }
 
   return (
-    <section className="rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
+    <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
       <div className="flex items-center justify-between">
         <SectionTitle icon={Edit3} title="自己紹介" />
         {editing ? (
@@ -497,7 +500,7 @@ function AreaDetail({
   }, [visibleSubjects]);
 
   return (
-    <section className="rounded-3xl border border-sky-200 bg-sky-50 p-4">
+    <section className="rounded-2xl border border-sky-200 bg-sky-50/70 p-4">
       <div className="flex items-center justify-between">
         <SectionTitle
           icon={ChevronRight}

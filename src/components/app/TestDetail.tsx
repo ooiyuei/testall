@@ -87,7 +87,7 @@ export function TestDetail({ id }: { id: string }) {
   }
 
   return (
-    <div className="px-4 pt-3 pb-10 space-y-5">
+    <div className="px-5 pb-8 pt-3 space-y-5">
       {/* Score header */}
       <section className="rounded-3xl border border-cream-200 bg-gradient-to-br from-sky-50 to-peach-50 p-5 shadow-soft">
         <div className="flex items-start justify-between">
@@ -256,7 +256,7 @@ export function TestDetail({ id }: { id: string }) {
 
       {/* Strengths */}
       {diagnosis.strengths.length > 0 ? (
-        <section className="rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
+        <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
           <SectionTitle small>強みになっているところ</SectionTitle>
           <ul className="mt-2 space-y-1.5">
             {diagnosis.strengths.map((s, i) => (

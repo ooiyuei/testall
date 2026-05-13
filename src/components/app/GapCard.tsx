@@ -1,12 +1,9 @@
 "use client";
 
-// 志望校ギャップ + 必要時間サマリ (MeView 上部に置くカード)
-// §18 / §19 の出力例を実装
+// 志望校ギャップカード — クリーン版
+// 大きな数字 + 控えめなラベル + 進捗バー
 
 import { useMemo } from "react";
-import Link from "next/link";
-import { Target, TrendingUp, Clock } from "lucide-react";
-import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
 import {
   defaultRemainingMonths,
@@ -28,7 +25,6 @@ export function GapCard() {
     const totalMonths = defaultRemainingMonths(grade);
     const remainingWeeks = Math.max(1, Math.round((totalMonths * 30) / 7));
 
-    // border_deviation の暫定値（次のアップデートで universities.faculties から取得）
     const border = 65;
     const baseHours = lookupRequiredHours(p.deviation, border);
 
@@ -46,92 +42,95 @@ export function GapCard() {
       currentByArea: {},
       remainingWeeks,
     });
+    const required = estimateRequiredBlocks({ gap, remainingWeeks });
 
-    const required = estimateRequiredBlocks({
-      gap,
-      remainingWeeks,
-    });
-
-    return {
-      border,
-      baseHours,
-      grade,
-      totalMonths,
-      remainingWeeks,
-      currentDeviation: p.deviation,
-      required,
-    };
+    return { border, baseHours, totalMonths, currentDeviation: p.deviation, required };
   }, [state.profile]);
 
-  if (!hydrated) return null;
-  if (!result) return null;
+  if (!hydrated || !result) return null;
 
   const { border, baseHours, totalMonths, currentDeviation, required } = result;
-  const futureRangeHours = required.futureRequiredHours;
   const futureBlocks = {
-    lower: Math.round(futureRangeHours.lower / HOURS_PER_BLOCK),
-    upper: Math.round(futureRangeHours.upper / HOURS_PER_BLOCK),
+    lower: Math.round(required.futureRequiredHours.lower / HOURS_PER_BLOCK),
+    upper: Math.round(required.futureRequiredHours.upper / HOURS_PER_BLOCK),
   };
   const weekly = required.weeklyRequiredBlocks;
-  const riskLabel = WEEK_LOAD_LABEL[required.riskLevel];
+  const gapPt = Math.max(0, border - currentDeviation);
+  const progress = Math.max(0, Math.min(100, (currentDeviation / border) * 100));
 
   return (
-    <section className="rounded-3xl border border-cream-200 bg-gradient-to-br from-sky-50 to-cream-50 p-4 shadow-soft">
-      <div className="flex items-center gap-1.5">
-        <Target className="h-3.5 w-3.5 text-sky-600" />
-        <h2 className="text-[10px] font-bold uppercase tracking-widest text-sky-700">
-          志望校までのギャップ
-        </h2>
+    <section className="rounded-2xl border border-ink-100/80 bg-white p-5">
+      <div className="flex items-baseline justify-between">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+          志望校ギャップ
+        </div>
+        <span className="text-[10px] font-medium text-ink-500">
+          残り {totalMonths}ヶ月
+        </span>
       </div>
 
-      <div className="mt-2 grid grid-cols-3 gap-2">
-        <Stat label="現在偏差値" value={currentDeviation} unit="" tone="bg-white text-ink-900" />
-        <Stat
-          label="目標偏差値"
-          value={border}
-          unit=""
-          tone="bg-sky-500 text-white"
-        />
-        <Stat
-          label="差"
-          value={Math.max(0, border - currentDeviation)}
-          unit="pt"
-          tone="bg-coral-300 text-white"
-        />
-      </div>
-
-      <div className="mt-3 rounded-2xl bg-white p-3">
-        <div className="flex items-baseline justify-between">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
-            必要有効学習時間（推定）
+      {/* 現在偏差値 → 目標偏差値 */}
+      <div className="mt-3 flex items-end gap-3">
+        <div>
+          <div className="text-[10px] font-medium text-ink-400">現在</div>
+          <div className="mt-0.5 flex items-baseline gap-1">
+            <span className="text-3xl font-bold tabular-nums text-ink-900">
+              {currentDeviation}
+            </span>
           </div>
-          <div className="text-[10px] text-ink-400">残り {totalMonths}ヶ月</div>
         </div>
-        <div className="mt-1 text-base font-black text-ink-900 tabular-nums">
-          {baseHours.lower.toLocaleString()}〜{baseHours.upper.toLocaleString()}
-          <span className="ml-1 text-xs font-bold text-ink-500">時間</span>
-        </div>
-        <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
-          <Mini icon={<Clock />} label="今後の必要時間" value={`${futureRangeHours.lower}〜${futureRangeHours.upper}h`} />
-          <Mini icon={<TrendingUp />} label="今後のブロック数" value={`${futureBlocks.lower}〜${futureBlocks.upper}`} />
+        <div className="mx-1 mb-1 flex-1 text-center text-ink-300">→</div>
+        <div className="text-right">
+          <div className="text-[10px] font-medium text-ink-400">目標</div>
+          <div className="mt-0.5 flex items-baseline justify-end gap-1">
+            <span className="text-3xl font-bold tabular-nums text-sky-500">
+              {border}
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="mt-3 rounded-2xl bg-white p-3">
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-cream-100">
+        <div
+          className="h-full rounded-full bg-sky-500 transition-all"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+      <div className="mt-1 flex items-baseline justify-between text-[10px] text-ink-500">
+        <span>差 {gapPt} pt</span>
+        <span className="font-medium">{WEEK_LOAD_LABEL[required.riskLevel]}</span>
+      </div>
+
+      {/* 必要時間ブロック */}
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Stat
+          label="必要時間"
+          main={`${baseHours.lower}〜${baseHours.upper}`}
+          unit="h"
+        />
+        <Stat
+          label="今後ブロック"
+          main={`${futureBlocks.lower}〜${futureBlocks.upper}`}
+          unit="blk"
+        />
+      </div>
+
+      <div className="mt-2 rounded-xl bg-cream-50/80 px-3 py-2">
         <div className="flex items-baseline justify-between">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
+          <span className="text-[10px] font-medium text-ink-500">
             週あたり必要
-          </div>
-          <div className="text-[10px] font-bold text-sky-700">{riskLabel}</div>
-        </div>
-        <div className="mt-1 text-base font-black text-ink-900 tabular-nums">
-          {weekly.lower}〜{weekly.upper}
-          <span className="ml-1 text-xs font-bold text-ink-500">ブロック / 週</span>
+          </span>
+          <span className="text-[14px] font-bold tabular-nums text-ink-900">
+            {weekly.lower}〜{weekly.upper}
+            <span className="ml-1 text-[10px] font-medium text-ink-500">
+              blk/週
+            </span>
+          </span>
         </div>
       </div>
 
-      <p className="mt-2 text-[11px] leading-relaxed text-ink-600">
-        ※ 偏差値ソースとユーザー実行ログで補正されます。初期値は粗い推定です。
+      <p className="mt-2 text-[10px] leading-[1.6] text-ink-400">
+        実行ログで自動補正されます。初期値は粗い推定です。
       </p>
     </section>
   );
@@ -139,42 +138,22 @@ export function GapCard() {
 
 function Stat({
   label,
-  value,
+  main,
   unit,
-  tone,
 }: {
   label: string;
-  value: number;
+  main: string;
   unit: string;
-  tone: string;
 }) {
   return (
-    <div className={cn("rounded-2xl px-2 py-2 text-center shadow-soft", tone)}>
-      <div className="text-[9px] font-bold opacity-80">{label}</div>
-      <div className="mt-0.5 text-xl font-black tabular-nums">
-        {value}
-        {unit ? <span className="ml-0.5 text-[10px] opacity-70">{unit}</span> : null}
+    <div className="rounded-xl bg-cream-50/80 px-3 py-2">
+      <div className="text-[10px] font-medium text-ink-500">{label}</div>
+      <div className="mt-0.5 flex items-baseline gap-1">
+        <span className="text-[14px] font-bold tabular-nums text-ink-900">
+          {main}
+        </span>
+        <span className="text-[10px] font-medium text-ink-500">{unit}</span>
       </div>
-    </div>
-  );
-}
-
-function Mini({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-xl bg-cream-50 p-2">
-      <div className="flex items-center gap-1 text-[9px] font-bold text-ink-500">
-        <span className="[&_svg]:h-3 [&_svg]:w-3">{icon}</span>
-        {label}
-      </div>
-      <div className="mt-0.5 font-black text-ink-900 tabular-nums">{value}</div>
     </div>
   );
 }
