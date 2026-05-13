@@ -136,6 +136,8 @@ function ModeSelect({
   );
 }
 
+type Confidence = "high" | "medium" | "low";
+
 type VisionResult = {
   subject: string;
   testName: string;
@@ -149,10 +151,15 @@ type VisionResult = {
   }[];
 };
 
+type VisionDetail = {
+  confidence?: { overall: Confidence; score: Confidence; units: Confidence };
+  notes?: string | null;
+};
+
 type PhotoState =
   | { status: "idle" }
   | { status: "analyzing" }
-  | { status: "done"; result: VisionResult; previewUrl: string }
+  | { status: "done"; result: VisionResult; detail?: VisionDetail; previewUrl: string }
   | { status: "error"; message: string };
 
 function PhotoMode({
@@ -190,13 +197,23 @@ function PhotoMode({
         return;
       }
 
-      const data = (await res.json()) as { ok: boolean; result?: VisionResult; error?: string };
+      const data = (await res.json()) as {
+        ok: boolean;
+        result?: VisionResult;
+        detail?: VisionDetail;
+        error?: string;
+      };
       if (!data.ok || !data.result) {
         setPhotoState({ status: "error", message: data.error ?? "vision_failed" });
         return;
       }
 
-      setPhotoState({ status: "done", result: data.result, previewUrl });
+      setPhotoState({
+        status: "done",
+        result: data.result,
+        detail: data.detail,
+        previewUrl,
+      });
     } catch {
       setPhotoState({ status: "error", message: "network_error" });
     }
@@ -295,25 +312,56 @@ function PhotoMode({
           <div className="rounded-2xl border border-cream-200 bg-white p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-widest text-ink-500">解析結果</span>
-              <Check className="h-4 w-4 text-mint-500" />
+              {photoState.detail?.confidence ? (
+                <ConfidenceBadge level={photoState.detail.confidence.overall} />
+              ) : (
+                <Check className="h-4 w-4 text-mint-500" />
+              )}
             </div>
+
+            {/* AI が低信頼度を返してきたら警告 */}
+            {photoState.detail?.confidence?.overall === "low" ? (
+              <div className="flex items-start gap-1.5 rounded-xl bg-sun-200/40 px-3 py-2 text-[11px] text-ink-700">
+                <AlertCircle className="h-3.5 w-3.5 flex-none mt-0.5 text-sun-300" />
+                <span>
+                  写真が読みにくかった部分があります。次の画面で正しい値に直してください。
+                  {photoState.detail.notes ? <><br />（{photoState.detail.notes}）</> : null}
+                </span>
+              </div>
+            ) : null}
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <div className="text-[10px] text-ink-500">科目</div>
                 <div className="mt-0.5 text-sm font-black text-ink-900">{photoState.result.subject}</div>
               </div>
               <div>
-                <div className="text-[10px] text-ink-500">テスト名</div>
+                <div className="text-[10px] text-ink-500">
+                  テスト名
+                  {photoState.detail?.confidence && photoState.detail.confidence.overall !== "high" ? (
+                    <span className="ml-1 text-[9px] font-bold text-ink-400">推測</span>
+                  ) : null}
+                </div>
                 <div className="mt-0.5 text-sm font-black text-ink-900">{photoState.result.testName || "—"}</div>
               </div>
               <div>
-                <div className="text-[10px] text-ink-500">得点</div>
+                <div className="text-[10px] text-ink-500">
+                  得点
+                  {photoState.detail?.confidence?.score === "low" ? (
+                    <span className="ml-1 text-[9px] font-bold text-coral-500">要確認</span>
+                  ) : null}
+                </div>
                 <div className="mt-0.5 text-sm font-black text-ink-900 tabular-nums">
                   {photoState.result.score} / {photoState.result.fullScore}点
                 </div>
               </div>
               <div>
-                <div className="text-[10px] text-ink-500">単元数</div>
+                <div className="text-[10px] text-ink-500">
+                  単元数
+                  {photoState.detail?.confidence?.units === "low" ? (
+                    <span className="ml-1 text-[9px] font-bold text-coral-500">要確認</span>
+                  ) : null}
+                </div>
                 <div className="mt-0.5 text-sm font-black text-ink-900">{photoState.result.units.length}件</div>
               </div>
             </div>
@@ -1189,6 +1237,24 @@ function UnitStep({
         );
       })}
     </div>
+  );
+}
+
+function ConfidenceBadge({ level }: { level: Confidence }) {
+  const meta = {
+    high: { label: "信頼度 高", tone: "bg-mint-100 text-mint-600" },
+    medium: { label: "信頼度 中", tone: "bg-sun-200/60 text-ink-700" },
+    low: { label: "信頼度 低", tone: "bg-coral-300/20 text-coral-500" },
+  }[level];
+  return (
+    <span
+      className={cn(
+        "rounded-full px-2 py-0.5 text-[10px] font-bold",
+        meta.tone,
+      )}
+    >
+      {meta.label}
+    </span>
   );
 }
 
