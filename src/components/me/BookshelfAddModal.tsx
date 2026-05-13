@@ -21,7 +21,11 @@ import {
 import { cn } from "@/lib/cn";
 import { addBookshelfItem } from "@/lib/store";
 import type { BookshelfItem } from "@/lib/store";
-import { TEXTBOOKS } from "@/lib/master/textbooks";
+import {
+  TEXTBOOKS,
+  getAllTextbooks,
+  searchAllTextbooks,
+} from "@/lib/master/textbooks";
 import type { Textbook, TextbookLevel } from "@/lib/master";
 import { PUBLISHERS, SUBJECT_AREAS } from "@/lib/master/subjects";
 import type { SubjectAreaId } from "@/lib/master/subjects";
@@ -145,8 +149,11 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
     setLookupState({ phase: "idle" });
   }
 
+  // 全 DB (手書き + bulk + AI 深掘りマージ) を一度だけ計算
+  const allBooks = useMemo(() => getAllTextbooks(), []);
+
   const filtered = useMemo(() => {
-    let list = TEXTBOOKS;
+    let list = allBooks;
     if (filterArea !== "all") {
       list = list.filter((b) =>
         filterArea === "history" || filterArea === "civics"
@@ -157,18 +164,22 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
     if (filterLevel !== "all") list = list.filter((b) => b.level === filterLevel);
     if (filterPub !== "all") list = list.filter((b) => b.publisher === filterPub);
     if (query.trim()) {
-      const q = query.trim().toLowerCase();
-      list = list.filter((b) => b.searchText?.includes(q));
+      // 横断検索: searchAllTextbooks は既にソート済 (rank → ヒット順)
+      const result = searchAllTextbooks(query.trim(), 100);
+      list = list.filter((b) => result.includes(b));
     }
-    return list;
-  }, [filterArea, filterLevel, filterPub, query]);
+    // 「使う順」上位ほど先頭に
+    return [...list].sort(
+      (a, b) => (a.rank ?? 9999) - (b.rank ?? 9999),
+    ).slice(0, 50); // モーダル内なので 50 件まで
+  }, [allBooks, filterArea, filterLevel, filterPub, query]);
 
   const popular = useMemo(
     () =>
-      POPULAR_IDS.map((id) => TEXTBOOKS.find((b) => b.id === id)).filter(
+      POPULAR_IDS.map((id) => allBooks.find((b) => b.id === id)).filter(
         (b): b is Textbook => !!b,
       ),
-    [],
+    [allBooks],
   );
 
   const noQuery = !query.trim() && filterArea === "all" && filterLevel === "all" && filterPub === "all";
@@ -356,11 +367,27 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
                     onClick={() => pick(b)}
                     className="group flex w-full items-start gap-3 rounded-xl border border-ink-100/80 bg-white p-3 text-left active:bg-cream-50 transition"
                   >
-                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-cream-100 text-ink-700">
-                      <BookOpen className="h-[16px] w-[16px]" />
-                    </span>
+                    {/* カバー画像 or アイコン */}
+                    {b.coverUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={b.coverUrl}
+                        alt=""
+                        className="h-12 w-9 flex-none rounded-md object-cover shadow-sm"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span className="flex h-12 w-9 flex-none items-center justify-center rounded-md bg-cream-100 text-ink-700">
+                        <BookOpen className="h-[16px] w-[16px]" />
+                      </span>
+                    )}
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {typeof b.rank === "number" && b.rank <= 50 ? (
+                          <span className="rounded-full bg-sun-200 px-1.5 py-0.5 text-[9px] font-bold text-ink-900">
+                            人気 #{b.rank}
+                          </span>
+                        ) : null}
                         <span
                           className={cn(
                             "rounded-full px-1.5 py-0.5 text-[9px] font-bold",
@@ -375,7 +402,21 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
                       </div>
                       <div className="mt-0.5 text-[11px] text-ink-500">
                         {b.publisher}
+                        {b.pages ? <span className="ml-1.5 text-ink-400">· {b.pages}p</span> : null}
                       </div>
+                      {/* タグ表示 (主要なものだけ) */}
+                      {b.usageTags && b.usageTags.length > 0 ? (
+                        <div className="mt-1 flex flex-wrap gap-0.5">
+                          {b.usageTags.slice(0, 3).map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full bg-cream-100 px-1.5 py-0.5 text-[9px] font-medium text-ink-600"
+                            >
+                              {USAGE_TAG_LABEL[tag] ?? tag}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                     <Check className="mt-1 h-4 w-4 flex-none text-ink-300 group-active:text-mint-500" />
                   </button>
@@ -603,6 +644,17 @@ const LEVEL_TONE: Record<TextbookLevel, string> = {
   standard: "bg-sky-50 text-sky-600",
   advanced: "bg-peach-50 text-peach-500",
   top: "bg-coral-300 text-white",
+};
+
+const USAGE_TAG_LABEL: Record<string, string> = {
+  comprehensive: "網羅",
+  drill: "演習",
+  input: "講義",
+  vocab: "単語",
+  "past-exam": "過去問",
+  "weak-point": "弱点",
+  "speed-run": "短期",
+  "mock-prep": "模試",
 };
 
 function Chips({

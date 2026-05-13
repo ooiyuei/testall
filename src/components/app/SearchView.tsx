@@ -25,7 +25,7 @@ import { useStore } from "@/lib/hooks/useStore";
 import { setProfile } from "@/lib/store";
 import { unifiedSearch } from "@/lib/master";
 import { UNIVERSITIES } from "@/lib/master/universities";
-import { TEXTBOOKS } from "@/lib/master/textbooks";
+import { TEXTBOOKS, getAllTextbooks } from "@/lib/master/textbooks";
 import { MOCK_EXAMS } from "@/lib/master/mockexams";
 import {
   remoteEnabled,
@@ -143,17 +143,31 @@ export function SearchView() {
       return filtered;
     }
     if (tab === "textbook") {
+      // bulk DB を含む全ての参考書から検索
+      const allBooks = getAllTextbooks();
       const all = remoteRes?.textbooks ?? (query.trim()
-        ? unifiedSearch({ query, kinds: ["textbook"], limit: 30 }).textbooks.map((h) => h.entity)
-        : TEXTBOOKS);
+        ? allBooks.filter((b) => {
+            const q = query.trim().toLowerCase();
+            return (
+              b.searchText?.toLowerCase().includes(q) ||
+              b.name.toLowerCase().includes(q) ||
+              b.publisher.toLowerCase().includes(q) ||
+              (b.author ?? "").toLowerCase().includes(q)
+            );
+          })
+        : allBooks);
       const filtered = applyBookFilter(all, bookArea, bookLevel, bookPublisher);
+      // 「使う順」rank 優先でソート
+      const sorted = [...filtered].sort(
+        (a, b) => (a.rank ?? 9999) - (b.rank ?? 9999),
+      );
       if (!query.trim()) {
         const popular = POPULAR_BOOK_IDS
-          .map((id) => filtered.find((b) => b.id === id))
+          .map((id) => sorted.find((b) => b.id === id))
           .filter((b): b is Textbook => !!b);
-        return [...popular, ...filtered.filter((b) => !POPULAR_BOOK_IDS.includes(b.id))].slice(0, 30);
+        return [...popular, ...sorted.filter((b) => !POPULAR_BOOK_IDS.includes(b.id))].slice(0, 50);
       }
-      return filtered;
+      return sorted.slice(0, 50);
     }
     // mock-exam
     const all = remoteRes?.mockExams ?? (query.trim()

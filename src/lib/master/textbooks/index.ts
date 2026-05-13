@@ -8,8 +8,30 @@
 import { TEXTBOOKS as RAW_TEXTBOOKS } from "../../textbooks";
 import type { Textbook as LegacyBook } from "../../textbooks";
 import type { Textbook, TextbookUsageTag } from "../types";
-import { buildSearchText } from "../types";
+import { buildSearchText, textbookCurationKey } from "../types";
 import { TEXTBOOKS_BULK } from "../textbooks-bulk";
+
+// Phase B (AI 深掘り) の結果。ファイルが無い場合は空マップで代替。
+type EnrichmentValue = {
+  rank: number;
+  title: string;
+  publisher: string;
+  tableOfContents: { section: string; items: string[]; confidence: "high" | "medium" | "low" }[];
+  strengths: string[];
+  weaknesses: string[];
+  recommendedFor: string;
+  estimatedHours: number;
+  overallConfidence: "high" | "medium" | "low";
+  notes: string;
+};
+let ENRICHMENT_MAP: Record<string, EnrichmentValue> = {};
+try {
+  // 動的 import — 生成前ならファイル無しでも問題ない
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  ENRICHMENT_MAP = require("../textbooks-enriched").TEXTBOOKS_ENRICHED_BY_KEY ?? {};
+} catch {
+  ENRICHMENT_MAP = {};
+}
 
 export type { Textbook, TextbookUsageTag };
 
@@ -123,5 +145,55 @@ export function getAllTextbooks(): Textbook[] {
     if (t.searchText) return t;
     return { ...t, searchText: buildSearchText(t) };
   });
-  return [...TEXTBOOKS, ...additions];
+  // AI 深掘り (Phase B) を title+publisher キーでマージ
+  return [...TEXTBOOKS, ...additions].map((t) => {
+    const key = textbookCurationKey(t.name, t.publisher);
+    const e = ENRICHMENT_MAP[key];
+    if (!e) return t;
+    return {
+      ...t,
+      rank: e.rank,
+      aiConfidence: e.overallConfidence,
+      tableOfContents: e.tableOfContents,
+      strengths: e.strengths.length > 0 ? e.strengths : t.strengths,
+      weaknesses: e.weaknesses,
+      recommendedFor: e.recommendedFor || t.recommendedFor,
+      estimatedHours: e.estimatedHours,
+    };
+  });
+}
+
+// 「使う順」上位のみ
+export function getTopPriorityTextbooks(limit = 200): Textbook[] {
+  return getAllTextbooks()
+    .filter((t) => typeof t.rank === "number")
+    .sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999))
+    .slice(0, limit);
+}
+
+// 検索 (全テーブル横断)
+export function searchAllTextbooks(query: string, limit = 50): Textbook[] {
+  const q = query.trim().toLowerCase();
+  const all = getAllTextbooks();
+  if (!q) {
+    // クエリ無し: 「使う順」上位を先に
+    return [...all]
+      .sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999))
+      .slice(0, limit);
+  }
+  return all
+    .filter((t) => {
+      const haystack = (
+        (t.searchText ?? "") +
+        " " +
+        t.name +
+        " " +
+        t.publisher +
+        " " +
+        (t.author ?? "")
+      ).toLowerCase();
+      return haystack.includes(q);
+    })
+    .sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999))
+    .slice(0, limit);
 }

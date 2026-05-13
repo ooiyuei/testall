@@ -139,6 +139,8 @@ export type Textbook = Searchable &
     author?: string;
     publisher: string;
     coverUrl?: string; // openBD など
+    pages?: number; // NDL の <dc:extent> から
+    series?: string; // 「チャート式」「Focus Gold」など
     // ─── Testall 独自タグ ───
     subject: string; // curriculum category id
     subjectDetail?: string; // 例: 数IA / 物基
@@ -150,7 +152,29 @@ export type Textbook = Searchable &
     usageNotes?: string; // 使い方ガイド
     description?: string;
     legacyTags?: string[]; // 旧 tags（互換）
+    // ─── AI 深掘り (Phase B) ───
+    aiConfidence?: "high" | "medium" | "low"; // 深掘りデータ全体の信頼度
+    tableOfContents?: {
+      section: string;
+      items: string[];
+      confidence: "high" | "medium" | "low";
+    }[];
+    strengths?: string[]; // 「具体例の数」「解説の丁寧さ」など
+    weaknesses?: string[]; // 「初学者には難しい」など
+    recommendedFor?: string; // 「高2-3、偏差値55-65、MARCH志望」
+    estimatedHours?: number; // 1 周にかかる目安時間
+    rank?: number; // 「使う順」の優先度 (1=最頻出)
   };
+
+// 「使う順」キュレーションのキー (title + publisher を正規化したもの)
+export function textbookCurationKey(title: string, publisher: string): string {
+  const norm = (s: string) =>
+    s
+      .replace(/\s+/g, "")
+      .replace(/[「」『』\(\)（）【】]/g, "")
+      .toLowerCase();
+  return `${norm(title)}:::${norm(publisher)}`;
+}
 
 // ─── 模試 ────────────────────────────────
 export type MockExamProvider =
