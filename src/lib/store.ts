@@ -47,10 +47,28 @@ export type BlockLog = {
   durationSec: number;
 };
 
+export type CalendarEventKind =
+  | "regular-test" // 定期テスト
+  | "mock-exam" // 模試
+  | "deadline" // 出願・期限
+  | "study" // 学習予定
+  | "other";
+
+export type CalendarEvent = {
+  id: string;
+  kind: CalendarEventKind;
+  title: string;
+  date: string; // YYYY-MM-DD
+  endDate?: string; // 連日イベント
+  note?: string;
+  subject?: string;
+};
+
 export type StoreState = {
   profile?: StoredProfile;
   tests: StoredTest[];
   blockLogs: BlockLog[];
+  events?: CalendarEvent[];
 };
 
 const STORAGE_KEY = "testall:v1";
@@ -58,6 +76,7 @@ const STORAGE_KEY = "testall:v1";
 const EMPTY_STATE: StoreState = {
   tests: [],
   blockLogs: [],
+  events: [],
 };
 
 function isBrowser(): boolean {
@@ -74,6 +93,7 @@ export function readStore(): StoreState {
       profile: parsed.profile,
       tests: Array.isArray(parsed.tests) ? parsed.tests : [],
       blockLogs: Array.isArray(parsed.blockLogs) ? parsed.blockLogs : [],
+      events: Array.isArray(parsed.events) ? parsed.events : [],
     };
   } catch {
     return EMPTY_STATE;
@@ -172,4 +192,74 @@ export function getStreak(): number {
 
 export function clearAll(): StoreState {
   return writeStore(EMPTY_STATE);
+}
+
+// ── イベント（定期テスト・模試など） ──
+
+export function listEvents(): CalendarEvent[] {
+  return readStore().events ?? [];
+}
+
+export function saveEvent(event: CalendarEvent): StoreState {
+  const current = readStore();
+  const events = current.events ?? [];
+  const filtered = events.filter((e) => e.id !== event.id);
+  return writeStore({
+    ...current,
+    events: [event, ...filtered].sort((a, b) => a.date.localeCompare(b.date)),
+  });
+}
+
+export function deleteEvent(id: string): StoreState {
+  const current = readStore();
+  return writeStore({
+    ...current,
+    events: (current.events ?? []).filter((e) => e.id !== id),
+  });
+}
+
+// ── 5科目実力パラメーター（テスト履歴から自動計算） ──
+
+export type SubjectStrength = {
+  category: string;
+  recentPct: number;
+  bestPct: number;
+  count: number;
+  // 0-100 の bar 値（recentPctを基本に、テスト数が増えれば信頼度↑）
+  bar: number;
+};
+
+function categoryFromSubjectName(name: string): string {
+  if (/数学|数IA|数IIBC|数IIIC/.test(name)) return "math";
+  if (/英語|英コミュ|英表現/.test(name)) return "english";
+  if (/国語|現代文|古典|古文|漢文/.test(name)) return "japanese";
+  if (/物理|化学|生物|地学|理科/.test(name)) return "science";
+  if (/日史|世史|地理|歴総|地総|政経|倫理|公共|社会|日本史|世界史/.test(name))
+    return "social";
+  if (/情報/.test(name)) return "info";
+  return "other";
+}
+
+export function getSubjectStrengths(): SubjectStrength[] {
+  const tests = readStore().tests;
+  const buckets: Record<string, { pcts: number[]; recentTs: number }> = {};
+  for (const t of tests) {
+    const cat = categoryFromSubjectName(t.input.subject);
+    const pct = Math.round((t.input.score / t.input.fullScore) * 100);
+    const ts = new Date(t.createdAt).getTime();
+    if (!buckets[cat]) buckets[cat] = { pcts: [], recentTs: 0 };
+    buckets[cat].pcts.push(pct);
+    if (ts > buckets[cat].recentTs) buckets[cat].recentTs = ts;
+  }
+  return Object.entries(buckets).map(([category, b]) => {
+    const recent = b.pcts[0] ?? 0;
+    const best = b.pcts.reduce((m, v) => Math.max(m, v), 0);
+    return {
+      category,
+      recentPct: recent,
+      bestPct: best,
+      count: b.pcts.length,
+      bar: recent,
+    };
+  });
 }
