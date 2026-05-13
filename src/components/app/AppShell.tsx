@@ -19,6 +19,7 @@ function titleFromPath(path: string): { title?: string; back?: string; showAdd?:
   if (path === "/app/plan")          return { title: "計画", showAdd: true };
   if (path === "/app/me")            return { title: "マイページ", showAdd: true };
   if (path === "/app/me/settings")   return { title: "設定", back: "/app/me", showAdd: false };
+  if (path.startsWith("/app/me/subjects/")) return { title: "", back: "/app/me", showAdd: false };
   if (path === "/app/test")          return { title: "テスト", back: "/app", showAdd: true };
   if (path === "/app/test/new")      return { title: "テスト追加", back: "/app/test", showAdd: false };
   if (path.startsWith("/app/test/")) return { title: "テスト詳細", back: "/app/test", showAdd: false };

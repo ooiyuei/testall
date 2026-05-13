@@ -47,7 +47,8 @@ import {
 import type { GradeId, SubjectAreaId } from "@/lib/master/subjects";
 import { RadarChart, type RadarPoint } from "@/components/me/RadarChart";
 import { BookshelfAddModal } from "@/components/me/BookshelfAddModal";
-import { LevelMountain } from "@/components/me/LevelMountain";
+import { LevelCard } from "@/components/me/LevelCard";
+import { DeviationTrend, type TrendSeries } from "@/components/me/DeviationTrend";
 import { computeTotalExp, levelFromExp } from "@/lib/exp";
 import { defaultRemainingMonths, estimateGoalGap, estimateRequiredBlocks } from "@/lib/planning";
 
@@ -64,9 +65,7 @@ export function MeView() {
   const { state, hydrated } = useStore();
   const [profileOpen, setProfileOpen] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [focusedArea, setFocusedArea] = useState<SubjectAreaId | null>(null);
   const [bookshelfModal, setBookshelfModal] = useState(false);
-  const [gradeToggle, setGradeToggle] = useState<GradeId>("h2");
 
   if (!hydrated) {
     return <div className="px-4 pt-10 text-sm text-ink-500">読み込み中…</div>;
@@ -139,8 +138,11 @@ export function MeView() {
         />
       ) : null}
 
-      {/* ── LV/経験値/山グラフ ── */}
+      {/* ── LV/経験値 ── */}
       <LevelSection />
+
+      {/* ── 偏差値の推移 ── */}
+      <DeviationTrendSection />
 
       {/* ── 本棚 ── */}
       <section>
@@ -194,15 +196,8 @@ export function MeView() {
         )}
       </section>
 
-      {/* ── ステータス（五角形 + 9教科 + 偏差値/スコア） ── */}
-      <StatusCard
-        profile={profile}
-        statusPoints={statusPoints}
-        focusedArea={focusedArea}
-        onFocus={setFocusedArea}
-        gradeToggle={gradeToggle}
-        onGradeChange={setGradeToggle}
-      />
+      {/* ── ステータス（五角形 + 9教科リンク + 偏差値/スコア） ── */}
+      <StatusCard profile={profile} statusPoints={statusPoints} />
 
       {/* ── メニュー ── */}
       <ul className="divide-y divide-ink-100/70 overflow-hidden rounded-2xl border border-ink-100/80 bg-white">
@@ -552,17 +547,9 @@ const KIND_LABEL: Record<BookshelfItem["kind"], string> = {
 function StatusCard({
   profile,
   statusPoints,
-  focusedArea,
-  onFocus,
-  gradeToggle,
-  onGradeChange,
 }: {
   profile?: StoredProfile;
   statusPoints: RadarPoint[];
-  focusedArea: SubjectAreaId | null;
-  onFocus: (a: SubjectAreaId | null) => void;
-  gradeToggle: GradeId;
-  onGradeChange: (g: GradeId) => void;
 }) {
   // アプリスコア (暫定): 直近テスト得点率の平均
   const appScore = useMemo(() => {
@@ -601,58 +588,44 @@ function StatusCard({
             </div>
           </div>
         </div>
-        {/* 五角形（コンパクト） */}
-        <div className="w-[150px] flex-none">
-          <RadarChart
-            data={statusPoints}
-            size={150}
-            onPick={(idx) => onFocus(PRIMARY_AREAS[idx])}
-          />
-        </div>
       </div>
 
-      {/* 9教科グリッド（タップで詳細展開） */}
+      {/* 五角形 (大きめ・教科タップで詳細ページへ) */}
+      <div className="mt-4">
+        <RadarChart
+          data={statusPoints}
+          size={260}
+          onPick={(idx) => {
+            const a = PRIMARY_AREAS[idx];
+            if (a) window.location.href = `/app/me/subjects/${a}`;
+          }}
+        />
+      </div>
+
+      {/* 9教科グリッド（タップで詳細ページへ） */}
       <ul className="mt-4 grid grid-cols-3 gap-1.5">
-        {SUBJECT_AREAS.map((a) => {
-          const focused = focusedArea === a.id;
-          return (
-            <li key={a.id}>
-              <button
-                type="button"
-                onClick={() => onFocus(focused ? null : a.id)}
+        {SUBJECT_AREAS.map((a) => (
+          <li key={a.id}>
+            <Link
+              href={`/app/me/subjects/${a.id}`}
+              className="flex w-full items-center gap-1.5 rounded-lg px-2 py-2 bg-cream-50/80 text-ink-900 hover:bg-cream-100 transition"
+            >
+              <span
                 className={cn(
-                  "flex w-full items-center gap-1.5 rounded-lg px-2 py-2 transition",
-                  focused
-                    ? "bg-ink-900 text-white"
-                    : "bg-cream-50/80 text-ink-900 hover:bg-cream-100",
+                  "flex h-6 w-6 flex-none items-center justify-center rounded-md text-[10px] font-bold",
+                  a.tone,
                 )}
               >
-                <span
-                  className={cn(
-                    "flex h-6 w-6 flex-none items-center justify-center rounded-md text-[10px] font-bold",
-                    focused ? "bg-white/15 text-white" : a.tone,
-                  )}
-                >
-                  {a.shortName}
-                </span>
-                <span className="text-[11px] font-bold">{a.name}</span>
-              </button>
-            </li>
-          );
-        })}
+                {a.shortName}
+              </span>
+              <span className="text-[11px] font-bold">{a.name}</span>
+            </Link>
+          </li>
+        ))}
       </ul>
-
-      {/* 教科詳細 */}
-      {focusedArea ? (
-        <div className="mt-3">
-          <AreaDetail
-            area={focusedArea}
-            gradeToggle={gradeToggle}
-            onGradeChange={onGradeChange}
-            onClose={() => onFocus(null)}
-          />
-        </div>
-      ) : null}
+      <p className="mt-2 text-center text-[10px] text-ink-400">
+        タップで偏差値推移・単元・能力値を確認
+      </p>
     </section>
   );
 }
@@ -704,14 +677,78 @@ function LevelSection() {
   }
 
   return (
-    <LevelMountain
+    <LevelCard
       level={lv.level}
       currentLevelExp={lv.currentLevelExp}
       nextLevelExp={lv.nextLevelExp}
       goalLabel={goalLabel}
-      overallProgress={overallProgress}
       blocksRemaining={remainingBlocks}
+      blocksDone={(state.blockLogs ?? []).length}
     />
+  );
+}
+
+// ─── 偏差値推移 (主要5科目+全体) ───
+function DeviationTrendSection() {
+  const { state, hydrated } = useStore();
+  if (!hydrated) return null;
+  const tests = state.tests ?? [];
+  if (tests.length === 0) {
+    return (
+      <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+          偏差値の推移
+        </div>
+        <p className="mt-2 text-[11px] leading-[1.6] text-ink-500">
+          テスト結果を登録すると、ここに偏差値の推移が表示されます。
+        </p>
+      </section>
+    );
+  }
+
+  // 各教科ごとの色
+  const COLORS: Record<SubjectAreaId, string> = {
+    japanese: "#d35d18",
+    math: "#0071e3",
+    english: "#0f9b5e",
+    science: "#f5b400",
+    history: "#d94a36",
+    civics: "#6e6a60",
+    info: "#36b97a",
+  };
+
+  // 各教科のシリーズを作る
+  const series: TrendSeries[] = [];
+  for (const area of ["japanese","math","english","science","history","civics","info"] as SubjectAreaId[]) {
+    const def = SUBJECT_AREAS.find((a) => a.id === area)!;
+    const points = tests
+      .filter((t) => guessArea(t.input.subject) === area)
+      .map((t) => ({
+        date: t.createdAt.slice(0, 10),
+        value:
+          t.input.deviation ??
+          Math.round((t.input.score / t.input.fullScore) * 100 / 2 + 35),
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+    if (points.length > 0) {
+      series.push({ name: def.name, color: COLORS[area], points });
+    }
+  }
+
+  return (
+    <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
+      <div className="flex items-baseline justify-between">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+          偏差値の推移
+        </div>
+        <span className="text-[10px] font-medium text-ink-500 tabular-nums">
+          {tests.length} 回
+        </span>
+      </div>
+      <div className="mt-3">
+        <DeviationTrend series={series} />
+      </div>
+    </section>
   );
 }
 

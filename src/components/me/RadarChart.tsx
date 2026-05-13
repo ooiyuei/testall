@@ -1,7 +1,8 @@
 "use client";
 
 // 五角形レーダーチャート (国/数/英/理/社)
-// 純粋 SVG。recharts などの依存を避ける。
+// 純粋 SVG。recharts なし。
+// 大きめ + ラベル外側配置 + 値ラベル小さく
 
 import { cn } from "@/lib/cn";
 
@@ -9,36 +10,32 @@ export type RadarPoint = {
   label: string;
   shortLabel: string;
   value: number; // 0〜100
-  tone?: string;
 };
 
 type Props = {
-  data: RadarPoint[]; // 推奨 5 点
+  data: RadarPoint[];
   size?: number;
   onPick?: (idx: number) => void;
 };
 
-export function RadarChart({ data, size = 240, onPick }: Props) {
+export function RadarChart({ data, size = 260, onPick }: Props) {
   const cx = size / 2;
   const cy = size / 2;
-  const r = (size / 2) * 0.78;
+  const r = (size / 2) * 0.72;
 
   if (data.length < 3) return null;
   const n = data.length;
 
   function point(idx: number, value: number) {
     const ratio = Math.max(0, Math.min(1, value / 100));
-    // 上(-90度)から時計回り
     const angle = -Math.PI / 2 + (idx * 2 * Math.PI) / n;
     return [cx + r * ratio * Math.cos(angle), cy + r * ratio * Math.sin(angle)];
   }
 
-  // 軸の頂点（100%）
   const axisPts = data.map((_, i) => point(i, 100));
-  // 実データ点
   const valuePts = data.map((d, i) => point(i, d.value));
 
-  // 同心多角形（25/50/75/100%）
+  // 同心多角形
   const rings = [25, 50, 75, 100].map((pct) =>
     data.map((_, i) => point(i, pct)).map((p) => p.join(",")).join(" "),
   );
@@ -55,9 +52,9 @@ export function RadarChart({ data, size = 240, onPick }: Props) {
         <polygon
           key={i}
           points={pts}
-          fill="none"
-          stroke="rgb(229 218 197 / 0.7)"
-          strokeWidth={i === 3 ? 1.2 : 0.8}
+          fill={i === 3 ? "rgba(252, 250, 247, 0.5)" : "none"}
+          stroke="rgb(216 212 200 / 0.5)"
+          strokeWidth={i === 3 ? 1.2 : 0.7}
         />
       ))}
       {/* 軸線 */}
@@ -68,51 +65,59 @@ export function RadarChart({ data, size = 240, onPick }: Props) {
           y1={cy}
           x2={p[0]}
           y2={p[1]}
-          stroke="rgb(229 218 197 / 0.7)"
-          strokeWidth={0.8}
+          stroke="rgb(216 212 200 / 0.5)"
+          strokeWidth={0.7}
         />
       ))}
-      {/* 値のポリゴン */}
+      {/* 値ポリゴン */}
       <polygon
         points={valuePts.map((p) => p.join(",")).join(" ")}
-        fill="rgb(99 165 230 / 0.30)"
-        stroke="rgb(56 132 209)"
+        fill="rgba(0, 113, 227, 0.16)"
+        stroke="rgb(0 113 227)"
         strokeWidth={2}
         strokeLinejoin="round"
       />
-      {/* 値の点（小さめ） */}
+      {/* 値の点 */}
       {valuePts.map(([x, y], i) => (
         <circle
           key={i}
           cx={x}
           cy={y}
-          r={2.5}
-          fill="rgb(56 132 209)"
+          r={3}
+          fill="rgb(0 113 227)"
           onClick={() => onPick?.(i)}
           style={{ cursor: onPick ? "pointer" : "default" }}
         />
       ))}
-      {/* ラベル */}
+      {/* ラベル (外側) */}
       {data.map((d, i) => {
-        const [lx, ly] = point(i, 118);
+        // ラベルは軸の頂点(100%)から少し外側
+        const ratio = 1.18;
+        const angle = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+        const lx = cx + r * ratio * Math.cos(angle);
+        const ly = cy + r * ratio * Math.sin(angle);
         return (
-          <g key={i} onClick={() => onPick?.(i)} style={{ cursor: onPick ? "pointer" : "default" }}>
+          <g
+            key={i}
+            onClick={() => onPick?.(i)}
+            style={{ cursor: onPick ? "pointer" : "default" }}
+          >
             <text
               x={lx}
               y={ly}
               textAnchor="middle"
               dominantBaseline="middle"
               className="fill-ink-900 font-bold"
-              style={{ fontSize: 12 }}
+              style={{ fontSize: 13 }}
             >
               {d.shortLabel}
             </text>
             <text
               x={lx}
-              y={ly + 13}
+              y={ly + 14}
               textAnchor="middle"
               dominantBaseline="middle"
-              className={cn("fill-ink-500 tabular-nums")}
+              className="fill-ink-500 tabular-nums"
               style={{ fontSize: 10 }}
             >
               {Math.round(d.value)}
