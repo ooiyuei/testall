@@ -17,19 +17,36 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Testall — 今日の45分を、整える。",
+  title: "Testall — 今日の25分を、整える。",
   description:
-    "Testallは、模試・校内テストから苦手分析・参考書ルート・今日の45分計画までを一緒に作るAI学習パートナー。続けやすい受験OS。",
+    "Testallは、模試・校内テストから苦手分析・参考書ルート・今日の25分計画までを一緒に作るAI学習パートナー。続けやすい受験OS。",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Testall",
+  },
+  icons: {
+    icon: [
+      { url: "/icon-192.svg", type: "image/svg+xml", sizes: "192x192" },
+      { url: "/icon-512.svg", type: "image/svg+xml", sizes: "512x512" },
+    ],
+    apple: "/icon-192.svg",
+  },
   openGraph: {
-    title: "Testall — 今日の45分を、整える。",
+    title: "Testall — 今日の25分を、整える。",
     description:
-      "テストを入れるだけ。AIがあなたの苦手を分析して、今日やる45分を整えます。",
+      "テストを入れるだけ。AIがあなたの苦手を分析して、今日やる25分を整えます。",
     type: "website",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#fdfbf6",
+  themeColor: "#fbfaf7",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({

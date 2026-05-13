@@ -14,6 +14,7 @@ import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
+import { setUnitProficiency } from "@/lib/store";
 import {
   CURRICULUM,
   SUBJECT_AREAS,
@@ -37,7 +38,9 @@ const DEFAULT_PROFICIENCY: Proficiency = "fair";
 export function SubjectAreaDetail({ area }: { area: SubjectAreaId }) {
   const { state, hydrated } = useStore();
   const [gradeToggle, setGradeToggle] = useState<GradeId>("h2");
-  const [proficiency, setProficiency] = useState<Record<string, Proficiency>>({});
+  // store 経由で永続化された unitProficiency を参照
+  const proficiency: Record<string, Proficiency> =
+    (state.unitProficiency as Record<string, Proficiency>) ?? {};
 
   const areaDef = SUBJECT_AREAS.find((a) => a.id === area);
 
@@ -200,7 +203,7 @@ export function SubjectAreaDetail({ area }: { area: SubjectAreaId }) {
                                 const order: Proficiency[] = ["good", "fair", "weak", "bad"];
                                 const cur = order.indexOf(prof);
                                 const next = order[(cur + 1) % order.length];
-                                setProficiency({ ...proficiency, [u.id]: next });
+                                setUnitProficiency(u.id, next);
                               }}
                               className={cn(
                                 "rounded-full px-2.5 py-1 text-[11px] font-bold transition",

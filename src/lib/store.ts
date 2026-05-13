@@ -223,6 +223,10 @@ export type ChatMessage = {
   timestamp: string;
 };
 
+// 単元ごとの得意度。SubjectAreaDetail で単元タップでサイクル
+export type UnitProficiency = "good" | "fair" | "weak" | "bad";
+export type UnitProficiencyMap = Record<string, UnitProficiency>;
+
 export type StoreState = {
   profile?: StoredProfile;
   planning?: PlanningProfile;
@@ -234,6 +238,7 @@ export type StoreState = {
   weeklyExecutions?: WeeklyExecutionLog[];
   tasks?: StoredTask[];
   chatMessages?: ChatMessage[];
+  unitProficiency?: UnitProficiencyMap;
 };
 
 const STORAGE_KEY = "testall:v1";
@@ -247,6 +252,7 @@ const EMPTY_STATE: StoreState = {
   weeklyExecutions: [],
   tasks: [],
   chatMessages: [],
+  unitProficiency: {},
 };
 
 function isBrowser(): boolean {
@@ -274,6 +280,10 @@ export function readStore(): StoreState {
         : [],
       tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
       chatMessages: Array.isArray(parsed.chatMessages) ? parsed.chatMessages : [],
+      unitProficiency:
+        parsed.unitProficiency && typeof parsed.unitProficiency === "object"
+          ? parsed.unitProficiency
+          : {},
     };
   } catch {
     return EMPTY_STATE;
@@ -635,4 +645,21 @@ export function addChatMessage(message: ChatMessage): StoreState {
 export function clearChat(): StoreState {
   const current = readStore();
   return writeStore({ ...current, chatMessages: [] });
+}
+
+// ── 単元の得意度 ──────────────────────────
+export function setUnitProficiency(
+  unitId: string,
+  level: UnitProficiency,
+): StoreState {
+  const current = readStore();
+  const next = { ...(current.unitProficiency ?? {}), [unitId]: level };
+  return writeStore({ ...current, unitProficiency: next });
+}
+
+export function clearUnitProficiency(unitId: string): StoreState {
+  const current = readStore();
+  const next = { ...(current.unitProficiency ?? {}) };
+  delete next[unitId];
+  return writeStore({ ...current, unitProficiency: next });
 }

@@ -19,6 +19,7 @@ import { useStore } from "@/lib/hooks/useStore";
 import type { Block } from "@/lib/types";
 import { MoodCheckCard } from "./MoodCheckCard";
 import { TodaySuggestion } from "./TodaySuggestion";
+import { GuideTour } from "./GuideTour";
 import { AiChat } from "./AiChat";
 
 const WEEKDAY_LABEL = ["月", "火", "水", "木", "金", "土", "日"];
@@ -78,6 +79,7 @@ export function HomeView() {
 
   return (
     <div className="px-5 pb-8 pt-3">
+      {hydrated && state.profile?.onboardedAt ? <GuideTour /> : null}
       {/* Hero greeting */}
       <section className="mb-5">
         <div className="text-[11px] font-medium tracking-wider text-ink-400">
