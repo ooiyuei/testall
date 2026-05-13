@@ -26,6 +26,7 @@ import {
   type SubjectCategory,
 } from "@/lib/curriculum";
 import { readStore, saveTest, setProfile } from "@/lib/store";
+import { updateProfileFromTests } from "@/lib/auto-deviation";
 import type {
   Diagnosis,
   MissCause,
@@ -703,6 +704,11 @@ function ManualForm({ prefill }: { prefill?: VisionResult | null }) {
         input,
         diagnosis: data.diagnosis,
       });
+
+      // 直近テストから profile.deviation / deviationByArea を自動補正
+      const after = readStore();
+      const updated = updateProfileFromTests(after.profile, after.tests);
+      if (updated) setProfile(updated);
 
       router.push(`/app/test/${id}`);
     } catch {

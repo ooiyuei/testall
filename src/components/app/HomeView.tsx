@@ -20,6 +20,7 @@ import type { Block } from "@/lib/types";
 import { MoodCheckCard } from "./MoodCheckCard";
 import { TodaySuggestion } from "./TodaySuggestion";
 import { GuideTour } from "./GuideTour";
+import { WeeklyReviewCard } from "./WeeklyReviewCard";
 import { AiChat } from "./AiChat";
 
 const WEEKDAY_LABEL = ["月", "火", "水", "木", "金", "土", "日"];
@@ -93,6 +94,7 @@ export function HomeView() {
       {needsOnboarding ? <OnboardingPrompt /> : null}
 
       {/* 今日のおすすめ */}
+      {hydrated ? <WeeklyReviewCard /> : null}
       {hydrated ? <TodaySuggestion state={state} /> : null}
 
       {/* 今日の準備 (気分 + 帰宅) */}

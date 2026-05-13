@@ -227,6 +227,17 @@ export type ChatMessage = {
 export type UnitProficiency = "good" | "fair" | "weak" | "bad";
 export type UnitProficiencyMap = Record<string, UnitProficiency>;
 
+// 固定スロット (食事・お風呂など) - TodaySchedule で除外される
+export type FixedSlot = {
+  id: string;
+  label: string;          // "夕食", "お風呂" など
+  startTime: string;      // "19:00"
+  durationMin: number;    // 30, 60 など
+  // 適用する曜日。空配列なら毎日
+  weekdays?: number[];    // 0=月, 6=日
+  icon?: "meal" | "bath" | "club" | "prep" | "other";
+};
+
 export type StoreState = {
   profile?: StoredProfile;
   planning?: PlanningProfile;
@@ -239,6 +250,7 @@ export type StoreState = {
   tasks?: StoredTask[];
   chatMessages?: ChatMessage[];
   unitProficiency?: UnitProficiencyMap;
+  fixedSlots?: FixedSlot[];
 };
 
 const STORAGE_KEY = "testall:v1";
@@ -253,6 +265,7 @@ const EMPTY_STATE: StoreState = {
   tasks: [],
   chatMessages: [],
   unitProficiency: {},
+  fixedSlots: [],
 };
 
 function isBrowser(): boolean {
@@ -284,6 +297,7 @@ export function readStore(): StoreState {
         parsed.unitProficiency && typeof parsed.unitProficiency === "object"
           ? parsed.unitProficiency
           : {},
+      fixedSlots: Array.isArray(parsed.fixedSlots) ? parsed.fixedSlots : [],
     };
   } catch {
     return EMPTY_STATE;
@@ -662,4 +676,29 @@ export function clearUnitProficiency(unitId: string): StoreState {
   const next = { ...(current.unitProficiency ?? {}) };
   delete next[unitId];
   return writeStore({ ...current, unitProficiency: next });
+}
+
+// ── 固定スロット (食事・お風呂など) ────────
+export function listFixedSlots(): FixedSlot[] {
+  return readStore().fixedSlots ?? [];
+}
+
+export function saveFixedSlot(slot: FixedSlot): StoreState {
+  const current = readStore();
+  const existing = current.fixedSlots ?? [];
+  const filtered = existing.filter((s) => s.id !== slot.id);
+  return writeStore({
+    ...current,
+    fixedSlots: [...filtered, slot].sort((a, b) =>
+      a.startTime.localeCompare(b.startTime),
+    ),
+  });
+}
+
+export function deleteFixedSlot(id: string): StoreState {
+  const current = readStore();
+  return writeStore({
+    ...current,
+    fixedSlots: (current.fixedSlots ?? []).filter((s) => s.id !== id),
+  });
 }

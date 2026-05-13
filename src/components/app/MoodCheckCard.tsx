@@ -174,6 +174,7 @@ export function MoodCheckCard() {
           wakeupTime={state.profile?.wakeupTime ?? "07:00"}
           returnTime={profile.defaultReturnTime}
           tasks={state.tasks}
+          fixedSlots={state.fixedSlots}
           onReset={() => setDecided(false)}
         />
       </>

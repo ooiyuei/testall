@@ -11,7 +11,7 @@ import { cn } from "@/lib/cn";
 import { buildTodaySchedule } from "@/lib/planning/today-schedule";
 import type { ScheduleInput, ScheduleResult, ScheduleSlot } from "@/lib/planning/today-schedule";
 import { effectivePriority } from "@/lib/store";
-import type { StoredTask } from "@/lib/store";
+import type { FixedSlot, StoredTask } from "@/lib/store";
 
 // ── 色マッピング ────────────────────────────
 const KIND_BG: Record<ScheduleSlot["kind"], string> = {
@@ -141,6 +141,7 @@ type TodayScheduleProps = {
   wakeupTime?: string;       // "07:00"
   returnTime?: string;       // "18:00"
   tasks?: StoredTask[];
+  fixedSlots?: FixedSlot[];
   onReset?: () => void;
 };
 
@@ -149,6 +150,8 @@ function buildScheduleInput(
   bedtime: string,
   startTime: string,
   tasks: StoredTask[] | undefined,
+  fixedSlots: FixedSlot[] | undefined,
+  today: Date,
 ): ScheduleInput {
   // 期日迫りで優先度が自動UPする effectivePriority を使う
   const activeTasks = (tasks ?? [])
@@ -169,7 +172,23 @@ function buildScheduleInput(
     remaining -= take;
   }
 
-  return { startTime, bedtime, finalBlocks, tasks: scheduleTasks };
+  // 今日の曜日に該当する固定スロットを抽出
+  const weekday = (today.getDay() + 6) % 7; // 0=月..6=日
+  const todayFixedSlots = (fixedSlots ?? [])
+    .filter((s) => !s.weekdays || s.weekdays.length === 0 || s.weekdays.includes(weekday))
+    .map((s) => ({
+      startTime: s.startTime,
+      durationMin: s.durationMin,
+      label: s.label,
+    }));
+
+  return {
+    startTime,
+    bedtime,
+    finalBlocks,
+    tasks: scheduleTasks,
+    fixedSlots: todayFixedSlots,
+  };
 }
 
 // ── スロット1行 ────────────────────────────
@@ -347,6 +366,7 @@ export function TodaySchedule({
   wakeupTime = "07:00",
   returnTime,
   tasks,
+  fixedSlots,
   onReset,
 }: TodayScheduleProps) {
   const [result, setResult] = useState<ScheduleResult | null>(null);
@@ -354,6 +374,13 @@ export function TodaySchedule({
   const [dayOffset, setDayOffset] = useState(0); // 0=今日, 1=明日, ...
   const [openZones, setOpenZones] = useState<Set<ZoneId>>(new Set(["evening"]));
   const currentRowRef = useRef<HTMLDivElement>(null);
+
+  // 表示日付 (今日 / 明日 / ...)
+  const displayDate = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + dayOffset);
+    return d;
+  })();
 
   // 帰宅時間: prop優先、なければwakeupTimeの2時間後または18:30
   const effectiveReturnTime = returnTime ?? "18:30";
@@ -387,7 +414,11 @@ export function TodaySchedule({
     // 今日: 帰宅時間か現在時刻の遅い方から開始
     const startMin = Math.max(timeToMin(nowStr), returnMin);
     const startTime = minToHHmm(startMin);
-    setResult(buildTodaySchedule(buildScheduleInput(finalBlocks, bedtime, startTime, tasks)));
+    setResult(
+      buildTodaySchedule(
+        buildScheduleInput(finalBlocks, bedtime, startTime, tasks, fixedSlots, displayDate),
+      ),
+    );
   };
 
   useEffect(() => {
