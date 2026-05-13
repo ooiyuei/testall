@@ -19,10 +19,17 @@ import { GRADES } from "@/lib/subjects";
 import {
   searchUniversities,
   TIER_LABEL,
-  type University,
-} from "@/lib/universities";
+  UNIVERSITIES as MASTER_UNIVERSITIES,
+} from "@/lib/master/universities";
+import { searchHighschools } from "@/lib/master/highschools";
+import {
+  mergedHighschools,
+  mergedUniversities,
+} from "@/lib/master/userAdditions";
+import type { Highschool, University } from "@/lib/master";
 import { readStore, setProfile } from "@/lib/store";
 import type { StoredProfile, TargetUniversity } from "@/lib/store";
+import { AddEntityModal, type AddEntityKind } from "@/components/master/AddEntityModal";
 
 const STEPS = [
   { id: "grade", label: "学年", icon: GraduationCap },
@@ -55,6 +62,7 @@ function defaultExamDate(grade: string): string {
 export function OnboardingFlow() {
   const router = useRouter();
   const [stepIdx, setStepIdx] = useState(0);
+  const [addModal, setAddModal] = useState<AddEntityKind | null>(null);
   const [form, setForm] = useState<FormState>(() => {
     const existing = readStore().profile;
     return {
@@ -77,8 +85,9 @@ export function OnboardingFlow() {
     if (stepId === "grade") return !!form.grade;
     if (stepId === "deviation") return form.deviation > 0;
     if (stepId === "target") return form.targetUniversities.length > 0;
-    if (stepId === "school") return true; // optional
-    if (stepId === "time") return form.weekdayMinutes > 0 && form.weekendMinutes > 0;
+    if (stepId === "school") return true;
+    if (stepId === "time")
+      return form.weekdayMinutes > 0 && form.weekendMinutes > 0;
     return true;
   }
 
@@ -108,7 +117,6 @@ export function OnboardingFlow() {
       availableMinutesPerDay: Math.round(
         (form.weekdayMinutes * 5 + form.weekendMinutes * 2) / 7,
       ),
-      // 既存フィールド互換
       target:
         form.targetUniversities[0]
           ? form.targetUniversities[0].universityId
@@ -123,7 +131,6 @@ export function OnboardingFlow() {
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col bg-cream-50">
-      {/* Header / progress */}
       <header className="sticky top-0 z-10 border-b border-cream-200 bg-cream-50/95 px-4 py-3 backdrop-blur">
         <div className="flex items-center justify-between">
           <button
@@ -132,9 +139,7 @@ export function OnboardingFlow() {
             disabled={stepIdx === 0}
             className={cn(
               "flex h-9 w-9 items-center justify-center rounded-full",
-              stepIdx === 0
-                ? "text-ink-300"
-                : "text-ink-700 hover:bg-cream-100",
+              stepIdx === 0 ? "text-ink-300" : "text-ink-700 hover:bg-cream-100",
             )}
             aria-label="戻る"
           >
@@ -143,10 +148,7 @@ export function OnboardingFlow() {
           <span className="text-xs font-bold text-ink-500 tabular-nums">
             {stepIdx + 1} / {STEPS.length}
           </span>
-          <Link
-            href="/"
-            className="text-xs font-bold text-ink-400"
-          >
+          <Link href="/" className="text-xs font-bold text-ink-400">
             やめる
           </Link>
         </div>
@@ -178,12 +180,14 @@ export function OnboardingFlow() {
             value={form.targetUniversities}
             deviation={form.deviation}
             onChange={(v) => update("targetUniversities", v)}
+            onAdd={() => setAddModal("university")}
           />
         ) : null}
         {stepId === "school" ? (
           <SchoolStep
             value={form.schoolName}
             onChange={(v) => update("schoolName", v)}
+            onAdd={() => setAddModal("highschool")}
           />
         ) : null}
         {stepId === "time" ? (
@@ -216,6 +220,10 @@ export function OnboardingFlow() {
           )}
         </button>
       </footer>
+
+      {addModal ? (
+        <AddEntityModal kind={addModal} onClose={() => setAddModal(null)} />
+      ) : null}
     </div>
   );
 }
@@ -338,42 +346,48 @@ function DeviationStep({
   );
 }
 
+function facultyDevRange(u: University): { min: number; max: number } | null {
+  const devs = u.faculties
+    .map((f) => f.deviation)
+    .filter((v): v is number => typeof v === "number");
+  if (devs.length === 0) return null;
+  return { min: Math.min(...devs), max: Math.max(...devs) };
+}
+
 function TargetStep({
   value,
   deviation,
   onChange,
+  onAdd,
 }: {
   value: TargetUniversity[];
   deviation: number;
   onChange: (v: TargetUniversity[]) => void;
+  onAdd: () => void;
 }) {
   const [query, setQuery] = useState("");
 
   const results = useMemo(() => {
-    const all = searchUniversities(query);
-    // ソート：偏差値差が小さい順、tier S→A→B→C→D
-    const tierWeight: Record<University["tier"], number> = {
-      S: 0,
-      A: 1,
-      B: 2,
-      C: 3,
-      D: 4,
-    };
+    const merged = mergedUniversities(MASTER_UNIVERSITIES);
+    const all = query.trim()
+      ? merged.filter((u) => u.searchText?.includes(query.toLowerCase()))
+      : merged;
+    const tierWeight: Record<string, number> = { S: 0, A: 1, B: 2, C: 3, D: 4 };
     return [...all]
       .map((u) => {
-        const minDev = Math.min(...u.faculties.map((f) => f.deviation));
-        const maxDev = Math.max(...u.faculties.map((f) => f.deviation));
+        const range = facultyDevRange(u);
+        const minDev = range?.min ?? 50;
+        const maxDev = range?.max ?? 50;
         const dist = Math.max(0, minDev - deviation);
         return { u, minDev, maxDev, dist };
       })
       .sort((a, b) => {
-        // 既選択は下位、tier優先、偏差値距離
         const selA = value.some((v) => v.universityId === a.u.id) ? 1 : 0;
         const selB = value.some((v) => v.universityId === b.u.id) ? 1 : 0;
         if (selA !== selB) return selA - selB;
-        if (a.u.tier !== b.u.tier) {
-          return tierWeight[a.u.tier] - tierWeight[b.u.tier];
-        }
+        const tA = a.u.tier ? tierWeight[a.u.tier] : 5;
+        const tB = b.u.tier ? tierWeight[b.u.tier] : 5;
+        if (tA !== tB) return tA - tB;
         return a.dist - b.dist;
       })
       .slice(0, 30);
@@ -385,10 +399,7 @@ function TargetStep({
     } else if (value.length < 3) {
       onChange([
         ...value,
-        {
-          universityId: uniId,
-          priority: (value.length + 1) as 1 | 2 | 3,
-        },
+        { universityId: uniId, priority: (value.length + 1) as 1 | 2 | 3 },
       ]);
     }
   }
@@ -400,6 +411,9 @@ function TargetStep({
     onChange(filtered);
   }
 
+  const empty = query.trim() && results.length === 0;
+  const all = mergedUniversities(MASTER_UNIVERSITIES);
+
   return (
     <>
       <StepTitle
@@ -407,13 +421,10 @@ function TargetStep({
         subtitle="第1〜第3志望。後から変えてOK。"
       />
 
-      {/* Selected */}
       {value.length > 0 ? (
         <ul className="mb-4 space-y-2">
           {value.map((tu, i) => {
-            const u = searchUniversities("").find(
-              (x) => x.id === tu.universityId,
-            );
+            const u = all.find((x) => x.id === tu.universityId);
             if (!u) return null;
             return (
               <li
@@ -424,11 +435,10 @@ function TargetStep({
                   第{i + 1}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-black text-ink-900">
-                    {u.name}
-                  </div>
+                  <div className="text-sm font-black text-ink-900">{u.name}</div>
                   <div className="text-[10px] text-ink-500">
-                    {TIER_LABEL[u.tier]} · {u.region}
+                    {u.tier ? `${TIER_LABEL[u.tier]} · ` : ""}
+                    {u.region}
                   </div>
                 </div>
                 <button
@@ -445,30 +455,30 @@ function TargetStep({
         </ul>
       ) : null}
 
-      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="大学名や地域を検索"
+          placeholder="大学名や略称を検索"
           className="h-11 w-full rounded-2xl border border-cream-200 bg-white pl-9 pr-3 text-sm text-ink-900 outline-none focus:border-sky-400"
         />
       </div>
 
-      {/* Results */}
       <ul className="mt-3 space-y-1.5">
         {results.map(({ u, minDev, maxDev }) => {
           const selected = value.some((v) => v.universityId === u.id);
           const disabled = !selected && value.length >= 3;
-          const reach =
-            minDev > deviation + 5
+          const range = facultyDevRange(u);
+          const reach = range
+            ? minDev > deviation + 5
               ? "挑戦"
               : minDev > deviation
               ? "やや上"
               : minDev > deviation - 5
               ? "適正"
-              : "安全";
+              : "安全"
+            : "—";
           const reachTone =
             reach === "挑戦"
               ? "bg-coral-300 text-white"
@@ -476,7 +486,9 @@ function TargetStep({
               ? "bg-sun-300 text-ink-900"
               : reach === "適正"
               ? "bg-sky-100 text-sky-700"
-              : "bg-mint-100 text-mint-600";
+              : reach === "安全"
+              ? "bg-mint-100 text-mint-600"
+              : "bg-cream-100 text-ink-500";
           return (
             <li key={u.id}>
               <button
@@ -495,7 +507,9 @@ function TargetStep({
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-black">{u.name}</div>
                   <div className="text-[10px] text-ink-500">
-                    {TIER_LABEL[u.tier]} · 偏差値 {minDev}-{maxDev} · {u.region}
+                    {u.tier ? `${TIER_LABEL[u.tier]} · ` : ""}
+                    {range ? `偏差値 ${minDev}-${maxDev} · ` : ""}
+                    {u.region}
                   </div>
                 </div>
                 <span
@@ -511,6 +525,26 @@ function TargetStep({
           );
         })}
       </ul>
+
+      {empty ? (
+        <button
+          type="button"
+          onClick={onAdd}
+          className="mt-3 flex w-full items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-cream-200 bg-white p-4 text-xs text-ink-500 hover:border-sky-300 hover:bg-sky-50"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          見つからない場合は手動で追加
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={onAdd}
+          className="mt-3 flex w-full items-center justify-center gap-1 text-xs font-bold text-ink-500"
+        >
+          <Plus className="h-3 w-3" />
+          一覧にない大学を追加する
+        </button>
+      )}
     </>
   );
 }
@@ -518,24 +552,95 @@ function TargetStep({
 function SchoolStep({
   value,
   onChange,
+  onAdd,
 }: {
   value: string;
   onChange: (v: string) => void;
+  onAdd: () => void;
 }) {
+  const [query, setQuery] = useState(value);
+
+  const results = useMemo(() => {
+    const merged = mergedHighschools([]);
+    // 全シード + ユーザー追加から絞り込み
+    const base = query.trim()
+      ? searchHighschools(query.trim(), 50)
+      : ([] as Highschool[]);
+    const userAdded = merged.filter(
+      (h) => !query.trim() || h.searchText?.includes(query.toLowerCase()),
+    );
+    return [...userAdded, ...base].slice(0, 30);
+  }, [query]);
+
+  function pick(name: string) {
+    onChange(name);
+    setQuery(name);
+  }
+
   return (
     <>
       <StepTitle
         title="通っている学校"
         subtitle="任意。同じ学校の人と比較するのに使います。"
       />
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="例：◯◯高校"
-        className="h-12 w-full rounded-2xl border border-cream-200 bg-white px-4 text-base text-ink-900 outline-none focus:border-sky-400"
-      />
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+        <input
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            onChange(e.target.value);
+          }}
+          placeholder="高校名を検索（例：日比谷）"
+          className="h-12 w-full rounded-2xl border border-cream-200 bg-white pl-9 pr-3 text-base text-ink-900 outline-none focus:border-sky-400"
+        />
+      </div>
+
+      {query.trim() && results.length > 0 ? (
+        <ul className="mt-3 space-y-1.5">
+          {results.map((h) => (
+            <li key={h.id}>
+              <button
+                type="button"
+                onClick={() => pick(h.name)}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-xl p-3 text-left transition",
+                  value === h.name
+                    ? "bg-sky-100 text-sky-700"
+                    : "bg-white text-ink-900 hover:bg-cream-50",
+                )}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-black">{h.name}</div>
+                  <div className="text-[10px] text-ink-500">
+                    {h.prefecture}
+                    {h.city ? ` · ${h.city}` : ""} ·{" "}
+                    {h.type === "private"
+                      ? "私立"
+                      : h.type === "national"
+                      ? "国立"
+                      : "公立"}
+                    {h.deviation ? ` · 偏差値 ${h.deviation}` : ""}
+                  </div>
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {query.trim() && results.length === 0 ? (
+        <button
+          type="button"
+          onClick={onAdd}
+          className="mt-3 flex w-full items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-cream-200 bg-white p-4 text-xs text-ink-500 hover:border-sky-300 hover:bg-sky-50"
+        >
+          <Plus className="h-3.5 w-3.5" />「{query}」が見つからない — 追加する
+        </button>
+      ) : null}
+
       <p className="mt-3 text-[11px] text-ink-500">
-        空欄でも構いません。
+        空欄でも構いません。後から設定で変えられます。
       </p>
     </>
   );
@@ -558,7 +663,6 @@ function TimeStep({
         title="1日の勉強時間"
         subtitle="平均でOK。AIが現実的な計画を組みます。"
       />
-
       <Slider
         label="平日"
         value={weekday}
