@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BookOpen,
   Building2,
   Check,
+  Cloud,
   GraduationCap,
   Plus,
   ScrollText,
@@ -15,6 +16,13 @@ import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
 import { setProfile } from "@/lib/store";
 import { unifiedSearch } from "@/lib/master";
+import {
+  remoteEnabled,
+  remoteSearchHighschools,
+  remoteSearchMockExams,
+  remoteSearchTextbooks,
+  remoteSearchUniversities,
+} from "@/lib/master/remote";
 import type {
   Highschool,
   MockExam,
@@ -49,19 +57,81 @@ const ARTICLES = [
   { id: "a4", title: "英語長文を時間内に解くための3つのコツ", tags: ["#英語", "#長文"] },
 ];
 
+type RemoteResults = {
+  universities: University[];
+  highschools: Highschool[];
+  textbooks: Textbook[];
+  mockExams: MockExam[];
+};
+
 export function SearchView() {
   const { state, hydrated } = useStore();
   const [tab, setTab] = useState<Tab>("all");
   const [query, setQuery] = useState("");
   const [addModal, setAddModal] = useState<AddEntityKind | null>(null);
+  const [remote, setRemote] = useState<RemoteResults | null>(null);
+  const [remoteLoading, setRemoteLoading] = useState(false);
+  const useRemote = remoteEnabled();
 
-  const results = useMemo(() => {
+  // ローカル seed の即時表示
+  const localResults = useMemo(() => {
     if (!query.trim()) {
-      // 空クエリ時は全カテゴリのトップを少しずつ表示
       return unifiedSearch({ query: "a", limit: 5 });
     }
     return unifiedSearch({ query, limit: tab === "all" ? 5 : 20 });
   }, [query, tab]);
+
+  // Supabase に問い合わせ（300ms デバウンス）
+  useEffect(() => {
+    if (!useRemote) return;
+    const q = query.trim();
+    if (!q) {
+      setRemote(null);
+      return;
+    }
+    setRemoteLoading(true);
+    const t = setTimeout(async () => {
+      const limit = tab === "all" ? 5 : 30;
+      const [universities, highschools, textbooks, mockExams] = await Promise.all([
+        remoteSearchUniversities(q, limit),
+        remoteSearchHighschools(q, limit),
+        remoteSearchTextbooks(q, limit),
+        remoteSearchMockExams(q, limit),
+      ]);
+      setRemote({ universities, highschools, textbooks, mockExams });
+      setRemoteLoading(false);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [query, tab, useRemote]);
+
+  // 表示用: remote ヒットがあれば優先、なければ local seed
+  const results = useMemo(() => {
+    if (remote) {
+      return {
+        universities: remote.universities.map((entity) => ({
+          kind: "university" as const,
+          score: 50,
+          entity,
+        })),
+        highschools: remote.highschools.map((entity) => ({
+          kind: "highschool" as const,
+          score: 50,
+          entity,
+        })),
+        textbooks: remote.textbooks.map((entity) => ({
+          kind: "textbook" as const,
+          score: 50,
+          entity,
+        })),
+        mockExams: remote.mockExams.map((entity) => ({
+          kind: "mock-exam" as const,
+          score: 50,
+          entity,
+        })),
+      };
+    }
+    return localResults;
+  }, [remote, localResults]);
 
   const showUni = tab === "all" || tab === "university";
   const showHs = tab === "all" || tab === "highschool";
@@ -81,6 +151,15 @@ export function SearchView() {
           className="h-11 w-full rounded-2xl border border-cream-200 bg-white pl-9 pr-3 text-sm text-ink-900 outline-none focus:border-sky-400"
         />
       </div>
+
+      {useRemote ? (
+        <div className="mt-2 flex items-center gap-1 text-[10px] font-bold text-ink-500">
+          <Cloud className="h-3 w-3 text-mint-600" />
+          {remoteLoading
+            ? "Supabase で検索中…"
+            : `Supabase 接続中（${query.trim() ? "リモート結果" : "ローカルseed"}）`}
+        </div>
+      ) : null}
 
       {/* Tabs */}
       <ul className="mt-3 flex gap-2 overflow-x-auto pb-1">
