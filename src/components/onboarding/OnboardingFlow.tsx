@@ -27,8 +27,8 @@ import {
   mergedUniversities,
 } from "@/lib/master/userAdditions";
 import type { Highschool, University } from "@/lib/master";
-import { readStore, setProfile } from "@/lib/store";
-import type { StoredProfile, TargetUniversity } from "@/lib/store";
+import { DEVIATION_BUCKETS, bucketMid, readStore, setProfile } from "@/lib/store";
+import type { DeviationBucket, StoredProfile, TargetUniversity } from "@/lib/store";
 import { AddEntityModal, type AddEntityKind } from "@/components/master/AddEntityModal";
 
 const STEPS = [
@@ -43,7 +43,8 @@ type StepId = (typeof STEPS)[number]["id"];
 
 type FormState = {
   grade: string;
-  deviation: number;
+  deviationBucket: DeviationBucket;
+  targetDeviationBucket: DeviationBucket;
   targetUniversities: TargetUniversity[];
   schoolName: string;
   weekdayMinutes: number;
@@ -67,7 +68,8 @@ export function OnboardingFlow() {
     const existing = readStore().profile;
     return {
       grade: existing?.grade ?? "h2",
-      deviation: existing?.deviation ?? 55,
+      deviationBucket: existing?.deviationBucket ?? "55-60",
+      targetDeviationBucket: existing?.targetDeviationBucket ?? "65-70",
       targetUniversities: existing?.targetUniversities ?? [],
       schoolName: existing?.schoolName ?? "",
       weekdayMinutes: existing?.weekdayMinutes ?? 120,
@@ -83,7 +85,7 @@ export function OnboardingFlow() {
 
   function canProceed(): boolean {
     if (stepId === "grade") return !!form.grade;
-    if (stepId === "deviation") return form.deviation > 0;
+    if (stepId === "deviation") return !!form.deviationBucket && !!form.targetDeviationBucket;
     if (stepId === "target") return form.targetUniversities.length > 0;
     if (stepId === "school") return true;
     if (stepId === "time")
@@ -109,7 +111,9 @@ export function OnboardingFlow() {
     const profile: StoredProfile = {
       ...existing,
       grade: form.grade,
-      deviation: form.deviation,
+      deviationBucket: form.deviationBucket,
+      deviation: bucketMid(form.deviationBucket),
+      targetDeviationBucket: form.targetDeviationBucket,
       targetUniversities: form.targetUniversities,
       schoolName: form.schoolName.trim() || undefined,
       weekdayMinutes: form.weekdayMinutes,
@@ -123,6 +127,7 @@ export function OnboardingFlow() {
           : existing?.target ?? "private-top",
       examDate: existing?.examDate ?? defaultExamDate(form.grade),
       textbooks: existing?.textbooks ?? [],
+      userId: existing?.userId ?? String(10000 + Math.floor(Math.random() * 90000)),
       onboardedAt: new Date().toISOString(),
     };
     setProfile(profile);
@@ -171,14 +176,16 @@ export function OnboardingFlow() {
         ) : null}
         {stepId === "deviation" ? (
           <DeviationStep
-            value={form.deviation}
-            onChange={(v) => update("deviation", v)}
+            current={form.deviationBucket}
+            target={form.targetDeviationBucket}
+            onChangeCurrent={(v) => update("deviationBucket", v)}
+            onChangeTarget={(v) => update("targetDeviationBucket", v)}
           />
         ) : null}
         {stepId === "target" ? (
           <TargetStep
             value={form.targetUniversities}
-            deviation={form.deviation}
+            deviation={bucketMid(form.deviationBucket)}
             onChange={(v) => update("targetUniversities", v)}
             onAdd={() => setAddModal("university")}
           />
@@ -287,62 +294,83 @@ function GradeStep({
 }
 
 function DeviationStep({
-  value,
-  onChange,
+  current,
+  target,
+  onChangeCurrent,
+  onChangeTarget,
 }: {
-  value: number;
-  onChange: (v: number) => void;
+  current: DeviationBucket;
+  target: DeviationBucket;
+  onChangeCurrent: (v: DeviationBucket) => void;
+  onChangeTarget: (v: DeviationBucket) => void;
 }) {
-  const label =
-    value >= 70
-      ? "最難関レベル"
-      : value >= 65
-      ? "難関レベル"
-      : value >= 60
-      ? "準難関レベル"
-      : value >= 55
-      ? "中堅上位レベル"
-      : value >= 50
-      ? "中堅レベル"
-      : value >= 45
-      ? "標準レベル"
-      : "これから伸ばすレベル";
-
   return (
     <>
       <StepTitle
-        title="今の偏差値はどのくらい？"
-        subtitle="おおよそでOK。複数科目なら平均で。"
+        title="偏差値を教えて"
+        subtitle="おおよその帯でOK。後で模試結果から自動補正されます。"
       />
-      <div className="rounded-3xl border border-cream-200 bg-white p-6 shadow-soft">
-        <div className="flex items-baseline justify-center gap-2">
-          <span className="text-6xl font-black tabular-nums text-ink-900">
-            {value}
-          </span>
-          <span className="text-base font-bold text-ink-500">前後</span>
-        </div>
-        <div className="mt-2 text-center text-xs font-bold text-sky-600">
-          {label}
-        </div>
-        <input
-          type="range"
-          min={30}
-          max={75}
-          step={1}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="mt-6 w-full accent-sky-500"
-        />
-        <div className="mt-2 flex justify-between text-[10px] font-bold text-ink-400 tabular-nums">
-          <span>30</span>
-          <span>50</span>
-          <span>75</span>
-        </div>
-      </div>
-      <p className="mt-4 text-center text-[11px] text-ink-500">
-        正確じゃなくて大丈夫。後で模試結果を入れたら自動で調整します。
+
+      <BucketPicker
+        label="今の偏差値"
+        value={current}
+        onChange={onChangeCurrent}
+        tone="sky"
+      />
+
+      <div className="mt-5" />
+
+      <BucketPicker
+        label="目指す学校の偏差値"
+        value={target}
+        onChange={onChangeTarget}
+        tone="peach"
+      />
+
+      <p className="mt-4 text-[11px] text-ink-500">
+        ※ 偏差値は模試ごとに意味が変わるため、内部では帯の中央値で扱います。
       </p>
     </>
+  );
+}
+
+function BucketPicker({
+  label,
+  value,
+  onChange,
+  tone,
+}: {
+  label: string;
+  value: DeviationBucket;
+  onChange: (v: DeviationBucket) => void;
+  tone: "sky" | "peach";
+}) {
+  const toneActive =
+    tone === "sky" ? "bg-sky-500 text-white" : "bg-peach-200 text-peach-500";
+  return (
+    <div className="rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
+      <div className="text-[11px] font-bold uppercase tracking-widest text-ink-500">
+        {label}
+      </div>
+      <ul className="mt-2 grid grid-cols-4 gap-1.5">
+        {DEVIATION_BUCKETS.map((b) => (
+          <li key={b.id}>
+            <button
+              type="button"
+              onClick={() => onChange(b.id)}
+              className={cn(
+                "flex h-12 w-full items-center justify-center rounded-xl text-xs font-black transition",
+                value === b.id
+                  ? `${toneActive} shadow-soft`
+                  : "bg-cream-50 text-ink-700",
+              )}
+            >
+              {b.label}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

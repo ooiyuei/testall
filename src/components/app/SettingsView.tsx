@@ -5,8 +5,10 @@ import { useState } from "react";
 import {
   Bell,
   ChevronRight,
+  Clock,
   FileText,
   Globe,
+  Home as HomeIcon,
   Lock,
   LogOut,
   Moon,
@@ -15,7 +17,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { clearAll } from "@/lib/store";
+import { clearAll, setPlanning } from "@/lib/store";
 import { useStore } from "@/lib/hooks/useStore";
 
 export function SettingsView() {
@@ -83,6 +85,12 @@ export function SettingsView() {
             label="参考書を追加・削除"
           />
         </SettingsGroup>
+      </section>
+
+      {/* 1日の予定 */}
+      <section>
+        <SectionTitle>1日の予定</SectionTitle>
+        <PlanningEditor />
       </section>
 
       {/* 法務 */}
@@ -286,6 +294,165 @@ function SettingsLink({
         <span className="flex-1 text-sm font-bold text-ink-900">{label}</span>
         <ChevronRight className="h-4 w-4 text-ink-400" />
       </Link>
+    </li>
+  );
+}
+
+// ── 1日の予定エディタ ────────────────────────
+function PlanningEditor() {
+  const { state, hydrated } = useStore();
+  const initial = state.planning;
+  const [weekdayBlocks, setWeekdayBlocks] = useState(
+    initial?.weekdayBaseBlocks ?? 3,
+  );
+  const [weekendBlocks, setWeekendBlocks] = useState(
+    initial?.weekendBaseBlocks ?? 6,
+  );
+  const [returnTime, setReturnTime] = useState(
+    initial?.defaultReturnTime ?? "18:30",
+  );
+  const [bedtime, setBedtime] = useState(initial?.defaultBedtime ?? "24:00");
+  const [buffer, setBuffer] = useState(initial?.bufferMinutes ?? 90);
+
+  function save() {
+    setPlanning({
+      weekdayBaseBlocks: weekdayBlocks,
+      weekendBaseBlocks: weekendBlocks,
+      defaultReturnTime: returnTime,
+      defaultBedtime: bedtime,
+      bufferMinutes: buffer,
+    });
+  }
+
+  if (!hydrated) return null;
+
+  return (
+    <div className="mt-2 divide-y divide-cream-200 overflow-hidden rounded-3xl border border-cream-200 bg-white shadow-soft">
+      <NumberRow
+        icon={Clock}
+        label="平日 基本ブロック"
+        value={weekdayBlocks}
+        min={0}
+        max={10}
+        suffix="ブロック"
+        onChange={setWeekdayBlocks}
+      />
+      <NumberRow
+        icon={Clock}
+        label="休日 基本ブロック"
+        value={weekendBlocks}
+        min={0}
+        max={14}
+        suffix="ブロック"
+        onChange={setWeekendBlocks}
+      />
+      <TimeRow
+        icon={HomeIcon}
+        label="基本の帰宅時間"
+        value={returnTime}
+        onChange={setReturnTime}
+      />
+      <TimeRow
+        icon={Moon}
+        label="就寝時間"
+        value={bedtime}
+        onChange={setBedtime}
+      />
+      <NumberRow
+        icon={Clock}
+        label="食事・風呂などのバッファ"
+        value={buffer}
+        min={0}
+        max={300}
+        step={15}
+        suffix="分"
+        onChange={setBuffer}
+      />
+      <li className="px-4 py-3">
+        <button
+          type="button"
+          onClick={save}
+          className="h-10 w-full rounded-xl bg-sky-500 text-sm font-black text-white"
+        >
+          保存
+        </button>
+      </li>
+    </div>
+  );
+}
+
+function NumberRow({
+  icon: Icon,
+  label,
+  value,
+  min,
+  max,
+  step = 1,
+  suffix,
+  onChange,
+}: {
+  icon: typeof Bell;
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step?: number;
+  suffix: string;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <li className="flex items-center gap-3 px-4 py-3">
+      <span className="flex h-8 w-8 flex-none items-center justify-center rounded-xl bg-cream-100 text-ink-700">
+        <Icon className="h-4 w-4" />
+      </span>
+      <span className="flex-1 text-sm font-bold text-ink-900">{label}</span>
+      <div className="flex items-center gap-1 rounded-xl border border-cream-200 bg-cream-50 px-1">
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(min, value - step))}
+          className="flex h-7 w-7 items-center justify-center text-ink-700"
+        >
+          −
+        </button>
+        <span className="w-10 text-center text-sm font-black text-ink-900 tabular-nums">
+          {value}
+        </span>
+        <button
+          type="button"
+          onClick={() => onChange(Math.min(max, value + step))}
+          className="flex h-7 w-7 items-center justify-center text-ink-700"
+        >
+          +
+        </button>
+      </div>
+      <span className="text-[10px] text-ink-500">{suffix}</span>
+    </li>
+  );
+}
+
+function TimeRow({
+  icon: Icon,
+  label,
+  value,
+  onChange,
+}: {
+  icon: typeof Bell;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <li className="flex items-center gap-3 px-4 py-3">
+      <span className="flex h-8 w-8 flex-none items-center justify-center rounded-xl bg-cream-100 text-ink-700">
+        <Icon className="h-4 w-4" />
+      </span>
+      <span className="flex-1 text-sm font-bold text-ink-900">{label}</span>
+      <input
+        type="time"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-9 rounded-xl border border-cream-200 bg-cream-50 px-2 text-sm text-ink-900 outline-none focus:border-sky-400 focus:bg-white"
+      />
     </li>
   );
 }

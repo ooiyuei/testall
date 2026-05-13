@@ -19,22 +19,79 @@ export type TargetUniversity = {
 export type StoredProfile = {
   // 識別
   name?: string;
+  userId?: string;          // @12345 のような5桁番号 (生成)
+  gender?: "male" | "female" | "other" | "na";
+  birthdate?: string;       // YYYY-MM-DD
+  prefecture?: string;
   schoolName?: string;
   // 学習プロフィール
   grade: string;
-  deviation?: number; // 全国偏差値（おおよそ）
+  deviation?: number;       // 全国偏差値（おおよそ）
+  deviationBucket?: DeviationBucket; // 5刻み入力
   // 志望校
-  target: string; // 旧フィールド（互換維持）。新規は targetUniversities を使う。
+  target: string;           // 旧フィールド（互換維持）。新規は targetUniversities を使う。
   targetUniversities?: TargetUniversity[];
+  targetDeviationBucket?: DeviationBucket; // 5刻みの目標偏差値帯
   examDate: string;
   // 勉強時間
   availableMinutesPerDay: number; // 旧フィールド（平均）。新規は weekday/weekend で取る。
   weekdayMinutes?: number;
   weekendMinutes?: number;
   // 所有資材
-  textbooks: string[];
+  textbooks: string[];      // 互換: テキスト名で保持
+  bookshelfItems?: BookshelfItem[]; // 拡張版
   // 完了フラグ
   onboardedAt?: string;
+};
+
+export type DeviationBucket =
+  | "lt45"
+  | "45-50"
+  | "50-55"
+  | "55-60"
+  | "60-65"
+  | "65-70"
+  | "70-75"
+  | "gte75";
+
+export const DEVIATION_BUCKETS: { id: DeviationBucket; label: string; mid: number }[] = [
+  { id: "lt45", label: "〜45", mid: 42 },
+  { id: "45-50", label: "45〜50", mid: 47 },
+  { id: "50-55", label: "50〜55", mid: 52 },
+  { id: "55-60", label: "55〜60", mid: 57 },
+  { id: "60-65", label: "60〜65", mid: 62 },
+  { id: "65-70", label: "65〜70", mid: 67 },
+  { id: "70-75", label: "70〜75", mid: 72 },
+  { id: "gte75", label: "75〜", mid: 77 },
+];
+
+export function bucketMid(b: DeviationBucket): number {
+  return DEVIATION_BUCKETS.find((x) => x.id === b)?.mid ?? 50;
+}
+
+export type BookshelfItem = {
+  id: string;
+  name: string;
+  kind: "textbook" | "school-textbook" | "workbook" | "past-exam" | "other";
+  subjectArea?: string;
+  progressPct?: number;
+  reps?: number;
+};
+
+// ── タスク（TODO） ─────────────────────────
+export type TaskTag = "homework" | "elective" | "qualification" | "added" | "other";
+
+export type StoredTask = {
+  id: string;
+  title: string;
+  blocks: number;         // 1〜
+  tag: TaskTag;
+  subjectArea?: string;   // SubjectAreaId
+  priority: 1 | 2 | 3;    // 1=高
+  dueDate?: string;
+  status: "todo" | "doing" | "done";
+  createdAt: string;
+  completedAt?: string;
 };
 
 export type StoredTest = {
@@ -88,6 +145,7 @@ export type StoreState = {
   dailyMoodLogs?: DailyMoodLog[];
   weeklyGoals?: WeeklyGoal[];
   weeklyExecutions?: WeeklyExecutionLog[];
+  tasks?: StoredTask[];
 };
 
 const STORAGE_KEY = "testall:v1";
@@ -99,6 +157,7 @@ const EMPTY_STATE: StoreState = {
   dailyMoodLogs: [],
   weeklyGoals: [],
   weeklyExecutions: [],
+  tasks: [],
 };
 
 function isBrowser(): boolean {
@@ -124,6 +183,7 @@ export function readStore(): StoreState {
       weeklyExecutions: Array.isArray(parsed.weeklyExecutions)
         ? parsed.weeklyExecutions
         : [],
+      tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
     };
   } catch {
     return EMPTY_STATE;
@@ -280,6 +340,81 @@ export function saveWeeklyExecution(log: WeeklyExecutionLog): StoreState {
   return writeStore({
     ...current,
     weeklyExecutions: [log, ...filtered],
+  });
+}
+
+// ── ユーザーID ────────────────────────────
+// 5 桁の数字 (10000〜99999)
+export function generateUserId(): string {
+  return String(10000 + Math.floor(Math.random() * 90000));
+}
+
+export function ensureUserId(): string {
+  const current = readStore();
+  if (current.profile?.userId) return current.profile.userId;
+  const id = generateUserId();
+  if (current.profile) {
+    writeStore({ ...current, profile: { ...current.profile, userId: id } });
+  }
+  return id;
+}
+
+// ── タスク ───────────────────────────────
+export function listTasks(): StoredTask[] {
+  return readStore().tasks ?? [];
+}
+
+export function saveTask(task: StoredTask): StoreState {
+  const current = readStore();
+  const existing = current.tasks ?? [];
+  const filtered = existing.filter((t) => t.id !== task.id);
+  return writeStore({
+    ...current,
+    tasks: [task, ...filtered],
+  });
+}
+
+export function deleteTask(id: string): StoreState {
+  const current = readStore();
+  return writeStore({
+    ...current,
+    tasks: (current.tasks ?? []).filter((t) => t.id !== id),
+  });
+}
+
+export function toggleTaskStatus(id: string): StoreState {
+  const current = readStore();
+  const tasks = (current.tasks ?? []).map((t) => {
+    if (t.id !== id) return t;
+    if (t.status === "done") return { ...t, status: "todo" as const, completedAt: undefined };
+    return { ...t, status: "done" as const, completedAt: new Date().toISOString() };
+  });
+  return writeStore({ ...current, tasks });
+}
+
+// ── 本棚 ────────────────────────────────
+export function addBookshelfItem(item: BookshelfItem): StoreState {
+  const current = readStore();
+  const p = current.profile;
+  if (!p) return current;
+  const items = p.bookshelfItems ?? [];
+  const filtered = items.filter((x) => x.id !== item.id);
+  return writeStore({
+    ...current,
+    profile: { ...p, bookshelfItems: [item, ...filtered] },
+  });
+}
+
+export function removeBookshelfItem(id: string): StoreState {
+  const current = readStore();
+  const p = current.profile;
+  if (!p) return current;
+  return writeStore({
+    ...current,
+    profile: {
+      ...p,
+      bookshelfItems: (p.bookshelfItems ?? []).filter((x) => x.id !== id),
+    },
   });
 }
 
