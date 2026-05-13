@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
 import {
@@ -21,11 +21,9 @@ import {
   CATEGORY_DEFS,
   getCategoryDef,
   subjectsForCategory,
-  subjectsForGrade,
   TEST_KINDS,
   type GradeId,
   type SubjectCategory,
-  type SubjectDef,
 } from "@/lib/curriculum";
 import { readStore, saveTest, setProfile } from "@/lib/store";
 import type {
@@ -51,6 +49,12 @@ const CAUSE_OPTIONS: { id: MissCause; label: string; tone: string }[] = [
 
 export function NewTestForm() {
   const [mode, setMode] = useState<Mode>("select");
+  const [prefill, setPrefill] = useState<VisionResult | null>(null);
+
+  function handleVisionAccept(result: VisionResult) {
+    setPrefill(result);
+    setMode("manual");
+  }
 
   return (
     <>
@@ -60,9 +64,12 @@ export function NewTestForm() {
           onPickPhoto={() => setMode("photo")}
         />
       ) : mode === "photo" ? (
-        <PhotoMode onBack={() => setMode("select")} />
+        <PhotoMode
+          onBack={() => setMode("select")}
+          onAccept={handleVisionAccept}
+        />
       ) : (
-        <ManualForm />
+        <ManualForm prefill={prefill} />
       )}
     </>
   );
@@ -128,8 +135,84 @@ function ModeSelect({
   );
 }
 
-function PhotoMode({ onBack }: { onBack: () => void }) {
-  const [scope, setScope] = useState<"answer" | "question" | "both">("answer");
+type VisionResult = {
+  subject: string;
+  testName: string;
+  score: number;
+  fullScore: number;
+  units: {
+    unit: string;
+    correct: number;
+    total: number;
+    cause: "knowledge" | "understanding" | "time" | "careless" | null;
+  }[];
+};
+
+type PhotoState =
+  | { status: "idle" }
+  | { status: "analyzing" }
+  | { status: "done"; result: VisionResult; previewUrl: string }
+  | { status: "error"; message: string };
+
+function PhotoMode({
+  onBack,
+  onAccept,
+}: {
+  onBack: () => void;
+  onAccept: (result: VisionResult) => void;
+}) {
+  const [photoState, setPhotoState] = useState<PhotoState>({ status: "idle" });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const previewUrl = URL.createObjectURL(file);
+    setPhotoState({ status: "analyzing" });
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const base64 = btoa(
+        String.fromCharCode(...new Uint8Array(buffer)),
+      );
+      const mediaType = file.type || "image/jpeg";
+
+      const res = await fetch("/api/diagnose-from-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: base64, mediaType }),
+      });
+
+      if (res.status === 503) {
+        setPhotoState({ status: "error", message: "api_key_not_configured" });
+        return;
+      }
+
+      const data = (await res.json()) as { ok: boolean; result?: VisionResult; error?: string };
+      if (!data.ok || !data.result) {
+        setPhotoState({ status: "error", message: data.error ?? "vision_failed" });
+        return;
+      }
+
+      setPhotoState({ status: "done", result: data.result, previewUrl });
+    } catch {
+      setPhotoState({ status: "error", message: "network_error" });
+    }
+  }
+
+  function handleAccept() {
+    if (photoState.status !== "done") return;
+    onAccept(photoState.result);
+  }
+
+  const errorMessages: Record<string, string> = {
+    api_key_not_configured: "画像入力は準備中です。手入力をご利用ください。",
+    parse_failed: "答案を読み取れませんでした。もう一度試すか手入力をご利用ください。",
+    vision_failed: "解析に失敗しました。もう一度試してください。",
+    network_error: "通信エラーが発生しました。接続を確認してください。",
+    image_required: "画像が選択されていません。",
+  };
 
   return (
     <div className="px-5 pb-8 pt-3">
@@ -146,64 +229,131 @@ function PhotoMode({ onBack }: { onBack: () => void }) {
         テストを撮影して取り込む
       </h1>
       <p className="mt-1 text-xs text-ink-500">
-        AIが答案を読み取って、単元別の正答数を自動入力します。
+        AIが答案を読み取って、科目・点数・単元を自動入力します。
       </p>
 
-      <div className="mt-5">
-        <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
-          何を撮影しますか？
-        </div>
-        <div className="mt-2 grid grid-cols-3 gap-2">
-          {(
-            [
-              { id: "answer", label: "答案のみ" },
-              { id: "question", label: "問題のみ" },
-              { id: "both", label: "両方" },
-            ] as const
-          ).map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => setScope(opt.id)}
-              className={cn(
-                "rounded-2xl border-2 px-2 py-2.5 text-xs font-bold transition",
-                scope === opt.id
-                  ? "border-sky-500 bg-sky-50 text-sky-700"
-                  : "border-cream-200 bg-white text-ink-700",
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      {photoState.status === "idle" ? (
+        <label className="mt-5 flex flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-cream-300 bg-white/60 p-8 text-center cursor-pointer hover:bg-cream-50 transition">
+          <ImagePlus className="h-8 w-8 text-sky-500" />
+          <span className="text-sm font-black text-ink-900">写真を選ぶ</span>
+          <span className="text-[11px] text-ink-500">または カメラで撮影</span>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+        </label>
+      ) : null}
 
-      <label className="mt-5 flex flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-cream-300 bg-white/60 p-8 text-center cursor-pointer hover:bg-cream-50 transition">
-        <ImagePlus className="h-8 w-8 text-sky-500" />
-        <span className="text-sm font-black text-ink-900">写真を選ぶ</span>
-        <span className="text-[11px] text-ink-500">
-          または カメラで撮影
-        </span>
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              alert(
-                `写真モードはβ版です。\n選択ファイル: ${file.name}\n\n現在は手入力モードのみ精度を保証しています。`,
-              );
-            }
-          }}
-        />
-      </label>
+      {photoState.status === "analyzing" ? (
+        <div className="mt-5 flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-sky-200 bg-sky-50 p-10">
+          <Loader2 className="h-8 w-8 animate-spin text-sky-500" />
+          <span className="text-sm font-bold text-sky-700">解析中…</span>
+          <span className="text-[11px] text-sky-500">Claude が答案を読み取っています</span>
+        </div>
+      ) : null}
+
+      {photoState.status === "error" ? (
+        <div className="mt-5 space-y-3">
+          <div className="flex items-start gap-2 rounded-2xl border border-coral-300 bg-coral-300/10 p-4 text-xs text-coral-500">
+            <AlertCircle className="h-4 w-4 flex-none mt-0.5" />
+            <span>{errorMessages[photoState.message] ?? "エラーが発生しました。"}</span>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setPhotoState({ status: "idle" });
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }}
+              className="flex h-11 flex-1 items-center justify-center rounded-xl border border-cream-200 text-sm font-bold text-ink-700"
+            >
+              やり直す
+            </button>
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex h-11 flex-1 items-center justify-center rounded-xl bg-sky-500 text-sm font-bold text-white"
+            >
+              手入力へ切替
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {photoState.status === "done" ? (
+        <div className="mt-5 space-y-4">
+          <img
+            src={photoState.previewUrl}
+            alt="撮影した答案"
+            className="w-full rounded-2xl object-cover max-h-48"
+          />
+          <div className="rounded-2xl border border-cream-200 bg-white p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-ink-500">解析結果</span>
+              <Check className="h-4 w-4 text-mint-500" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="text-[10px] text-ink-500">科目</div>
+                <div className="mt-0.5 text-sm font-black text-ink-900">{photoState.result.subject}</div>
+              </div>
+              <div>
+                <div className="text-[10px] text-ink-500">テスト名</div>
+                <div className="mt-0.5 text-sm font-black text-ink-900">{photoState.result.testName || "—"}</div>
+              </div>
+              <div>
+                <div className="text-[10px] text-ink-500">得点</div>
+                <div className="mt-0.5 text-sm font-black text-ink-900 tabular-nums">
+                  {photoState.result.score} / {photoState.result.fullScore}点
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] text-ink-500">単元数</div>
+                <div className="mt-0.5 text-sm font-black text-ink-900">{photoState.result.units.length}件</div>
+              </div>
+            </div>
+            {photoState.result.units.length > 0 ? (
+              <ul className="mt-1 space-y-1 border-t border-cream-200 pt-2">
+                {photoState.result.units.map((u, i) => (
+                  <li key={i} className="flex items-baseline justify-between text-xs">
+                    <span className="text-ink-700 font-bold">{u.unit}</span>
+                    <span className="text-ink-500 tabular-nums">{u.correct}/{u.total}問</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setPhotoState({ status: "idle" });
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }}
+              className="flex h-12 flex-none items-center justify-center rounded-xl border border-cream-200 px-4 text-sm font-bold text-ink-700"
+            >
+              撮り直す
+            </button>
+            <button
+              type="button"
+              onClick={handleAccept}
+              className="flex h-12 flex-1 items-center justify-center gap-1 rounded-xl bg-sky-500 text-sm font-black text-white shadow-soft active:scale-[0.98] transition"
+            >
+              <Check className="h-4 w-4" />
+              この内容で入力する
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-6 rounded-2xl border border-cream-200 bg-white p-4 text-[11px] text-ink-700">
         <p className="font-bold text-ink-900">プライバシー</p>
         <p className="mt-1">
-          画像はAI解析にのみ使い、保存されません。問題文の中身は記録しません。
+          画像はAI解析にのみ使い、サーバーに保存されません。問題文の中身は記録しません。
         </p>
       </div>
     </div>
@@ -256,9 +406,48 @@ function defaultSubjectForCategory(
   };
 }
 
-function buildInitialState(): FormState {
+const SUBJECT_NAME_TO_CATEGORY: Record<string, SubjectCategory> = {
+  数学: "math",
+  英語: "english",
+  国語: "japanese",
+  理科: "science",
+  社会: "social",
+};
+
+function buildInitialState(prefill: VisionResult | null): FormState {
   const existing = readStore().profile;
   const grade = (existing?.grade as GradeId) ?? "h2";
+
+  if (prefill) {
+    const cat: SubjectCategory =
+      SUBJECT_NAME_TO_CATEGORY[prefill.subject] ?? "math";
+    const subjects = subjectsForCategory(cat, grade);
+    const first = subjects[0];
+    const prefillEntry: SubjectEntry | null = first
+      ? {
+          category: cat,
+          subjectId: first.id,
+          score: String(prefill.score ?? ""),
+          fullScore: String(prefill.fullScore ?? 100),
+          units: prefill.units.map((u) => ({
+            unit: u.unit,
+            correct: u.correct,
+            total: u.total,
+            cause: u.cause ?? undefined,
+          })),
+        }
+      : null;
+
+    return {
+      grade,
+      testKindId: "school-mock",
+      testDate: todayDate(),
+      testName: prefill.testName ?? "",
+      selectedCategories: [cat],
+      subjects: prefillEntry ? [prefillEntry] : [],
+    };
+  }
+
   const initialCat: SubjectCategory = "math";
   const first = defaultSubjectForCategory(initialCat, grade);
   return {
@@ -271,10 +460,10 @@ function buildInitialState(): FormState {
   };
 }
 
-function ManualForm() {
+function ManualForm({ prefill }: { prefill?: VisionResult | null }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>(0);
-  const [form, setForm] = useState<FormState>(buildInitialState);
+  const [form, setForm] = useState<FormState>(() => buildInitialState(prefill ?? null));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
