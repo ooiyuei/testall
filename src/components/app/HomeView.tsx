@@ -18,6 +18,8 @@ import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
 import type { Block } from "@/lib/types";
 import { MoodCheckCard } from "./MoodCheckCard";
+import { TodaySuggestion } from "./TodaySuggestion";
+import { AiChat } from "./AiChat";
 
 const WEEKDAY_LABEL = ["月", "火", "水", "木", "金", "土", "日"];
 
@@ -87,6 +89,9 @@ export function HomeView() {
       </section>
 
       {needsOnboarding ? <OnboardingPrompt /> : null}
+
+      {/* 今日のおすすめ */}
+      {hydrated ? <TodaySuggestion state={state} /> : null}
 
       {/* 今日の準備 (気分 + 帰宅) */}
       {hydrated ? <MoodCheckCard /> : null}
@@ -218,6 +223,9 @@ export function HomeView() {
           </ul>
         </section>
       ) : null}
+
+      {/* AI チャット */}
+      {hydrated ? <AiChat state={state} /> : null}
 
       {/* AI からのひとこと — 一旦削除 (TODO v0.7 で復活) */}
       {false && latest ? (

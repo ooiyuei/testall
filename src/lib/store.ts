@@ -185,6 +185,13 @@ export type DailyMoodLog = {
   createdAt: string;
 };
 
+export type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+};
+
 export type StoreState = {
   profile?: StoredProfile;
   planning?: PlanningProfile;
@@ -195,6 +202,7 @@ export type StoreState = {
   weeklyGoals?: WeeklyGoal[];
   weeklyExecutions?: WeeklyExecutionLog[];
   tasks?: StoredTask[];
+  chatMessages?: ChatMessage[];
 };
 
 const STORAGE_KEY = "testall:v1";
@@ -207,6 +215,7 @@ const EMPTY_STATE: StoreState = {
   weeklyGoals: [],
   weeklyExecutions: [],
   tasks: [],
+  chatMessages: [],
 };
 
 function isBrowser(): boolean {
@@ -233,6 +242,7 @@ export function readStore(): StoreState {
         ? parsed.weeklyExecutions
         : [],
       tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
+      chatMessages: Array.isArray(parsed.chatMessages) ? parsed.chatMessages : [],
     };
   } catch {
     return EMPTY_STATE;
@@ -567,4 +577,16 @@ export function getSubjectStrengths(): SubjectStrength[] {
       bar: recent,
     };
   });
+}
+
+// ── チャット履歴 ─────────────────────────────
+export function addChatMessage(message: ChatMessage): StoreState {
+  const current = readStore();
+  const existing = current.chatMessages ?? [];
+  return writeStore({ ...current, chatMessages: [...existing, message] });
+}
+
+export function clearChat(): StoreState {
+  const current = readStore();
+  return writeStore({ ...current, chatMessages: [] });
 }
