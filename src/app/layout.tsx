@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP, Inter } from "next/font/google";
 import "./globals.css";
+import { ServiceWorkerRegister } from "@/components/system/ServiceWorkerRegister";
 
 const notoJP = Noto_Sans_JP({
   variable: "--font-noto-jp",
@@ -60,6 +61,7 @@ export default function RootLayout({
       className={`${notoJP.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-cream-50 text-ink-900">
+        <ServiceWorkerRegister />
         {children}
       </body>
     </html>
