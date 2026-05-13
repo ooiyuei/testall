@@ -1,5 +1,6 @@
-// Client-only persistence layer backed by sessionStorage.
-// TODO: 実データに置き換え（Supabase 接続後）
+// Persistence layer: sessionStorage (always) + Supabase (when authenticated).
+// Dual-write: writes go to sessionStorage immediately, then Supabase in background.
+// Reads always come from sessionStorage for zero-latency UI.
 
 import type { Diagnosis, TestInput } from "./types";
 import type {
@@ -8,6 +9,36 @@ import type {
   WeeklyExecutionLog,
   WeeklyGoal,
 } from "./planning/types";
+import {
+  deleteEventRemote,
+  deleteTaskRemote,
+  deleteTestRemote,
+  saveBlockLogRemote,
+  saveDailyMoodLogRemote,
+  saveEventRemote,
+  savePlanningRemote,
+  saveProfileRemote,
+  saveTaskRemote,
+  saveTestRemote,
+  saveWeeklyExecutionRemote,
+  saveWeeklyGoalRemote,
+} from "./store-remote";
+
+// Active authenticated user ID — set by useStore on login, cleared on logout
+let _authUserId: string | null = null;
+
+export function setAuthUserId(userId: string | null): void {
+  _authUserId = userId;
+}
+
+export function getAuthUserId(): string | null {
+  return _authUserId;
+}
+
+// fire-and-forget — UI を止めない
+function bg<T>(p: Promise<T>): void {
+  p.catch((e) => console.error("[store] background sync error:", e));
+}
 
 export type TargetUniversity = {
   universityId: string;
@@ -249,7 +280,7 @@ export function readStore(): StoreState {
   }
 }
 
-function writeStore(next: StoreState): StoreState {
+export function writeStore(next: StoreState): StoreState {
   if (!isBrowser()) return next;
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   window.dispatchEvent(new Event("testall:store"));
@@ -258,25 +289,28 @@ function writeStore(next: StoreState): StoreState {
 
 export function setProfile(profile: StoredProfile): StoreState {
   const current = readStore();
-  return writeStore({ ...current, profile });
+  const next = writeStore({ ...current, profile });
+  if (_authUserId) bg(saveProfileRemote(_authUserId, profile));
+  return next;
 }
 
 export function saveTest(test: StoredTest): StoreState {
   const current = readStore();
   const filtered = current.tests.filter((t) => t.id !== test.id);
-  return writeStore({
-    ...current,
-    tests: [test, ...filtered],
-  });
+  const next = writeStore({ ...current, tests: [test, ...filtered] });
+  if (_authUserId) bg(saveTestRemote(_authUserId, test));
+  return next;
 }
 
 export function deleteTest(id: string): StoreState {
   const current = readStore();
-  return writeStore({
+  const next = writeStore({
     ...current,
     tests: current.tests.filter((t) => t.id !== id),
     blockLogs: current.blockLogs.filter((b) => b.testId !== id),
   });
+  if (_authUserId) bg(deleteTestRemote(_authUserId, id));
+  return next;
 }
 
 export function getTest(id: string): StoredTest | undefined {
@@ -292,10 +326,9 @@ export function logBlock(log: BlockLog): StoreState {
   const filtered = current.blockLogs.filter(
     (b) => !(b.testId === log.testId && b.blockIdx === log.blockIdx),
   );
-  return writeStore({
-    ...current,
-    blockLogs: [log, ...filtered],
-  });
+  const next = writeStore({ ...current, blockLogs: [log, ...filtered] });
+  if (_authUserId) bg(saveBlockLogRemote(_authUserId, log));
+  return next;
 }
 
 export function getBlockLog(testId: string, blockIdx: number): BlockLog | undefined {
@@ -354,7 +387,9 @@ export function clearAll(): StoreState {
 // ── プランニングプロフィール ─────────────────
 export function setPlanning(planning: PlanningProfile): StoreState {
   const current = readStore();
-  return writeStore({ ...current, planning });
+  const next = writeStore({ ...current, planning });
+  if (_authUserId) bg(savePlanningRemote(_authUserId, planning));
+  return next;
 }
 
 // ── 日付ヘルパ（6時リセット） ────────────────
@@ -372,10 +407,9 @@ export function logDailyMood(log: DailyMoodLog): StoreState {
   const current = readStore();
   const existing = current.dailyMoodLogs ?? [];
   const filtered = existing.filter((l) => l.dateISO !== log.dateISO);
-  return writeStore({
-    ...current,
-    dailyMoodLogs: [log, ...filtered],
-  });
+  const next = writeStore({ ...current, dailyMoodLogs: [log, ...filtered] });
+  if (_authUserId) bg(saveDailyMoodLogRemote(_authUserId, log));
+  return next;
 }
 
 export function getTodayMoodLog(today = new Date()): DailyMoodLog | undefined {
@@ -388,10 +422,9 @@ export function saveWeeklyGoal(goal: WeeklyGoal): StoreState {
   const current = readStore();
   const existing = current.weeklyGoals ?? [];
   const filtered = existing.filter((g) => g.weekStartISO !== goal.weekStartISO);
-  return writeStore({
-    ...current,
-    weeklyGoals: [goal, ...filtered],
-  });
+  const next = writeStore({ ...current, weeklyGoals: [goal, ...filtered] });
+  if (_authUserId) bg(saveWeeklyGoalRemote(_authUserId, goal));
+  return next;
 }
 
 export function getCurrentWeekGoal(today = new Date()): WeeklyGoal | undefined {
@@ -414,10 +447,9 @@ export function saveWeeklyExecution(log: WeeklyExecutionLog): StoreState {
   const current = readStore();
   const existing = current.weeklyExecutions ?? [];
   const filtered = existing.filter((l) => l.weekStartISO !== log.weekStartISO);
-  return writeStore({
-    ...current,
-    weeklyExecutions: [log, ...filtered],
-  });
+  const next = writeStore({ ...current, weeklyExecutions: [log, ...filtered] });
+  if (_authUserId) bg(saveWeeklyExecutionRemote(_authUserId, log));
+  return next;
 }
 
 // ── ユーザーID ────────────────────────────
@@ -445,28 +477,38 @@ export function saveTask(task: StoredTask): StoreState {
   const current = readStore();
   const existing = current.tasks ?? [];
   const filtered = existing.filter((t) => t.id !== task.id);
-  return writeStore({
-    ...current,
-    tasks: [task, ...filtered],
-  });
+  const next = writeStore({ ...current, tasks: [task, ...filtered] });
+  if (_authUserId) bg(saveTaskRemote(_authUserId, task));
+  return next;
 }
 
 export function deleteTask(id: string): StoreState {
   const current = readStore();
-  return writeStore({
+  const next = writeStore({
     ...current,
     tasks: (current.tasks ?? []).filter((t) => t.id !== id),
   });
+  if (_authUserId) bg(deleteTaskRemote(_authUserId, id));
+  return next;
 }
 
 export function toggleTaskStatus(id: string): StoreState {
   const current = readStore();
+  let toggled: StoredTask | undefined;
   const tasks = (current.tasks ?? []).map((t) => {
     if (t.id !== id) return t;
-    if (t.status === "done") return { ...t, status: "todo" as const, completedAt: undefined };
-    return { ...t, status: "done" as const, completedAt: new Date().toISOString() };
+    if (t.status === "done") {
+      const u: StoredTask = { ...t, status: "todo" as const, completedAt: undefined };
+      toggled = u;
+      return u;
+    }
+    const u: StoredTask = { ...t, status: "done" as const, completedAt: new Date().toISOString() };
+    toggled = u;
+    return u;
   });
-  return writeStore({ ...current, tasks });
+  const next = writeStore({ ...current, tasks });
+  if (_authUserId && toggled) bg(saveTaskRemote(_authUserId, toggled));
+  return next;
 }
 
 // 7日経った完了タスクをクリーンアップ
@@ -519,18 +561,22 @@ export function saveEvent(event: CalendarEvent): StoreState {
   const current = readStore();
   const events = current.events ?? [];
   const filtered = events.filter((e) => e.id !== event.id);
-  return writeStore({
+  const next = writeStore({
     ...current,
     events: [event, ...filtered].sort((a, b) => a.date.localeCompare(b.date)),
   });
+  if (_authUserId) bg(saveEventRemote(_authUserId, event));
+  return next;
 }
 
 export function deleteEvent(id: string): StoreState {
   const current = readStore();
-  return writeStore({
+  const next = writeStore({
     ...current,
     events: (current.events ?? []).filter((e) => e.id !== id),
   });
+  if (_authUserId) bg(deleteEventRemote(_authUserId, id));
+  return next;
 }
 
 // ── 5科目実力パラメーター（テスト履歴から自動計算） ──
