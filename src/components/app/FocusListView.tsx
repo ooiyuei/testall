@@ -47,7 +47,7 @@ export function FocusListView() {
           </Link>
         </div>
 
-        <div className="mt-5 rounded-3xl border border-dashed border-cream-300 bg-white/60 p-5 text-center">
+        <div className="mt-5 rounded-2xl border border-dashed border-cream-300 bg-white/60 p-5 text-center">
           <div className="text-sm font-bold text-ink-700">
             ブロックを使うにはテスト診断が必要
           </div>
@@ -89,7 +89,7 @@ export function FocusListView() {
   return (
     <div className="px-5 pb-8 pt-3">
       {/* Hero */}
-      <section className="rounded-3xl border border-sky-200 bg-white p-5 shadow-soft">
+      <section className="rounded-2xl border border-sky-200 bg-white p-5 shadow-soft">
         <div className="flex items-center justify-between">
           <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-[10px] font-black text-sky-700">
             {status[activeIdx] === "done" ? "完了済み" : "次のブロック"}

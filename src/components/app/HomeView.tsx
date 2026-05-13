@@ -152,22 +152,22 @@ export function HomeView() {
       {hydrated && state.profile?.onboardedAt ? <GuideTour /> : null}
       {hydrated && state.profile?.onboardedAt ? <LoginBonus /> : null}
       {hydrated && state.profile?.onboardedAt ? <InstallPrompt /> : null}
-      {/* Hero greeting */}
-      <section className="mb-5 flex items-start justify-between gap-3">
-        <div>
-          <div className="text-[11px] font-medium tracking-wider text-ink-400">
+      {/* Hero greeting — Apple HIG 風に大胆なタイポグラフィ */}
+      <section className="mb-6 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[11px] font-medium tracking-wide text-ink-400">
             {dateLabel}
           </div>
-          <h1 className="mt-1 text-[22px] font-bold leading-tight text-ink-900">
+          <h1 className="mt-1.5 text-[26px] font-bold leading-[1.15] tracking-[-0.02em] text-ink-900">
             {greeting}
           </h1>
         </div>
         {streakDays > 0 ? (
-          <div className="flex flex-none items-center gap-1 rounded-full bg-coral-300/10 px-3 py-1.5 text-coral-500">
+          <div className="flex flex-none items-center gap-1 rounded-full border border-coral-300/30 bg-coral-300/8 px-3 py-1.5 text-coral-500 shadow-soft">
             <Flame className="h-3.5 w-3.5" strokeWidth={2.4} />
-            <span className="text-[12px] font-bold tabular-nums">
+            <span className="text-[12px] font-bold tabular-nums leading-none">
               {streakDays}
-              <span className="ml-0.5 text-[10px] font-medium">日連続</span>
+              <span className="ml-0.5 text-[10px] font-medium">日</span>
             </span>
           </div>
         ) : null}
@@ -182,39 +182,39 @@ export function HomeView() {
       {/* 今日の準備 (気分 + 帰宅) */}
       {hydrated ? <MoodCheckCard /> : null}
 
-      {/* 今日の進み */}
+      {/* 今日の進み — Hero カード化 */}
       {totalCount > 0 ? (
-        <section className="mt-5 rounded-2xl border border-ink-100/80 bg-white p-5">
+        <section className="mt-5 rounded-2xl border border-ink-100/80 bg-white p-5 shadow-soft">
           <div className="flex items-baseline justify-between gap-2">
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
                 Today
               </div>
-              <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-[40px] font-bold leading-none tabular-nums text-ink-900">
+              <div className="mt-1.5 flex items-baseline gap-1.5">
+                <span className="text-[44px] font-bold leading-none tabular-nums tracking-[-0.03em] text-ink-900">
                   {doneCount}
                 </span>
-                <span className="text-base font-bold text-ink-400">/</span>
-                <span className="text-base font-bold tabular-nums text-ink-400">
+                <span className="text-lg font-bold text-ink-300">/</span>
+                <span className="text-lg font-bold tabular-nums text-ink-400">
                   {totalCount}
                 </span>
-                <span className="ml-1 text-xs font-medium text-ink-500">
+                <span className="ml-1.5 text-[11px] font-medium text-ink-500">
                   ブロック完了
                 </span>
               </div>
             </div>
             <Link
               href="/app/focus"
-              className="inline-flex h-9 items-center gap-1 rounded-full bg-ink-900 px-4 text-[12px] font-bold text-white active:scale-[0.97] transition"
+              className="inline-flex h-10 flex-none items-center gap-1 rounded-full bg-ink-900 px-4 text-[12px] font-bold text-white shadow-soft transition active:scale-[0.96] hover:bg-ink-800"
             >
-              <Play className="h-3 w-3" strokeWidth={2.5} />
+              <Play className="h-3 w-3" strokeWidth={2.5} fill="currentColor" />
               はじめる
             </Link>
           </div>
 
-          <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-cream-200/70">
+          <div className="mt-5 h-2 overflow-hidden rounded-full bg-cream-200/60">
             <div
-              className="h-full rounded-full bg-mint-500 transition-all duration-300"
+              className="h-full rounded-full bg-mint-500 transition-all duration-500"
               style={{
                 width: `${totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100)}%`,
               }}

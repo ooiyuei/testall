@@ -58,7 +58,7 @@ export function TestDetail({ id }: { id: string }) {
   if (!test) {
     return (
       <div className="px-4 pt-10">
-        <div className="rounded-3xl border border-cream-200 bg-white p-6 text-center shadow-soft">
+        <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center shadow-soft">
           <AlertTriangle className="mx-auto h-7 w-7 text-coral-400" />
           <div className="mt-2 text-sm font-bold text-ink-900">
             この診断は見つかりませんでした
@@ -90,7 +90,7 @@ export function TestDetail({ id }: { id: string }) {
   return (
     <div className="px-5 pb-8 pt-3 space-y-5">
       {/* Score header */}
-      <section className="rounded-3xl border border-cream-200 bg-gradient-to-br from-sky-50 to-peach-50 p-5 shadow-soft">
+      <section className="rounded-2xl border border-cream-200 bg-gradient-to-br from-sky-50 to-peach-50 p-5 shadow-soft">
         <div className="flex items-start justify-between">
           <div>
             <div className="text-[10px] font-bold uppercase tracking-widest text-sky-700">
@@ -346,7 +346,7 @@ export function TestDetail({ id }: { id: string }) {
       </section>
 
       {/* Encouragement */}
-      <section className="rounded-3xl border border-mint-200 bg-mint-50 p-4">
+      <section className="rounded-2xl border border-mint-200 bg-mint-50 p-4">
         <div className="flex items-start gap-3">
           <Sparkles className="mt-0.5 h-5 w-5 flex-none text-mint-600" />
           <p className="text-sm font-bold text-ink-900">

@@ -141,7 +141,7 @@ export function PlanView() {
 
       {/* Today goal card */}
       {latest ? (
-        <section className="rounded-3xl border border-cream-200 bg-gradient-to-br from-mint-50 to-sky-50 p-4 shadow-soft">
+        <section className="rounded-2xl border border-cream-200 bg-gradient-to-br from-mint-50 to-sky-50 p-4 shadow-soft">
           <div className="flex items-center gap-1.5">
             <Target className="h-3.5 w-3.5 text-mint-600" />
             <span className="text-[10px] font-bold uppercase tracking-widest text-mint-600">
@@ -160,7 +160,7 @@ export function PlanView() {
       ) : null}
 
       {/* Calendar */}
-      <section className="rounded-3xl border border-cream-200 bg-white p-3 shadow-soft">
+      <section className="rounded-2xl border border-cream-200 bg-white p-3 shadow-soft">
         <header className="flex items-center justify-between px-2 pb-2">
           <button
             type="button"
@@ -319,7 +319,7 @@ export function PlanView() {
           ) : null}
         </div>
         {upcoming.length === 0 ? (
-          <div className="mt-3 rounded-3xl border border-dashed border-cream-300 bg-white/60 p-5 text-center">
+          <div className="mt-3 rounded-2xl border border-dashed border-cream-300 bg-white/60 p-5 text-center">
             <p className="text-sm font-bold text-ink-700">
               定期テスト・模試を登録しましょう
             </p>
@@ -418,7 +418,7 @@ export function PlanView() {
           </ul>
         </section>
       ) : (
-        <section className="rounded-3xl border border-dashed border-cream-300 bg-white/60 p-5 text-center">
+        <section className="rounded-2xl border border-dashed border-cream-300 bg-white/60 p-5 text-center">
           <p className="text-sm font-bold text-ink-700">
             テストを追加するとAIが週間プランを出します
           </p>
@@ -566,7 +566,7 @@ function EventEditor({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[480px] rounded-t-3xl bg-cream-50 p-5 shadow-[0_-12px_30px_-12px_rgba(0,0,0,0.3)] sm:rounded-3xl"
+        className="w-full max-w-[480px] rounded-t-3xl bg-cream-50 p-5 shadow-[0_-12px_30px_-12px_rgba(0,0,0,0.3)] sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-base font-black text-ink-900">

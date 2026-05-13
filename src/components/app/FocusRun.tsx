@@ -214,7 +214,7 @@ function TimerView({
   return (
     <>
       {/* Goal */}
-      <section className="rounded-3xl bg-white/10 p-4 text-white backdrop-blur">
+      <section className="rounded-2xl bg-white/10 p-4 text-white backdrop-blur">
         {block ? (
           <>
             <div className="text-[10px] font-bold uppercase tracking-widest text-white/60">
@@ -386,7 +386,7 @@ function FinishView({
 }) {
   return (
     <div className="space-y-5">
-      <section className="rounded-3xl bg-white p-5 shadow-soft">
+      <section className="rounded-2xl bg-white p-5 shadow-soft">
         <div className="text-[10px] font-bold uppercase tracking-widest text-mint-600">
           お疲れさま
         </div>
@@ -405,7 +405,7 @@ function FinishView({
         ) : null}
       </section>
 
-      <section className="rounded-3xl bg-white p-5 shadow-soft">
+      <section className="rounded-2xl bg-white p-5 shadow-soft">
         <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
           自己評価
         </div>
@@ -435,7 +435,7 @@ function FinishView({
         </div>
       </section>
 
-      <section className="rounded-3xl bg-white p-5 shadow-soft">
+      <section className="rounded-2xl bg-white p-5 shadow-soft">
         <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
           メモ（任意）
         </div>

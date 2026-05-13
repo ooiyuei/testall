@@ -78,7 +78,7 @@ export function GuideTour() {
         aria-label="閉じる"
         onClick={dismiss}
       />
-      <div className="sheet-in relative z-10 w-full max-w-[400px] rounded-3xl bg-white p-6 shadow-pop">
+      <div className="sheet-in relative z-10 w-full max-w-[400px] rounded-2xl bg-white p-6 shadow-pop">
         <button
           type="button"
           onClick={dismiss}

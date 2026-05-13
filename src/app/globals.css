@@ -156,21 +156,24 @@ button, a {
 }
 
 /* ─────────────────────────────────────────────
-   App shell の柔らかい背景
+   App shell — 軽量で上品な単層グラデーション
+   (Apple HIG: 大型グラデは GPU 負荷高い、Linear / Vercel は単色 or 微グラデのみ)
    ───────────────────────────────────────────── */
 .app-shell {
-  background:
-    radial-gradient(
-      900px 600px at 15% -10%,
-      color-mix(in oklch, var(--color-sky-100) 60%, transparent),
-      transparent 55%
-    ),
-    radial-gradient(
-      800px 500px at 110% 110%,
-      color-mix(in oklch, var(--color-peach-100) 60%, transparent),
-      transparent 55%
-    ),
-    var(--color-cream-50);
+  background: var(--color-cream-50);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* スペックに余裕があるブラウザでだけ薄いグラデーションを付与 */
+  .app-shell {
+    background:
+      radial-gradient(
+        720px 480px at 12% -8%,
+        color-mix(in oklch, var(--color-sky-100) 45%, transparent),
+        transparent 60%
+      ),
+      var(--color-cream-50);
+  }
 }
 
 .dot-bg {

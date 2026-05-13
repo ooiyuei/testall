@@ -67,7 +67,7 @@ export function TestListView() {
         </div>
       ) : null}
 
-      <div className="mt-6 rounded-3xl border border-dashed border-cream-300 bg-white/60 p-6 text-center">
+      <div className="mt-6 rounded-2xl border border-dashed border-cream-300 bg-white/60 p-6 text-center">
         <div className="text-sm font-bold text-ink-700">
           {tests.length === 0
             ? "テストを追加して、AIに分析してもらおう"

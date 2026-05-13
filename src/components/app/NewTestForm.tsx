@@ -93,7 +93,7 @@ function ModeSelect({
         <button
           type="button"
           onClick={onPickPhoto}
-          className="flex items-center gap-4 rounded-3xl border border-cream-200 bg-white p-5 text-left shadow-soft active:scale-[0.99] transition"
+          className="flex items-center gap-4 rounded-2xl border border-cream-200 bg-white p-5 text-left shadow-soft active:scale-[0.99] transition"
         >
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
             <Camera className="h-6 w-6" />
@@ -112,7 +112,7 @@ function ModeSelect({
         <button
           type="button"
           onClick={onPickManual}
-          className="flex items-center gap-4 rounded-3xl border border-cream-200 bg-white p-5 text-left shadow-soft active:scale-[0.99] transition"
+          className="flex items-center gap-4 rounded-2xl border border-cream-200 bg-white p-5 text-left shadow-soft active:scale-[0.99] transition"
         >
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-mint-100 text-mint-600">
             <Edit3 className="h-6 w-6" />
@@ -251,7 +251,7 @@ function PhotoMode({
       </p>
 
       {photoState.status === "idle" ? (
-        <label className="mt-5 flex flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-cream-300 bg-white/60 p-8 text-center cursor-pointer hover:bg-cream-50 transition">
+        <label className="mt-5 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-cream-300 bg-white/60 p-8 text-center cursor-pointer hover:bg-cream-50 transition">
           <ImagePlus className="h-8 w-8 text-sky-500" />
           <span className="text-sm font-black text-ink-900">写真を選ぶ</span>
           <span className="text-[11px] text-ink-500">または カメラで撮影</span>
@@ -267,7 +267,7 @@ function PhotoMode({
       ) : null}
 
       {photoState.status === "analyzing" ? (
-        <div className="mt-5 flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-sky-200 bg-sky-50 p-10">
+        <div className="mt-5 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-sky-200 bg-sky-50 p-10">
           <Loader2 className="h-8 w-8 animate-spin text-sky-500" />
           <span className="text-sm font-bold text-sky-700">解析中…</span>
           <span className="text-[11px] text-sky-500">Claude が答案を読み取っています</span>
@@ -1340,7 +1340,7 @@ function UnitStep({
         return (
           <section
             key={`${entry.category}:${entry.subjectId}`}
-            className="rounded-3xl border border-cream-200 bg-white p-3 shadow-soft"
+            className="rounded-2xl border border-cream-200 bg-white p-3 shadow-soft"
           >
             <header className="flex items-center gap-2 pb-2">
               <span

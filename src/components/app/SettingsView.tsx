@@ -191,7 +191,7 @@ export function SettingsView() {
           </li>
         </SettingsGroup>
 
-        <details className="mt-3 rounded-3xl border border-coral-300/40 bg-coral-300/5 p-1">
+        <details className="mt-3 rounded-2xl border border-coral-300/40 bg-coral-300/5 p-1">
           <summary className="flex cursor-pointer items-center gap-2 rounded-2xl px-3 py-3 text-sm font-bold text-coral-500 hover:bg-coral-300/10">
             <TriangleAlert className="h-4 w-4" />
             危険な操作を表示
