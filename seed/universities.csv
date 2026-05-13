@@ -1,0 +1,26 @@
+id,school_code,name,short_name,kana,aliases,type,region,tier,homepage,source
+u-tokyo,8300001,東京大学,東大,とうきょうだいがく,"{東大,U.Tokyo,Todai}",national,関東,S,https://www.u-tokyo.ac.jp/,seed
+u-kyoto,8300002,京都大学,京大,きょうとだいがく,"{京大,Kyodai}",national,関西,S,https://www.kyoto-u.ac.jp/,seed
+hitotsubashi,,一橋大学,,ひとつばしだいがく,"{一橋,一橋大}",national,関東,S,,seed
+titech,,東京工業大学,東工大,とうきょうこうぎょうだいがく,"{東工大,Tokyo Tech}",national,関東,S,,seed
+osaka,,大阪大学,阪大,おおさかだいがく,{阪大},national,関西,S,,seed
+tohoku,,東北大学,東北大,とうほくだいがく,{東北大},national,東北,A,,seed
+nagoya,,名古屋大学,名大,なごやだいがく,{名大},national,中部,A,,seed
+hokkaido,,北海道大学,北大,ほっかいどうだいがく,{北大},national,北海道,A,,seed
+kyushu,,九州大学,九大,きゅうしゅうだいがく,{九大},national,九州,A,,seed
+kobe,,神戸大学,神大,こうべだいがく,{神大},national,関西,A,,seed
+waseda,,早稲田大学,早大,わせだだいがく,"{早大,Waseda}",private,関東,S,,seed
+keio,,慶應義塾大学,慶應,けいおうぎじゅくだいがく,"{慶應,慶大,Keio}",private,関東,S,,seed
+sophia,,上智大学,,じょうちだいがく,"{上智,Sophia}",private,関東,A,,seed
+icu,,国際基督教大学,ICU,こくさいきりすときょうだいがく,{ICU},private,関東,A,,seed
+meiji,,明治大学,明大,めいじだいがく,{明大},private,関東,B,,seed
+aoyama,,青山学院大学,青学,あおやまがくいんだいがく,{青学},private,関東,B,,seed
+rikkyo,,立教大学,,りっきょうだいがく,{立教},private,関東,B,,seed
+chuo,,中央大学,中大,ちゅうおうだいがく,{中大},private,関東,B,,seed
+hosei,,法政大学,法大,ほうせいだいがく,{法大},private,関東,B,,seed
+gakushuin,,学習院大学,,がくしゅういんだいがく,,private,関東,B,,seed
+kansai,,関西大学,関大,かんさいだいがく,{関大},private,関西,B,,seed
+kansei,,関西学院大学,関学,かんせいがくいんだいがく,{関学},private,関西,B,,seed
+doshisha,,同志社大学,,どうししゃだいがく,,private,関西,B,,seed
+ritsumei,,立命館大学,立命,りつめいかんだいがく,{立命},private,関西,B,,seed
+rikadai,,東京理科大学,理科大,とうきょうりかだいがく,{理科大},private,関東,A,,seed
