@@ -16,6 +16,19 @@ export async function signInWithGoogle(): Promise<void> {
   if (error) throw error;
 }
 
+export async function signInWithMagicLink(email: string): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error("Supabase not configured");
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: `${REDIRECT_BASE}/auth/callback`,
+    },
+  });
+  if (error) throw error;
+}
+
 export async function signOut(): Promise<void> {
   const supabase = getSupabase();
   if (!supabase) return;

@@ -1,16 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Mail } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { signInWithGoogle } from "@/lib/auth";
+import { signInWithGoogle, signInWithMagicLink } from "@/lib/auth";
 
 type Mode = "signin" | "signup";
 
 export function AuthScreen({ mode }: { mode: Mode }) {
+  const router = useRouter();
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [emailMode, setEmailMode] = useState(false);
+  const [email, setEmail] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
   const isSignup = mode === "signup";
 
   async function continueAs(method: string) {
@@ -25,6 +30,28 @@ export function AuthScreen({ mode }: { mode: Mode }) {
       setErrorMsg("ログインに失敗しました。もう一度お試しください。");
       setSubmitting(null);
     }
+  }
+
+  async function submitEmail() {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setErrorMsg("正しいメールアドレスを入力してください");
+      return;
+    }
+    setErrorMsg(null);
+    setSubmitting("email");
+    try {
+      await signInWithMagicLink(email);
+      setEmailSent(true);
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "メール送信に失敗しました");
+    } finally {
+      setSubmitting(null);
+    }
+  }
+
+  function continueAsGuest() {
+    // Supabase 未接続でも sessionStorage で動く
+    router.push("/onboarding");
   }
 
   return (
@@ -49,36 +76,103 @@ export function AuthScreen({ mode }: { mode: Mode }) {
             : "サインインして続きから。"}
         </p>
 
-        <div className="mt-10 space-y-3">
-          <AuthButton
-            provider="google"
-            submitting={submitting === "google"}
-            onClick={() => continueAs("google")}
-          />
-          <AuthButton
-            provider="apple"
-            submitting={false}
-            disabled
-            label="Appleで続ける（準備中）"
-            onClick={() => {}}
-          />
-
-          <div className="flex items-center gap-3 py-1">
-            <div className="h-px flex-1 bg-cream-200" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-ink-400">
-              または
-            </span>
-            <div className="h-px flex-1 bg-cream-200" />
+        {emailSent ? (
+          <div className="mt-10 rounded-2xl border border-mint-200 bg-mint-50 p-5 text-center">
+            <Mail className="mx-auto h-8 w-8 text-mint-600" strokeWidth={2.2} />
+            <h2 className="mt-3 text-base font-bold text-ink-900">
+              メールを送りました
+            </h2>
+            <p className="mt-1 text-[12px] leading-[1.7] text-ink-600">
+              {email} 宛のリンクから {isSignup ? "登録" : "サインイン"} を完了してください。
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setEmailSent(false);
+                setEmailMode(false);
+                setEmail("");
+              }}
+              className="mt-4 text-[11px] font-bold text-sky-600 underline-offset-2 hover:underline"
+            >
+              別の方法で続ける
+            </button>
           </div>
+        ) : emailMode ? (
+          <div className="mt-10 space-y-3">
+            <label className="block">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
+                メールアドレス
+              </span>
+              <input
+                type="email"
+                autoFocus
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                inputMode="email"
+                autoComplete="email"
+                className="mt-1.5 h-12 w-full rounded-xl border border-cream-200 bg-white px-3 text-base text-ink-900 outline-none focus:border-sky-400"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={submitEmail}
+              disabled={submitting === "email"}
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 text-sm font-black text-white shadow-soft active:scale-[0.98] transition disabled:opacity-50"
+            >
+              {submitting === "email"
+                ? "送信中…"
+                : isSignup
+                  ? "登録リンクを送る"
+                  : "サインインリンクを送る"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setEmailMode(false)}
+              className="block w-full text-center text-[12px] font-medium text-ink-500"
+            >
+              戻る
+            </button>
+          </div>
+        ) : (
+          <div className="mt-10 space-y-3">
+            <AuthButton
+              provider="google"
+              submitting={submitting === "google"}
+              onClick={() => continueAs("google")}
+            />
+            <AuthButton
+              provider="apple"
+              submitting={false}
+              disabled
+              label="Appleで続ける（準備中）"
+              onClick={() => {}}
+            />
 
-          <AuthButton
-            provider="email"
-            submitting={false}
-            disabled
-            label={isSignup ? "メールで登録（近日対応）" : "メールでサインイン（近日対応）"}
-            onClick={() => {}}
-          />
-        </div>
+            <div className="flex items-center gap-3 py-1">
+              <div className="h-px flex-1 bg-cream-200" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-ink-400">
+                または
+              </span>
+              <div className="h-px flex-1 bg-cream-200" />
+            </div>
+
+            <AuthButton
+              provider="email"
+              submitting={false}
+              label={isSignup ? "メールで登録" : "メールでサインイン"}
+              onClick={() => setEmailMode(true)}
+            />
+
+            <button
+              type="button"
+              onClick={continueAsGuest}
+              className="mt-2 block w-full rounded-2xl border border-cream-200 bg-cream-50/50 py-3 text-center text-[12px] font-bold text-ink-700 transition hover:bg-cream-100"
+            >
+              アカウントなしで試す
+            </button>
+          </div>
+        )}
 
         {errorMsg ? (
           <p className="mt-4 rounded-xl bg-coral-300/10 px-4 py-3 text-sm font-bold text-coral-500">
