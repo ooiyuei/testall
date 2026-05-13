@@ -39,8 +39,8 @@ export function LoginBonus() {
     const today = currentDayISO();
     const key = SHOWN_KEY_PREFIX + today;
     try {
-      if (sessionStorage.getItem(key)) return;
-      sessionStorage.setItem(key, "1");
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(key, "1");
       // 軽い遅延で目立たせる
       const t = setTimeout(() => setVisible(true), 400);
       return () => clearTimeout(t);
