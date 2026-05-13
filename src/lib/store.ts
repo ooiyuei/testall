@@ -386,7 +386,7 @@ export function getStreak(): number {
   yesterdayDate.setDate(yesterdayDate.getDate() - 1);
   const yesterdayISO = yesterdayDate.toISOString().slice(0, 10);
 
-  let cursorISO = dateSet.has(todayISO)
+  const cursorISO = dateSet.has(todayISO)
     ? todayISO
     : dateSet.has(yesterdayISO)
       ? yesterdayISO

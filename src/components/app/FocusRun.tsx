@@ -111,16 +111,18 @@ export function FocusRun() {
 
   function saveAndExit() {
     if (rating === 0) return;
-    if (testId && blockIdx !== null) {
-      logBlock({
-        testId,
-        blockIdx,
-        completedAt: new Date().toISOString(),
-        rating,
-        note: note.trim() || undefined,
-        durationSec: elapsedSec(),
-      });
-    }
+    // testId が無い場合は「自由学習」として記録 (連続日数・ヒートマップに反映)
+    const effectiveTestId = testId ?? "free-study";
+    const effectiveBlockIdx =
+      blockIdx !== null ? blockIdx : Math.floor(Date.now() / 1000);
+    logBlock({
+      testId: effectiveTestId,
+      blockIdx: effectiveBlockIdx,
+      completedAt: new Date().toISOString(),
+      rating,
+      note: note.trim() || undefined,
+      durationSec: elapsedSec(),
+    });
     router.push(testId ? `/app/test/${testId}` : "/app");
   }
 
