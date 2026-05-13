@@ -2,6 +2,12 @@
 // TODO: 実データに置き換え（Supabase 接続後）
 
 import type { Diagnosis, TestInput } from "./types";
+import type {
+  Mood,
+  PlanningProfile,
+  WeeklyExecutionLog,
+  WeeklyGoal,
+} from "./planning/types";
 
 export type TargetUniversity = {
   universityId: string;
@@ -64,11 +70,24 @@ export type CalendarEvent = {
   subject?: string;
 };
 
+export type DailyMoodLog = {
+  dateISO: string;            // YYYY-MM-DD
+  mood: Mood;
+  returnTime: string;         // "18:30"
+  finalBlocks: number;
+  reason: string;
+  createdAt: string;
+};
+
 export type StoreState = {
   profile?: StoredProfile;
+  planning?: PlanningProfile;
   tests: StoredTest[];
   blockLogs: BlockLog[];
   events?: CalendarEvent[];
+  dailyMoodLogs?: DailyMoodLog[];
+  weeklyGoals?: WeeklyGoal[];
+  weeklyExecutions?: WeeklyExecutionLog[];
 };
 
 const STORAGE_KEY = "testall:v1";
@@ -77,6 +96,9 @@ const EMPTY_STATE: StoreState = {
   tests: [],
   blockLogs: [],
   events: [],
+  dailyMoodLogs: [],
+  weeklyGoals: [],
+  weeklyExecutions: [],
 };
 
 function isBrowser(): boolean {
@@ -91,9 +113,17 @@ export function readStore(): StoreState {
     const parsed = JSON.parse(raw) as StoreState;
     return {
       profile: parsed.profile,
+      planning: parsed.planning,
       tests: Array.isArray(parsed.tests) ? parsed.tests : [],
       blockLogs: Array.isArray(parsed.blockLogs) ? parsed.blockLogs : [],
       events: Array.isArray(parsed.events) ? parsed.events : [],
+      dailyMoodLogs: Array.isArray(parsed.dailyMoodLogs)
+        ? parsed.dailyMoodLogs
+        : [],
+      weeklyGoals: Array.isArray(parsed.weeklyGoals) ? parsed.weeklyGoals : [],
+      weeklyExecutions: Array.isArray(parsed.weeklyExecutions)
+        ? parsed.weeklyExecutions
+        : [],
     };
   } catch {
     return EMPTY_STATE;
@@ -192,6 +222,65 @@ export function getStreak(): number {
 
 export function clearAll(): StoreState {
   return writeStore(EMPTY_STATE);
+}
+
+// ── プランニングプロフィール ─────────────────
+export function setPlanning(planning: PlanningProfile): StoreState {
+  const current = readStore();
+  return writeStore({ ...current, planning });
+}
+
+// ── 日次気分ログ ──────────────────────────
+export function logDailyMood(log: DailyMoodLog): StoreState {
+  const current = readStore();
+  const existing = current.dailyMoodLogs ?? [];
+  const filtered = existing.filter((l) => l.dateISO !== log.dateISO);
+  return writeStore({
+    ...current,
+    dailyMoodLogs: [log, ...filtered],
+  });
+}
+
+export function getTodayMoodLog(today = new Date()): DailyMoodLog | undefined {
+  const dateISO = today.toISOString().slice(0, 10);
+  return (readStore().dailyMoodLogs ?? []).find((l) => l.dateISO === dateISO);
+}
+
+// ── 週次目標 ────────────────────────────
+export function saveWeeklyGoal(goal: WeeklyGoal): StoreState {
+  const current = readStore();
+  const existing = current.weeklyGoals ?? [];
+  const filtered = existing.filter((g) => g.weekStartISO !== goal.weekStartISO);
+  return writeStore({
+    ...current,
+    weeklyGoals: [goal, ...filtered],
+  });
+}
+
+export function getCurrentWeekGoal(today = new Date()): WeeklyGoal | undefined {
+  const start = startOfWeek(today);
+  return (readStore().weeklyGoals ?? []).find((g) => g.weekStartISO === start);
+}
+
+export function startOfWeek(date: Date): string {
+  const d = new Date(date);
+  const day = d.getDay();
+  // 月曜始まり: day=0(日) を -6 として扱う
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString().slice(0, 10);
+}
+
+// ── 週次実行ログ ─────────────────────────
+export function saveWeeklyExecution(log: WeeklyExecutionLog): StoreState {
+  const current = readStore();
+  const existing = current.weeklyExecutions ?? [];
+  const filtered = existing.filter((l) => l.weekStartISO !== log.weekStartISO);
+  return writeStore({
+    ...current,
+    weeklyExecutions: [log, ...filtered],
+  });
 }
 
 // ── イベント（定期テスト・模試など） ──
