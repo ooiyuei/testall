@@ -1,56 +1,73 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BookOpen, Building2, Search, Sparkles, Check } from "lucide-react";
+import {
+  BookOpen,
+  Building2,
+  Check,
+  GraduationCap,
+  Plus,
+  ScrollText,
+  Search,
+  Sparkles,
+} from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
 import { setProfile } from "@/lib/store";
+import { unifiedSearch } from "@/lib/master";
+import type {
+  Highschool,
+  MockExam,
+  Textbook,
+  University,
+} from "@/lib/master";
 import {
-  searchUniversities,
-  TIER_LABEL,
-  type University,
-} from "@/lib/universities";
-import { searchTextbooks, type Textbook } from "@/lib/textbooks";
+  PROVIDER_LABEL,
+} from "@/lib/master/mockexams";
+import { TIER_LABEL } from "@/lib/master/universities";
+import { AddEntityModal, type AddEntityKind } from "@/components/master/AddEntityModal";
 
-type Tab = "all" | "university" | "textbook" | "article";
+type Tab = "all" | "university" | "highschool" | "textbook" | "mock-exam" | "article";
 
 const TABS: { id: Tab; label: string; icon: typeof Building2 }[] = [
   { id: "all", label: "すべて", icon: Sparkles },
   { id: "university", label: "大学", icon: Building2 },
+  { id: "highschool", label: "高校", icon: GraduationCap },
   { id: "textbook", label: "参考書", icon: BookOpen },
+  { id: "mock-exam", label: "模試", icon: ScrollText },
   { id: "article", label: "記事", icon: Sparkles },
 ];
 
 const ARTICLES = [
-  {
-    id: "a1",
-    title: "高2の冬から逆転合格するための戦略3つ",
-    tags: ["#戦略", "#高2"],
-  },
+  { id: "a1", title: "高2の冬から逆転合格するための戦略3つ", tags: ["#戦略", "#高2"] },
   {
     id: "a2",
     title: "国公立大学の共通テスト対策ロードマップ（2025年版）",
     tags: ["#共通テスト", "#国公立"],
   },
-  {
-    id: "a3",
-    title: "数学の青チャートを3周する勉強法",
-    tags: ["#数学", "#参考書"],
-  },
-  {
-    id: "a4",
-    title: "英語長文を時間内に解くための3つのコツ",
-    tags: ["#英語", "#長文"],
-  },
+  { id: "a3", title: "数学の青チャートを3周する勉強法", tags: ["#数学", "#参考書"] },
+  { id: "a4", title: "英語長文を時間内に解くための3つのコツ", tags: ["#英語", "#長文"] },
 ];
 
 export function SearchView() {
   const { state, hydrated } = useStore();
   const [tab, setTab] = useState<Tab>("all");
   const [query, setQuery] = useState("");
+  const [addModal, setAddModal] = useState<AddEntityKind | null>(null);
 
-  const unis = useMemo(() => searchUniversities(query).slice(0, 12), [query]);
-  const books = useMemo(() => searchTextbooks(query).slice(0, 20), [query]);
+  const results = useMemo(() => {
+    if (!query.trim()) {
+      // 空クエリ時は全カテゴリのトップを少しずつ表示
+      return unifiedSearch({ query: "a", limit: 5 });
+    }
+    return unifiedSearch({ query, limit: tab === "all" ? 5 : 20 });
+  }, [query, tab]);
+
+  const showUni = tab === "all" || tab === "university";
+  const showHs = tab === "all" || tab === "highschool";
+  const showBook = tab === "all" || tab === "textbook";
+  const showExam = tab === "all" || tab === "mock-exam";
+  const showArticle = tab === "all" || tab === "article";
 
   return (
     <div className="px-4 pt-3 pb-32">
@@ -60,7 +77,7 @@ export function SearchView() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="大学・参考書・キーワード"
+          placeholder="大学・高校・参考書・模試で検索"
           className="h-11 w-full rounded-2xl border border-cream-200 bg-white pl-9 pr-3 text-sm text-ink-900 outline-none focus:border-sky-400"
         />
       </div>
@@ -85,51 +102,79 @@ export function SearchView() {
         ))}
       </ul>
 
-      {/* Sections */}
-      {tab === "all" || tab === "university" ? (
-        <section className="mt-5">
-          <SectionHeader icon={Building2} title="大学" />
-          <ul className="mt-2 space-y-1.5">
-            {unis.slice(0, tab === "university" ? 12 : 5).map((u) => (
-              <UniversityRow key={u.id} u={u} />
-            ))}
-            {unis.length === 0 ? (
-              <li className="rounded-2xl bg-white p-4 text-center text-xs text-ink-500">
-                該当なし
-              </li>
-            ) : null}
-          </ul>
-        </section>
+      {/* 大学 */}
+      {showUni ? (
+        <Section
+          title="大学"
+          icon={Building2}
+          empty={results.universities.length === 0 && !!query.trim()}
+          onAdd={() => setAddModal("university")}
+        >
+          {results.universities.map((h) => (
+            <UniversityRow key={h.entity.id} u={h.entity} />
+          ))}
+        </Section>
       ) : null}
 
-      {tab === "all" || tab === "textbook" ? (
-        <section className="mt-6">
-          <SectionHeader icon={BookOpen} title="参考書" />
-          <ul className="mt-2 space-y-1.5">
-            {books.slice(0, tab === "textbook" ? 20 : 6).map((b) => (
-              <TextbookRow
-                key={b.id}
-                b={b}
-                owned={
-                  hydrated &&
-                  (state.profile?.textbooks ?? []).includes(b.name)
-                }
-                onToggleOwn={(name) => {
-                  const current = state.profile;
-                  if (!current) return;
-                  const owned = current.textbooks ?? [];
-                  const next = owned.includes(name)
-                    ? owned.filter((x) => x !== name)
-                    : [...owned, name];
-                  setProfile({ ...current, textbooks: next });
-                }}
-              />
-            ))}
-          </ul>
-        </section>
+      {/* 高校 */}
+      {showHs ? (
+        <Section
+          title="高校"
+          icon={GraduationCap}
+          empty={results.highschools.length === 0 && !!query.trim()}
+          onAdd={() => setAddModal("highschool")}
+        >
+          {results.highschools.map((h) => (
+            <HighschoolRow key={h.entity.id} h={h.entity} />
+          ))}
+        </Section>
       ) : null}
 
-      {tab === "all" || tab === "article" ? (
+      {/* 参考書 */}
+      {showBook ? (
+        <Section
+          title="参考書"
+          icon={BookOpen}
+          empty={results.textbooks.length === 0 && !!query.trim()}
+          onAdd={() => setAddModal("textbook")}
+        >
+          {results.textbooks.map((h) => (
+            <TextbookRow
+              key={h.entity.id}
+              b={h.entity}
+              owned={
+                hydrated && (state.profile?.textbooks ?? []).includes(h.entity.name)
+              }
+              onToggleOwn={(name) => {
+                const current = state.profile;
+                if (!current) return;
+                const owned = current.textbooks ?? [];
+                const next = owned.includes(name)
+                  ? owned.filter((x) => x !== name)
+                  : [...owned, name];
+                setProfile({ ...current, textbooks: next });
+              }}
+            />
+          ))}
+        </Section>
+      ) : null}
+
+      {/* 模試 */}
+      {showExam ? (
+        <Section
+          title="模試"
+          icon={ScrollText}
+          empty={results.mockExams.length === 0 && !!query.trim()}
+          onAdd={() => setAddModal("mock-exam")}
+        >
+          {results.mockExams.map((h) => (
+            <MockExamRow key={h.entity.id} m={h.entity} />
+          ))}
+        </Section>
+      ) : null}
+
+      {/* 記事 */}
+      {showArticle ? (
         <section className="mt-6">
           <SectionHeader icon={Sparkles} title="記事" />
           <ul className="mt-2 space-y-1.5">
@@ -157,7 +202,59 @@ export function SearchView() {
           </p>
         </section>
       ) : null}
+
+      {addModal ? (
+        <AddEntityModal
+          kind={addModal}
+          initialName={query.trim() || undefined}
+          onClose={() => setAddModal(null)}
+        />
+      ) : null}
     </div>
+  );
+}
+
+// ─── 各種行 ────────────────────────────────
+function Section({
+  title,
+  icon,
+  empty,
+  onAdd,
+  children,
+}: {
+  title: string;
+  icon: typeof Building2;
+  empty?: boolean;
+  onAdd?: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="mt-5">
+      <div className="flex items-center justify-between">
+        <SectionHeader icon={icon} title={title} />
+        {onAdd ? (
+          <button
+            type="button"
+            onClick={onAdd}
+            className="flex h-7 items-center gap-1 rounded-full bg-cream-100 px-2.5 text-[10px] font-bold text-ink-700 hover:bg-cream-200"
+          >
+            <Plus className="h-3 w-3" />
+            追加
+          </button>
+        ) : null}
+      </div>
+      <ul className="mt-2 space-y-1.5">{children}</ul>
+      {empty ? (
+        <button
+          type="button"
+          onClick={onAdd}
+          className="mt-2 flex w-full items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-cream-200 bg-white p-4 text-xs text-ink-500 hover:border-sky-300 hover:bg-sky-50"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          見つからない場合は手動で追加
+        </button>
+      ) : null}
+    </section>
   );
 }
 
@@ -179,18 +276,42 @@ function SectionHeader({
 }
 
 function UniversityRow({ u }: { u: University }) {
-  const minDev = Math.min(...u.faculties.map((f) => f.deviation));
-  const maxDev = Math.max(...u.faculties.map((f) => f.deviation));
+  const devs = u.faculties.map((f) => f.deviation).filter((v): v is number => typeof v === "number");
+  const minDev = devs.length ? Math.min(...devs) : undefined;
+  const maxDev = devs.length ? Math.max(...devs) : undefined;
   return (
     <li className="rounded-2xl border border-cream-200 bg-white p-3 shadow-soft">
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-sm font-black text-ink-900">{u.name}</span>
-        <span className="flex-none rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-bold text-ink-700 tabular-nums">
-          偏差値 {minDev}-{maxDev}
-        </span>
+        {minDev !== undefined && maxDev !== undefined ? (
+          <span className="flex-none rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-bold text-ink-700 tabular-nums">
+            偏差値 {minDev}-{maxDev}
+          </span>
+        ) : null}
       </div>
       <div className="mt-0.5 text-[10px] text-ink-500">
-        {TIER_LABEL[u.tier]} · {u.region} · 全{u.faculties.length}学部
+        {u.tier ? `${TIER_LABEL[u.tier]} · ` : ""}
+        {u.region} · 全{u.faculties.length}学部
+      </div>
+    </li>
+  );
+}
+
+function HighschoolRow({ h }: { h: Highschool }) {
+  return (
+    <li className="rounded-2xl border border-cream-200 bg-white p-3 shadow-soft">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-sm font-black text-ink-900">{h.name}</span>
+        {h.deviation ? (
+          <span className="flex-none rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-bold text-ink-700 tabular-nums">
+            偏差値 {h.deviation}
+          </span>
+        ) : null}
+      </div>
+      <div className="mt-0.5 text-[10px] text-ink-500">
+        {h.prefecture}
+        {h.city ? ` · ${h.city}` : ""} ·{" "}
+        {h.type === "private" ? "私立" : h.type === "national" ? "国立" : "公立"}
       </div>
     </li>
   );
@@ -236,7 +357,9 @@ function TextbookRow({
             </span>
           </div>
           <div className="mt-1 text-[10px] text-ink-500">{b.publisher}</div>
-          <p className="mt-1 text-[11px] text-ink-700">{b.description}</p>
+          {b.description ? (
+            <p className="mt-1 text-[11px] text-ink-700">{b.description}</p>
+          ) : null}
         </div>
         <button
           type="button"
@@ -249,8 +372,26 @@ function TextbookRow({
           )}
         >
           {owned ? <Check className="h-3.5 w-3.5" /> : null}
-          {owned ? "持ってる" : "持ってる"}
+          持ってる
         </button>
+      </div>
+    </li>
+  );
+}
+
+function MockExamRow({ m }: { m: MockExam }) {
+  return (
+    <li className="rounded-2xl border border-cream-200 bg-white p-3 shadow-soft">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-sm font-black text-ink-900 line-clamp-1">
+          {m.name}
+        </span>
+        <span className="flex-none rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-bold text-ink-700">
+          {PROVIDER_LABEL[m.provider]}
+        </span>
+      </div>
+      <div className="mt-0.5 text-[10px] text-ink-500">
+        {m.examDate ?? "—"} · {m.targetGrades.join("/")} · {m.year}
       </div>
     </li>
   );
