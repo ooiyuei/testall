@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Logo } from "./Logo";
 import { Button } from "./ui/Button";
 
@@ -21,8 +22,14 @@ export function Header() {
           </a>
         </nav>
         <div className="flex items-center gap-2">
-          <Button href="/app" size="sm" variant="primary">
-            アプリを開く
+          <Link
+            href="/signin"
+            className="hidden h-9 items-center rounded-full px-3 text-sm font-bold text-ink-700 hover:bg-cream-100 md:flex"
+          >
+            サインイン
+          </Link>
+          <Button href="/signup" size="sm" variant="primary">
+            はじめる
           </Button>
         </div>
       </div>

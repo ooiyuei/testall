@@ -3,13 +3,32 @@
 
 import type { Diagnosis, TestInput } from "./types";
 
+export type TargetUniversity = {
+  universityId: string;
+  faculty?: string;
+  priority: 1 | 2 | 3; // 第1〜3志望
+  examType?: string; // 一般 / 共通テスト / 総合型 / 推薦
+};
+
 export type StoredProfile = {
+  // 識別
   name?: string;
+  schoolName?: string;
+  // 学習プロフィール
   grade: string;
-  target: string;
+  deviation?: number; // 全国偏差値（おおよそ）
+  // 志望校
+  target: string; // 旧フィールド（互換維持）。新規は targetUniversities を使う。
+  targetUniversities?: TargetUniversity[];
   examDate: string;
-  availableMinutesPerDay: number;
+  // 勉強時間
+  availableMinutesPerDay: number; // 旧フィールド（平均）。新規は weekday/weekend で取る。
+  weekdayMinutes?: number;
+  weekendMinutes?: number;
+  // 所有資材
   textbooks: string[];
+  // 完了フラグ
+  onboardedAt?: string;
 };
 
 export type StoredTest = {

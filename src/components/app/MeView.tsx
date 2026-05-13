@@ -13,6 +13,7 @@ import {
 import { useStore } from "@/lib/hooks/useStore";
 import { clearAll, getStreak } from "@/lib/store";
 import { GRADES, TARGET_LEVELS } from "@/lib/subjects";
+import { findUniversity } from "@/lib/universities";
 
 export function MeView() {
   const { state, hydrated } = useStore();
@@ -37,6 +38,7 @@ export function MeView() {
     GRADES.find((g) => g.id === profile?.grade)?.name ?? "未設定";
   const targetLabel =
     TARGET_LEVELS.find((t) => t.id === profile?.target)?.name ?? "未設定";
+  const targetUniversities = profile?.targetUniversities ?? [];
 
   const stats = [
     {
@@ -86,7 +88,11 @@ export function MeView() {
               {profile?.name ?? "あなた"}
             </div>
             <div className="text-xs text-ink-500">
-              {gradeLabel} · {targetLabel}
+              {gradeLabel}
+              {profile?.schoolName ? ` · ${profile.schoolName}` : ""}
+              {profile?.deviation
+                ? ` · 偏差値 ${profile.deviation}`
+                : ` · ${targetLabel}`}
             </div>
             {profile?.examDate ? (
               <div className="mt-1 text-[10px] font-bold text-peach-500">
@@ -132,6 +138,35 @@ export function MeView() {
         ))}
       </ul>
 
+      {/* Target universities */}
+      {targetUniversities.length > 0 ? (
+        <section className="mt-5 rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
+            志望校
+          </div>
+          <ul className="mt-2 space-y-1.5">
+            {targetUniversities.map((tu) => {
+              const u = findUniversity(tu.universityId);
+              if (!u) return null;
+              return (
+                <li
+                  key={tu.universityId}
+                  className="flex items-center gap-2 rounded-xl bg-cream-50 px-3 py-2"
+                >
+                  <span className="flex h-6 w-6 flex-none items-center justify-center rounded-md bg-sky-500 text-[10px] font-black text-white">
+                    {tu.priority}
+                  </span>
+                  <span className="min-w-0 flex-1 text-sm font-bold text-ink-900 truncate">
+                    {u.name}
+                    {tu.faculty ? ` / ${tu.faculty}` : ""}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
+
       {/* Textbooks */}
       {profile?.textbooks && profile.textbooks.length > 0 ? (
         <section className="mt-5 rounded-3xl border border-cream-200 bg-white p-4 shadow-soft">
@@ -155,11 +190,22 @@ export function MeView() {
       <ul className="mt-5 divide-y divide-cream-200 overflow-hidden rounded-3xl border border-cream-200 bg-white shadow-soft">
         <li>
           <Link
-            href="/app/test/new"
+            href="/onboarding"
             className="flex items-center justify-between px-4 py-3.5 active:bg-cream-100"
           >
             <span className="text-sm font-bold text-ink-900">
               プロフィール / 志望校を更新
+            </span>
+            <ChevronRight className="h-4 w-4 text-ink-400" />
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/app/search"
+            className="flex items-center justify-between px-4 py-3.5 active:bg-cream-100"
+          >
+            <span className="text-sm font-bold text-ink-900">
+              参考書を追加（探す）
             </span>
             <ChevronRight className="h-4 w-4 text-ink-400" />
           </Link>
