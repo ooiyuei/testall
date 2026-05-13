@@ -34,3 +34,13 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## 環境変数
+
+| 変数名 | 用途 | 必須 |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | Claude Vision による答案画像の自動解析（画像入力機能） | 画像入力を使う場合は必須 |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase 接続 | 認証・DB機能 |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase 接続 | 認証・DB機能 |
+
+`ANTHROPIC_API_KEY` が未設定の場合、テキスト診断（`/api/diagnose`）はフォールバックで動作しますが、写真入力（`/api/diagnose-from-image`）は「準備中」表示になります。本番環境では Vercel の Environment Variables に設定してください。
