@@ -94,13 +94,14 @@ export type RequiredBlocksResult = {
 };
 
 // ── 今日のブロック ──────────────────────────
-export type Mood = "less" | "normal" | "more" | "max";
+export type Mood = "less" | "normal" | "more" | "max" | "today-off";
 
 export const MOOD_DELTA: Record<Mood, number> = {
   less: -2,
   normal: 0,
   more: +2,
   max: +4,
+  "today-off": 0, // 使用しない (finalBlocks は強制 0)
 };
 
 export type ReturnTimeKind =

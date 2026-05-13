@@ -8,7 +8,7 @@
 import { useMemo, useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { logDailyMood, setPlanning } from "@/lib/store";
+import { currentDayISO, logDailyMood, setPlanning } from "@/lib/store";
 import { useStore } from "@/lib/hooks/useStore";
 import {
   adjustTodayBlocks,
@@ -19,10 +19,11 @@ import type { Mood } from "@/lib/planning";
 import { TodaySchedule } from "./TodaySchedule";
 
 const MOODS: { id: Mood; label: string; delta: string }[] = [
-  { id: "less",   label: "少なめ", delta: "-2" },
-  { id: "normal", label: "並",     delta: "±0" },
-  { id: "more",   label: "大盛",   delta: "+2" },
-  { id: "max",    label: "特盛",   delta: "+4" },
+  { id: "today-off", label: "できない", delta: "—" },
+  { id: "less",      label: "少なめ",   delta: "-2" },
+  { id: "normal",    label: "並",       delta: "±0" },
+  { id: "more",      label: "大盛",     delta: "+2" },
+  { id: "max",       label: "特盛",     delta: "+4" },
 ];
 
 function nowHHmm(): string {
@@ -76,13 +77,16 @@ export function MoodCheckCard() {
     blockMinutes: 30,
   });
 
-  // 就寝時間を超えている / 残り時間が物理的に0
-  const tooLate = result.availableBlocks <= 0;
+  // 就寝時間を超えている / 残り時間が物理的に0 (today-off は除く)
+  const tooLate = mood !== "today-off" && result.availableBlocks <= 0;
+
+  // 特盛りおすすめ: 物理上限が baseBlocks+4 以上あるとき
+  const showMaxBadge = !decided && result.availableBlocks >= baseBlocks + 4;
 
   function commit() {
     if (!planning) setPlanning(profile);
     logDailyMood({
-      dateISO: now.toISOString().slice(0, 10),
+      dateISO: currentDayISO(now),
       mood,
       returnTime: startTime,
       finalBlocks: result.finalBlocks,
@@ -104,6 +108,29 @@ export function MoodCheckCard() {
         <p className="mt-2 text-[11px] text-ink-500">
           就寝 {profile.defaultBedtime} まで残り{result.availableBlocks <= 0 ? "わずか" : ""}
         </p>
+      </section>
+    );
+  }
+
+  if (decided && mood === "today-off") {
+    return (
+      <section className="rounded-2xl border border-ink-100/80 bg-cream-50 p-5 text-center">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+          今日は完全休養
+        </div>
+        <p className="mt-2 text-[15px] font-bold leading-[1.6] text-ink-900">
+          しっかり休んで、また明日。
+        </p>
+        <p className="mt-2 text-[12px] leading-[1.7] text-ink-500">
+          休息も勉強の一部です。
+        </p>
+        <button
+          type="button"
+          onClick={() => setDecided(false)}
+          className="mt-4 text-[11px] font-medium text-ink-400 underline-offset-2 hover:underline"
+        >
+          気分を変更
+        </button>
       </section>
     );
   }
@@ -169,8 +196,15 @@ export function MoodCheckCard() {
         <ul className="mt-2 flex gap-1 rounded-xl bg-cream-100/70 p-1">
           {MOODS.map((m) => {
             const active = mood === m.id;
+            const isOff = m.id === "today-off";
+            const showBadge = m.id === "max" && showMaxBadge;
             return (
-              <li key={m.id} className="flex-1">
+              <li key={m.id} className="relative flex-1">
+                {showBadge && (
+                  <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-amber-400 px-1.5 py-0.5 text-[8px] font-bold leading-none text-white shadow-sm">
+                    おすすめ✨
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={() => setMood(m.id)}
@@ -182,7 +216,11 @@ export function MoodCheckCard() {
                   <span
                     className={cn(
                       "text-[12px] font-bold",
-                      active ? "text-ink-900" : "text-ink-500",
+                      active && isOff
+                        ? "text-ink-500"
+                        : active
+                          ? "text-ink-900"
+                          : "text-ink-500",
                     )}
                   >
                     {m.label}
@@ -202,27 +240,38 @@ export function MoodCheckCard() {
         </ul>
       </div>
 
-      <div className="mt-5 flex items-end justify-between rounded-xl bg-cream-50/80 px-4 py-3">
-        <div>
-          <div className="text-[10px] font-medium text-ink-500">
-            今日のブロック
+      {mood === "today-off" ? (
+        <div className="mt-5 rounded-xl bg-cream-50/80 px-4 py-3 text-center">
+          <p className="text-[13px] font-bold text-ink-600">
+            今日は完全休養日にする
+          </p>
+          <p className="mt-1 text-[11px] text-ink-400">
+            ブロックは 0 に設定されます
+          </p>
+        </div>
+      ) : (
+        <div className="mt-5 flex items-end justify-between rounded-xl bg-cream-50/80 px-4 py-3">
+          <div>
+            <div className="text-[10px] font-medium text-ink-500">
+              今日のブロック
+            </div>
+            <div className="mt-0.5 flex items-baseline gap-1">
+              <span className="text-3xl font-bold leading-none tabular-nums text-ink-900">
+                {result.finalBlocks}
+              </span>
+              <span className="text-[10px] font-medium text-ink-500">
+                ×25分
+              </span>
+            </div>
           </div>
-          <div className="mt-0.5 flex items-baseline gap-1">
-            <span className="text-3xl font-bold leading-none tabular-nums text-ink-900">
-              {result.finalBlocks}
-            </span>
-            <span className="text-[10px] font-medium text-ink-500">
-              ×25分
-            </span>
+          <div className="text-right text-[10px] leading-[1.6] text-ink-500">
+            基本 {baseBlocks} · 気分 {result.moodDelta >= 0 ? "+" : ""}
+            {result.moodDelta}
+            <br />
+            物理上限 {result.availableBlocks}
           </div>
         </div>
-        <div className="text-right text-[10px] leading-[1.6] text-ink-500">
-          基本 {baseBlocks} · 気分 {result.moodDelta >= 0 ? "+" : ""}
-          {result.moodDelta}
-          <br />
-          物理上限 {result.availableBlocks}
-        </div>
-      </div>
+      )}
 
       <button
         type="button"
