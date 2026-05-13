@@ -138,6 +138,13 @@ button, a {
   letter-spacing: 0.01em;
 }
 
+/* デフォルトのトランジションを統一 (滑らかな押し心地) */
+button, a, [role="button"] {
+  transition-property: transform, background-color, color, border-color, opacity, box-shadow;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* tabular-nums を持つ要素は palt OFF（数字を等幅に） */
 .tabular-nums {
   font-feature-settings: "tnum" 1, "lnum" 1;
@@ -150,9 +157,19 @@ button, a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-sky-400);
+  outline: 2px solid var(--color-sky-500);
   outline-offset: 2px;
-  border-radius: 8px;
+  border-radius: 10px;
+}
+
+/* タップフィードバックを iOS 風に統一 (ボタンに active:scale-* が無くてもデフォルトで効く) */
+@media (hover: none) and (pointer: coarse) {
+  button:active:not(:disabled),
+  a:active,
+  [role="button"]:active {
+    transform: scale(0.97);
+    opacity: 0.92;
+  }
 }
 
 /* ─────────────────────────────────────────────
