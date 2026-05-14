@@ -230,6 +230,24 @@ button, a, [role="button"] {
   to   { transform: scaleX(0); }
 }
 
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* カード等の登場演出。staggered する場合は style={{ animationDelay: '0.05s' }} などで */
+.animate-fade-in-up { animation: fade-in-up 0.36s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+
+/* prefers-reduced-motion を尊重 */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-slideDown,
+  .sheet-in,
+  .float-y,
+  .pulse-soft {
+    animation: none !important;
+  }
+}
+
 /* iOS safe-area helpers */
 .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
 .pt-safe { padding-top: max(env(safe-area-inset-top), 0px); }

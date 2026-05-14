@@ -27,6 +27,7 @@ import { AiChat } from "./AiChat";
 import { StreakHeatmap } from "./StreakHeatmap";
 import { LoginBonus } from "./LoginBonus";
 import { InstallPrompt } from "./InstallPrompt";
+import { HomeSkeleton } from "@/components/ui/Skeleton";
 
 const WEEKDAY_LABEL = ["月", "火", "水", "木", "金", "土", "日"];
 
@@ -147,11 +148,14 @@ export function HomeView() {
 
   const needsOnboarding = hydrated && !state.profile?.onboardedAt;
 
+  // ハイドレート中はスケルトンで形を見せる (FOUC 防止)
+  if (!hydrated) return <HomeSkeleton />;
+
   return (
     <div className="px-5 pb-8 pt-3">
-      {hydrated && state.profile?.onboardedAt ? <GuideTour /> : null}
-      {hydrated && state.profile?.onboardedAt ? <LoginBonus /> : null}
-      {hydrated && state.profile?.onboardedAt ? <InstallPrompt /> : null}
+      {state.profile?.onboardedAt ? <GuideTour /> : null}
+      {state.profile?.onboardedAt ? <LoginBonus /> : null}
+      {state.profile?.onboardedAt ? <InstallPrompt /> : null}
       {/* Hero greeting — Apple HIG 風に大胆なタイポグラフィ */}
       <section className="mb-6 flex items-start justify-between gap-3">
         <div className="min-w-0">
