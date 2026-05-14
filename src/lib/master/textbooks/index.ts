@@ -11,27 +11,9 @@ import type { Textbook, TextbookUsageTag } from "../types";
 import { buildSearchText, textbookCurationKey } from "../types";
 import { TEXTBOOKS_BULK } from "../textbooks-bulk";
 
-// Phase B (AI 深掘り) の結果。ファイルが無い場合は空マップで代替。
-type EnrichmentValue = {
-  rank: number;
-  title: string;
-  publisher: string;
-  tableOfContents: { section: string; items: string[]; confidence: "high" | "medium" | "low" }[];
-  strengths: string[];
-  weaknesses: string[];
-  recommendedFor: string;
-  estimatedHours: number;
-  overallConfidence: "high" | "medium" | "low";
-  notes: string;
-};
-let ENRICHMENT_MAP: Record<string, EnrichmentValue> = {};
-try {
-  // 動的 import — 生成前ならファイル無しでも問題ない
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  ENRICHMENT_MAP = require("../textbooks-enriched").TEXTBOOKS_ENRICHED_BY_KEY ?? {};
-} catch {
-  ENRICHMENT_MAP = {};
-}
+// Phase B (AI 深掘り) の結果。空 placeholder が常にあるので require は不要。
+import { TEXTBOOKS_ENRICHED_BY_KEY } from "../textbooks-enriched";
+const ENRICHMENT_MAP = TEXTBOOKS_ENRICHED_BY_KEY ?? {};
 
 export type { Textbook, TextbookUsageTag };
 
