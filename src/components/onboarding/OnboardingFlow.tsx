@@ -114,16 +114,14 @@ function OnboardingHeader({
         </button>
       </div>
 
-      {/* プログレスバー */}
+      {/* プログレスバー — ink-900 fill (mock spec) */}
       <div className="mt-3 flex gap-1" role="progressbar" aria-valuenow={stepIdx + 1} aria-valuemax={totalSteps}>
         {STEPS.map((_, i) => (
           <div
             key={i}
             className={cn(
-              "h-1 flex-1 rounded-full transition-all duration-300",
-              i < stepIdx ? "bg-sky-500"
-              : i === stepIdx ? "bg-sky-400"
-              : "bg-cream-200",
+              "h-[3px] flex-1 rounded-full transition-colors",
+              i <= stepIdx ? "bg-ink-900" : "bg-ink-100",
             )}
           />
         ))}

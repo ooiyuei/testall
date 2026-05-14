@@ -160,7 +160,15 @@ export function SearchView() {
   const tabLabel = tab === "university" ? "大学" : tab === "textbook" ? "参考書" : "模試";
 
   return (
-    <div className="px-5 pb-8 pt-3 space-y-3">
+    <div className="px-5 pb-8 pt-2 space-y-3">
+      {/* Header */}
+      <h1
+        className="text-[28px] font-extrabold tracking-[-0.025em] text-ink-900"
+        style={{ fontFamily: "var(--font-display)" }}
+      >
+        探す
+      </h1>
+
       {/* 検索バー */}
       <div className="relative">
         <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" strokeWidth={1.75} />

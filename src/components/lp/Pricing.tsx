@@ -1,6 +1,5 @@
-import { Check } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { cn } from "@/lib/cn";
+import { ArrowRight, Check } from "lucide-react";
+import Link from "next/link";
 
 const plans = [
   {
@@ -23,7 +22,7 @@ const plans = [
     features: [
       "週間計画の自動生成",
       "基本苦手分析",
-      "今日のタスク+25分ブロック",
+      "25分ブロックの今日タスク",
       "テスト記録 無制限",
     ],
     cta: "Lightで始める",
@@ -49,73 +48,125 @@ const plans = [
 
 export function Pricing() {
   return (
-    <section id="price" className="relative border-b border-cream-200 py-20 sm:py-28">
-      <div className="mx-auto max-w-6xl px-5">
-        <div className="max-w-3xl">
-          <div className="text-xs font-black tracking-[0.3em] text-sky-600">
+    <section
+      id="price"
+      className="relative border-b border-ink-100 bg-cream-50 py-20 sm:py-24"
+    >
+      <div className="mx-auto max-w-[1100px] px-6">
+        {/* Heading */}
+        <div className="mx-auto max-w-[700px] text-center">
+          <div className="inline-flex items-center gap-2 text-[12px] font-semibold tracking-[0.04em] text-ink-500">
+            <span className="h-px w-4 bg-ink-400" />
             料金プラン
+            <span className="h-px w-4 bg-ink-400" />
           </div>
-          <h2 className="mt-4 text-3xl font-black leading-tight text-ink-900 sm:text-5xl">
-            塾の1/20の価格で、<br />
+          <h2
+            className="mt-6 text-[36px] font-extrabold leading-[1.05] tracking-[-0.03em] text-ink-900 sm:text-[48px] md:text-[56px]"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            塾の <span className="text-sky-500">1/20</span> の価格で、
+            <br />
             毎日の伴走を。
           </h2>
+          <p className="mt-4 text-[14px] leading-[1.8] text-ink-600 sm:text-[15px]">
+            プランはいつでも変更・解約できます。受験本番までずっと使えるよう設計しています。
+          </p>
         </div>
 
-        <div className="mt-12 grid gap-5 md:grid-cols-3">
-          {plans.map((p) => (
-            <div
-              key={p.name}
-              className={cn(
-                "relative flex flex-col rounded-3xl border p-7",
-                p.highlight
-                  ? "border-sky-200 bg-white shadow-card ring-2 ring-sky-200"
-                  : "border-cream-200 bg-white shadow-soft",
-              )}
-            >
-              {p.highlight && (
-                <div className="absolute -top-3 left-7 rounded-full bg-sky-500 px-3 py-1 text-[11px] font-black text-white shadow-soft">
-                  人気プラン
+        {/* Plans */}
+        <div className="mt-14 grid gap-3.5 md:grid-cols-3">
+          {plans.map((p) => {
+            const highlight = p.highlight;
+            return (
+              <div
+                key={p.name}
+                className={
+                  "relative flex flex-col rounded-[22px] p-7 " +
+                  (highlight
+                    ? "bg-ink-900 text-white shadow-[0_24px_48px_-20px_rgba(20,19,15,0.4)]"
+                    : "border border-ink-100 bg-white text-ink-900 shadow-[0_1px_1px_rgba(20,19,15,0.04),0_2px_6px_rgba(20,19,15,0.04)]")
+                }
+              >
+                {highlight ? (
+                  <span className="absolute -top-3 right-6 rounded-full bg-sun-300 px-3 py-1 text-[11px] font-extrabold tracking-wide text-ink-900">
+                    人気プラン
+                  </span>
+                ) : null}
+
+                <div className="text-[15px] font-extrabold tracking-tight">
+                  {p.name}
                 </div>
-              )}
-              <div className="text-base font-black text-ink-900">{p.name}</div>
-              <div className="mt-1 text-sm text-ink-500">{p.sub}</div>
+                <div
+                  className={
+                    "mt-1 text-[12px] " +
+                    (highlight ? "text-white/65" : "text-ink-500")
+                  }
+                >
+                  {p.sub}
+                </div>
 
-              <div className="mt-6 flex items-baseline gap-1.5">
-                <span className="text-sm text-ink-500">月額</span>
-                <span className="text-5xl font-black tabular-nums text-ink-900">
-                  ¥{p.price}
-                </span>
-              </div>
-
-              <ul className="mt-7 space-y-3">
-                {p.features.map((f) => (
-                  <li
-                    key={f}
-                    className="flex items-start gap-2.5 text-sm text-ink-700"
+                <div className="mt-6 flex items-baseline gap-1">
+                  <span
+                    className={
+                      "text-[13px] font-medium " +
+                      (highlight ? "text-white/60" : "text-ink-400")
+                    }
                   >
-                    <Check
-                      className={cn(
-                        "mt-0.5 h-4 w-4 flex-none",
-                        p.highlight ? "text-sky-500" : "text-mint-500",
-                      )}
-                    />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
+                    ¥
+                  </span>
+                  <span
+                    className="text-[56px] font-extrabold leading-none tabular-nums tracking-[-0.03em] sm:text-[60px]"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    {p.price}
+                  </span>
+                  <span
+                    className={
+                      "text-[13px] font-medium " +
+                      (highlight ? "text-white/60" : "text-ink-400")
+                    }
+                  >
+                    /月
+                  </span>
+                </div>
 
-              <div className="mt-8">
-                <Button
+                <ul className="mt-8 flex flex-col gap-3">
+                  {p.features.map((f) => (
+                    <li
+                      key={f}
+                      className={
+                        "flex gap-2.5 text-[13px] leading-[1.6] " +
+                        (highlight ? "text-white" : "text-ink-700")
+                      }
+                    >
+                      <Check
+                        className={
+                          "mt-0.5 h-3.5 w-3.5 flex-none " +
+                          (highlight ? "text-sky-500" : "text-mint-600")
+                        }
+                        strokeWidth={2.5}
+                      />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="flex-1" />
+                <Link
                   href={p.href}
-                  size="md"
-                  variant={p.highlight ? "primary" : "ghost"}
-                  className="w-full"
+                  className={
+                    "mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-full text-[14px] font-bold transition active:scale-[0.97] " +
+                    (highlight
+                      ? "bg-white text-ink-900"
+                      : "bg-ink-900 text-white")
+                  }
                 >
                   {p.cta}
-                </Button>
+                  <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.4} />
+                </Link>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

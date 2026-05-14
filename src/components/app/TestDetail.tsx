@@ -240,53 +240,76 @@ function ScoreHeader({
   trend,
 }: ScoreHeaderProps) {
   return (
-    <section className="rounded-2xl border border-cream-200 bg-gradient-to-br from-sky-50/80 to-mint-50/40 p-5 shadow-soft">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="text-[11px] font-semibold text-sky-700">
-            {subject}
-          </div>
-          <h2 className="mt-0.5 text-lg font-black leading-snug text-ink-900">
-            {testName}
-          </h2>
-          <div className="mt-1 text-[11px] text-ink-400">
-            {new Date(createdAt).toLocaleDateString("ja-JP", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </div>
+    <section>
+      {/* Title block */}
+      <div>
+        <div className="text-[11px] font-medium text-ink-400">
+          {new Date(createdAt).toLocaleDateString("ja-JP", {
+            month: "long",
+            day: "numeric",
+          })}{" "}
+          · {subject}
         </div>
-        <div className="flex-none text-right">
-          <div className="text-4xl font-black tabular-nums tracking-[-0.02em] text-ink-900">
-            {pct}
-            <span className="ml-0.5 text-sm font-bold text-ink-500">%</span>
-          </div>
-          <div className="mt-0.5 text-[11px] text-ink-400 tabular-nums">
-            {score} / {fullScore}
-          </div>
-          {/* 前回比トレンド */}
-          {trend ? (
-            <div
-              className={cn(
-                "mt-1.5 inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums",
-                trend.delta > 0
-                  ? "bg-mint-100 text-mint-600"
-                  : trend.delta < 0
-                    ? "bg-coral-300/20 text-coral-500"
-                    : "bg-cream-100 text-ink-500",
-              )}
-              title={`前回 ${trend.prevTestName}: ${trend.prevPct}%`}
-            >
-              {trend.delta > 0 ? "↑" : trend.delta < 0 ? "↓" : "—"}
-              {trend.delta > 0 ? "+" : ""}{trend.delta}%
-            </div>
-          ) : null}
-        </div>
+        <h2
+          className="mt-1 text-[24px] font-extrabold leading-[1.15] tracking-[-0.025em] text-ink-900"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          {testName}
+        </h2>
       </div>
-      <blockquote className="mt-4 border-l-2 border-sky-300 pl-3">
-        <p className="text-[13px] leading-relaxed text-ink-700">{summary}</p>
-      </blockquote>
+
+      {/* Dark hero — score + pct */}
+      <div className="mt-3.5 rounded-[20px] bg-ink-900 p-5 text-white">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-semibold text-white/60">得点</div>
+            <div className="mt-1 flex items-baseline gap-1.5">
+              <span
+                className="text-[60px] font-extrabold leading-[0.95] tabular-nums tracking-[-0.03em]"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {score}
+              </span>
+              <span className="text-[16px] text-white/65">/ {fullScore}</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-[11px] font-semibold text-white/60">正答率</div>
+            <div className="mt-1 flex items-baseline justify-end gap-1.5">
+              <span
+                className="text-[36px] font-extrabold tabular-nums tracking-[-0.02em]"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {pct}
+                <span className="text-[14px] text-white/60">%</span>
+              </span>
+              {trend ? (
+                <span
+                  className={cn(
+                    "text-[12px] font-bold tabular-nums",
+                    trend.delta > 0
+                      ? "text-mint-500"
+                      : trend.delta < 0
+                        ? "text-coral-300"
+                        : "text-white/60",
+                  )}
+                  title={`前回 ${trend.prevTestName}: ${trend.prevPct}%`}
+                >
+                  {trend.delta > 0 ? "+" : ""}
+                  {trend.delta}
+                </span>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        {/* Summary — divider + AI 要約 */}
+        {summary ? (
+          <p className="mt-4 border-t border-white/10 pt-3 text-[12px] leading-[1.7] text-white/75">
+            {summary}
+          </p>
+        ) : null}
+      </div>
     </section>
   );
 }

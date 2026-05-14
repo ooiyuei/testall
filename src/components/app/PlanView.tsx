@@ -134,19 +134,27 @@ export function PlanView() {
       <WeeklyGoalCard />
       <WeeklyTaskBoard tasks={state.tasks ?? []} />
 
-      {/* 今週の目標 */}
+      {/* 今週の目標 — ⑤ design (dark hero) */}
       {latest ? (
-        <section className="rounded-2xl border border-cream-200 bg-gradient-to-br from-mint-50 to-sky-50 p-4 shadow-soft">
-          <div className="flex items-center gap-2">
-            <IconBadge tone="success" size="sm">
-              <Target strokeWidth={1.75} />
-            </IconBadge>
-            <span className="text-[11px] font-medium text-mint-600">今週の目標</span>
+        <section className="rounded-[18px] bg-ink-900 p-4 text-white shadow-[0_8px_28px_-10px_rgba(20,19,15,0.35)]">
+          <div className="flex items-center gap-1.5">
+            <Target className="h-3 w-3 text-sky-500" strokeWidth={2.2} />
+            <span className="text-[10px] font-bold uppercase tracking-[0.04em] text-white/60">
+              今週の目標
+            </span>
           </div>
-          <p className="mt-2 text-sm text-ink-700">
+          <p className="mt-1.5 text-[14px] font-bold leading-snug tracking-tight text-white">
             {latest.diagnosis.weaknesses.slice(0, 2).map((w) => w.unit).join(" / ")}
             {" "}を中心に、{latest.input.subject}の底を上げる
           </p>
+          <div className="mt-2.5 flex items-center gap-2.5">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/15">
+              <div className="h-full rounded-full bg-mint-500" style={{ width: "55%" }} />
+            </div>
+            <span className="text-[11px] font-bold tabular-nums text-white">
+              11 / 20
+            </span>
+          </div>
         </section>
       ) : null}
 

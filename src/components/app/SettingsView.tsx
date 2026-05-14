@@ -69,7 +69,15 @@ export function SettingsView() {
   }
 
   return (
-    <div className="px-5 pb-10 pt-3 space-y-5">
+    <div className="px-5 pb-10 pt-2 space-y-5">
+      {/* Header */}
+      <h1
+        className="text-[28px] font-extrabold tracking-[-0.025em] text-ink-900"
+        style={{ fontFamily: "var(--font-display)" }}
+      >
+        設定
+      </h1>
+
       {/* アプリ設定 */}
       <section>
         <SectionLabel title="アプリ" className="mb-2" />

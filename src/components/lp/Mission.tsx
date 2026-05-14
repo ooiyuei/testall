@@ -1,33 +1,53 @@
 export function Mission() {
   return (
-    <section id="mission" className="relative overflow-hidden border-b border-cream-200 py-24 sm:py-28">
-      <div
-        className="absolute inset-0 -z-0 opacity-80"
-        style={{
-          background:
-            "radial-gradient(60% 60% at 20% 30%, var(--color-sky-100), transparent 60%), radial-gradient(50% 50% at 80% 80%, var(--color-peach-100), transparent 60%)",
-        }}
-        aria-hidden
-      />
-      <div className="relative mx-auto max-w-4xl px-5 text-center">
-        <div className="text-xs font-black tracking-[0.3em] text-sky-600">
+    <section
+      id="mission"
+      className="relative overflow-hidden border-b border-ink-100 bg-cream-50 py-28 sm:py-32"
+    >
+      <div className="relative mx-auto max-w-[800px] px-6">
+        {/* Eyebrow */}
+        <div className="inline-flex items-center gap-2 text-[12px] font-semibold tracking-[0.04em] text-ink-500">
+          <span className="h-px w-4 bg-ink-400" />
           ミッション
         </div>
-        <h2 className="mt-6 text-3xl font-black leading-[1.3] text-ink-900 sm:text-5xl md:text-6xl">
-          親の年収で、<br />
-          <span className="text-sky-500">受験の選択肢を狭めない。</span>
-        </h2>
-        <p className="mx-auto mt-8 max-w-2xl text-base text-ink-600 sm:text-lg">
-          塾代 年100万円を出せる家庭と出せない家庭で、難関大の合格率には大きな差があります。
-          地方と首都圏でも、出会える先生の数が違います。
-          <br />
-          <br />
-          Testallが目指すのは、
-          <span className="font-bold text-ink-900">この差を、少しずつ小さくしていくこと</span>。
-          月100万円相当の伴走価値を、月1,500円で。困窮世帯には自治体・財団との連携で無償提供枠も用意していきます。
-        </p>
 
-        <div className="mt-12 grid gap-3 sm:grid-cols-3">
+        {/* Big editorial headline */}
+        <h2
+          className="mt-7 text-[40px] font-extrabold leading-[1.1] tracking-[-0.03em] text-ink-900 sm:text-[52px] md:text-[56px]"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          受験は、
+          <br />
+          ひとりで戦う必要はない。
+        </h2>
+
+        {/* Editorial monologue */}
+        <div className="mt-10 flex flex-col gap-6 text-[15px] leading-[2.0] text-ink-600 sm:text-[17px]">
+          <p>
+            塾に通える子と、通えない子。
+            <br />
+            親が伴走できる家と、できない家。
+            <br />
+            受験では、その差が「努力の効率」になって現れます。
+          </p>
+          <p>
+            私たちは、誰のそばにも
+            <strong className="font-bold text-ink-900">AIの伴走者</strong>
+            がいる世界をつくります。
+            毎日の25分を整え、崩れたら一緒にやり直し、本番までずっと隣にいる存在。
+            それが Testall です。
+          </p>
+          <p
+            className="text-[19px] font-bold leading-[1.6] tracking-[-0.01em] text-ink-900 sm:text-[21px]"
+          >
+            努力を、ちゃんと成績に変換する。
+            <br />
+            それを、月1,500円で。
+          </p>
+        </div>
+
+        {/* 3 sub-pillars */}
+        <div className="mt-14 grid gap-3 sm:grid-cols-3">
           {[
             { k: "個別指導の民主化", v: "AI×プロダクトで1/20の価格に" },
             { k: "地理的制約の解消", v: "東京の最高指導を地方にも" },
@@ -35,10 +55,14 @@ export function Mission() {
           ].map((it) => (
             <div
               key={it.k}
-              className="rounded-2xl border border-cream-200 bg-white p-5 text-left shadow-soft"
+              className="rounded-2xl border border-ink-100 bg-white p-5"
             >
-              <div className="text-sm font-black text-sky-600">{it.k}</div>
-              <div className="mt-1 text-sm text-ink-600">{it.v}</div>
+              <div className="text-[13px] font-extrabold tracking-tight text-sky-500">
+                {it.k}
+              </div>
+              <div className="mt-1.5 text-[13px] leading-[1.7] text-ink-600">
+                {it.v}
+              </div>
             </div>
           ))}
         </div>

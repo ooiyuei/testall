@@ -1,28 +1,29 @@
 "use client";
 
-// ヘルプ・使い方ページ
-// 主要機能を「何ができるか／どう使うか」の2行で説明する FAQ + 機能一覧
+// ヘルプ・使い方ページ — ⑭ HelpScreen スタイル
+// 上: 「ヘルプ」大見出し
+// 中: 検索バー (実装は filter のみ)
+// 下: よくある質問 (アコーディオン) + お問い合わせ
 
 import Link from "next/link";
 import {
   BookOpen,
   Calendar,
   ChevronDown,
-  ChevronRight,
   ClipboardList,
   Compass,
   Flame,
   HelpCircle,
+  Search,
   Sparkles,
   Target,
   Timer,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
 
 type Section = {
   icon: typeof BookOpen;
-  tone: string;
   title: string;
   body: string;
   steps?: string[];
@@ -31,7 +32,6 @@ type Section = {
 const SECTIONS: Section[] = [
   {
     icon: ClipboardList,
-    tone: "bg-peach-100 text-peach-500",
     title: "テストを追加する",
     body: "模試・校内テストの結果を入力すると、AI が弱点を分析して今日の 25分を整えます。",
     steps: [
@@ -43,7 +43,6 @@ const SECTIONS: Section[] = [
   },
   {
     icon: Timer,
-    tone: "bg-sky-100 text-sky-600",
     title: "25分ブロックで集中する",
     body: "ポモドーロ式の 25分タイマー。テスト診断から自動で「今日やるべき25分」が並びます。",
     steps: [
@@ -55,7 +54,6 @@ const SECTIONS: Section[] = [
   },
   {
     icon: Sparkles,
-    tone: "bg-mint-100 text-mint-600",
     title: "気分に合わせて調整",
     body: "毎日の「気分」を選ぶだけで、その日のブロック数が自動で増減します。",
     steps: [
@@ -67,7 +65,6 @@ const SECTIONS: Section[] = [
   },
   {
     icon: Calendar,
-    tone: "bg-sky-100 text-sky-700",
     title: "週間プランを立てる",
     body: "週次の目標ブロックを設定して、ドラッグで日ごとに割り振れます。",
     steps: [
@@ -79,7 +76,6 @@ const SECTIONS: Section[] = [
   },
   {
     icon: Target,
-    tone: "bg-coral-300/30 text-coral-500",
     title: "弱点を一覧する",
     body: "テスト診断から弱点・原因・優先度が抽出され、領域別の偏差値も自動更新されます。",
     steps: [
@@ -90,7 +86,6 @@ const SECTIONS: Section[] = [
   },
   {
     icon: Flame,
-    tone: "bg-coral-300/30 text-coral-500",
     title: "ストリークと経験値",
     body: "毎日 25分やると連続日数が伸び、ヒートマップとレベルが更新されます。",
     steps: [
@@ -101,13 +96,11 @@ const SECTIONS: Section[] = [
   },
   {
     icon: Compass,
-    tone: "bg-mint-100 text-mint-600",
     title: "AI とチャット",
     body: "ホーム下部の AI チャットに質問できます。学年・志望校・直近テストを踏まえて返答します。",
   },
   {
     icon: BookOpen,
-    tone: "bg-cream-100 text-ink-700",
     title: "データのバックアップ",
     body: "設定 → データ から JSON でエクスポート/インポートできます。",
     steps: [
@@ -118,82 +111,144 @@ const SECTIONS: Section[] = [
   },
 ];
 
+const CONTACT_ITEMS = [
+  { label: "チャットで質問する", href: "/app" },
+  { label: "メールで送る", href: "mailto:support@testall.app" },
+  { label: "コミュニティを見る", href: "#" },
+];
+
 export function HelpView() {
+  const [query, setQuery] = useState("");
   const [openIdx, setOpenIdx] = useState<number | null>(0);
 
-  return (
-    <div className="px-5 pb-8 pt-3">
-      <header className="mb-5">
-        <div className="text-[11px] font-medium tracking-wider text-ink-400">
-          サポート
-        </div>
-        <h1 className="mt-1 flex items-center gap-2 text-[22px] font-bold leading-tight text-ink-900">
-          <HelpCircle className="h-5 w-5 text-sky-500" />
-          ヘルプ・使い方
-        </h1>
-        <p className="mt-1.5 text-[12px] leading-[1.7] text-ink-500">
-          Testall は「テスト結果を、次の25分でやるべき勉強に変える」アプリです。
-        </p>
-      </header>
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return SECTIONS.map((s, i) => ({ s, i }));
+    return SECTIONS
+      .map((s, i) => ({ s, i }))
+      .filter(({ s }) =>
+        s.title.toLowerCase().includes(q) ||
+        s.body.toLowerCase().includes(q) ||
+        (s.steps?.some((step) => step.toLowerCase().includes(q)) ?? false)
+      );
+  }, [query]);
 
-      <ul className="space-y-2">
-        {SECTIONS.map((s, i) => {
-          const open = openIdx === i;
-          const Icon = s.icon;
-          return (
-            <li
-              key={i}
-              className="overflow-hidden rounded-2xl border border-ink-100/80 bg-white"
-            >
-              <button
-                type="button"
-                onClick={() => setOpenIdx(open ? null : i)}
-                className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-cream-100"
-              >
-                <span
+  return (
+    <div className="px-5 pb-8 pt-2">
+      <h1
+        className="text-[28px] font-extrabold tracking-[-0.025em] text-ink-900"
+        style={{ fontFamily: "var(--font-display)" }}
+      >
+        ヘルプ
+      </h1>
+
+      {/* Search */}
+      <div className="relative mt-3.5">
+        <Search
+          className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400"
+          strokeWidth={1.8}
+        />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="質問を検索"
+          className="h-11 w-full rounded-[14px] border border-ink-100 bg-white pl-10 pr-3.5 text-[13px] text-ink-900 outline-none focus:border-sky-400"
+        />
+      </div>
+
+      {/* FAQ */}
+      <section className="mt-5">
+        <h2 className="text-[11px] font-medium text-ink-500">よくある質問</h2>
+        <div className="mt-2.5 overflow-hidden rounded-2xl border border-ink-100/80 bg-white">
+          {visible.length === 0 ? (
+            <div className="px-4 py-10 text-center text-[12px] text-ink-400">
+              該当する質問が見つかりませんでした
+            </div>
+          ) : (
+            visible.map(({ s, i }, listIdx) => {
+              const open = openIdx === i;
+              return (
+                <div
+                  key={i}
                   className={cn(
-                    "flex h-9 w-9 flex-none items-center justify-center rounded-xl",
-                    s.tone,
+                    "px-4 py-3.5",
+                    listIdx < visible.length - 1 && "border-b border-ink-100/40",
                   )}
                 >
-                  <Icon className="h-4 w-4" strokeWidth={2.2} />
-                </span>
-                <div className="flex-1">
-                  <div className="text-[13px] font-bold text-ink-900">
-                    {s.title}
-                  </div>
-                  <p className="mt-0.5 text-[11px] leading-[1.6] text-ink-500">
-                    {s.body}
-                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setOpenIdx(open ? null : i)}
+                    className="flex w-full items-center justify-between gap-3 text-left"
+                  >
+                    <span
+                      className={cn(
+                        "text-[13px] tracking-tight text-ink-900",
+                        open ? "font-bold" : "font-semibold",
+                      )}
+                    >
+                      {s.title}
+                    </span>
+                    <ChevronDown
+                      className={cn(
+                        "h-3.5 w-3.5 flex-none text-ink-400 transition-transform",
+                        open && "rotate-180",
+                      )}
+                      strokeWidth={2}
+                    />
+                  </button>
+                  {open ? (
+                    <div className="mt-2 space-y-2">
+                      <p className="text-[12px] leading-[1.7] text-ink-600">
+                        {s.body}
+                      </p>
+                      {s.steps ? (
+                        <ol className="space-y-1 rounded-xl bg-cream-50/70 p-3 text-[11px] leading-[1.7] text-ink-600">
+                          {s.steps.map((step, j) => (
+                            <li key={j} className="flex gap-2">
+                              <span className="mt-[2px] flex h-4 w-4 flex-none items-center justify-center rounded-full bg-ink-900 text-[9px] font-bold text-white">
+                                {j + 1}
+                              </span>
+                              <span>{step}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
-                {open ? (
-                  <ChevronDown className="h-4 w-4 flex-none text-ink-400" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 flex-none text-ink-400" />
-                )}
-              </button>
-              {open && s.steps ? (
-                <ol className="space-y-1 border-t border-ink-100/60 bg-cream-50/50 px-4 py-3 text-[11px] leading-[1.7] text-ink-600">
-                  {s.steps.map((step, j) => (
-                    <li key={j} className="flex gap-2">
-                      <span className="flex h-4 w-4 flex-none items-center justify-center rounded-full bg-ink-900 text-[9px] font-bold text-white">
-                        {j + 1}
-                      </span>
-                      <span>{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              ) : null}
-            </li>
-          );
-        })}
-      </ul>
+              );
+            })
+          )}
+        </div>
+      </section>
 
-      <section className="mt-7 rounded-2xl border border-sky-200 bg-sky-50/60 p-5">
-        <h2 className="text-[13px] font-bold text-ink-900">
-          困ったときは
-        </h2>
-        <p className="mt-1 text-[11px] leading-[1.7] text-ink-600">
+      {/* Contact */}
+      <section className="mt-5">
+        <h2 className="text-[11px] font-medium text-ink-500">お問い合わせ</h2>
+        <div className="mt-2.5 overflow-hidden rounded-2xl border border-ink-100/80 bg-white">
+          {CONTACT_ITEMS.map((it, i) => (
+            <Link
+              key={it.label}
+              href={it.href}
+              className={cn(
+                "flex items-center justify-between px-4 py-3.5 text-[13px] font-semibold text-ink-900 transition active:bg-cream-50",
+                i < CONTACT_ITEMS.length - 1 && "border-b border-ink-100/40",
+              )}
+            >
+              {it.label}
+              <span className="text-ink-300">›</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Hint footer */}
+      <section className="mt-5 rounded-2xl border border-sky-200 bg-sky-50/60 p-4">
+        <div className="flex items-center gap-2">
+          <HelpCircle className="h-4 w-4 text-sky-500" strokeWidth={2.2} />
+          <h3 className="text-[12px] font-bold text-ink-900">困ったときは</h3>
+        </div>
+        <p className="mt-1.5 text-[11px] leading-[1.7] text-ink-600">
           上手く動かないときは、設定 → データ から一度エクスポートしてから、データを削除して再ログインすると改善することがあります。
         </p>
         <div className="mt-3 flex gap-2">

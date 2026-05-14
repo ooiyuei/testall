@@ -85,52 +85,71 @@ function ModeSelect({
   onPickPhoto: () => void;
 }) {
   return (
-    <div className="px-5 pb-8 pt-3">
-      <p className="text-sm text-ink-600">
-        テスト1つに複数科目を一括で登録できます。AIが弱点と次の25分を整えます。
+    <div className="px-5 pb-8 pt-2">
+      {/* Step label */}
+      <div className="text-[11px] font-medium text-ink-400">STEP 1 / 3</div>
+      <h1
+        className="mt-1.5 text-[28px] font-extrabold leading-[1.15] tracking-[-0.025em] text-ink-900"
+        style={{ fontFamily: "var(--font-display)" }}
+      >
+        テストを登録して、
+        <br />
+        次の25分を決めよう
+      </h1>
+      <p className="mt-2.5 text-[13px] leading-[1.7] text-ink-500">
+        1テストに複数科目を一括で登録できます。AIが苦手と次の手を出します。
       </p>
 
-      <div className="mt-5 grid gap-3">
-        <button
-          type="button"
-          onClick={onPickPhoto}
-          className="flex items-center gap-4 rounded-2xl border border-cream-200 bg-white p-5 text-left shadow-soft active:scale-[0.99] transition"
-        >
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
-            <Camera className="h-6 w-6" />
+      {/* Photo mode — dark hero */}
+      <button
+        type="button"
+        onClick={onPickPhoto}
+        className="mt-6 flex w-full items-center gap-3.5 rounded-[20px] bg-ink-900 p-5 text-left text-white shadow-[0_8px_28px_-10px_rgba(20,19,15,0.35)] transition active:scale-[0.99]"
+      >
+        <div className="flex h-14 w-14 flex-none items-center justify-center rounded-2xl bg-white/[0.08]">
+          <Camera className="h-[26px] w-[26px]" strokeWidth={1.6} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[16px] font-extrabold tracking-tight">
+              写真で取り込む
+            </span>
+            <span className="rounded-full bg-sun-300 px-1.5 py-0.5 text-[9px] font-bold text-ink-900">
+              β版
+            </span>
           </div>
-          <div className="flex-1">
-            <div className="text-sm font-black text-ink-900">写真で取り込む</div>
-            <div className="mt-0.5 text-[11px] text-ink-500">
-              答案・成績票を撮影。問題文の中身は保存しません。
-            </div>
+          <div className="mt-1 text-[11px] leading-[1.6] text-white/65">
+            答案・成績票を撮影 → AIが自動で科目・点数・単元を入力
           </div>
-          <span className="rounded-full bg-sun-200 px-2 py-0.5 text-[10px] font-bold text-ink-900">
-            β版
-          </span>
-        </button>
+        </div>
+        <ChevronRight className="h-4 w-4 flex-none text-white/60" strokeWidth={2.3} />
+      </button>
 
-        <button
-          type="button"
-          onClick={onPickManual}
-          className="flex items-center gap-4 rounded-2xl border border-cream-200 bg-white p-5 text-left shadow-soft active:scale-[0.99] transition"
-        >
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-mint-100 text-mint-600">
-            <Edit3 className="h-6 w-6" />
+      {/* Manual mode */}
+      <button
+        type="button"
+        onClick={onPickManual}
+        className="mt-2.5 flex w-full items-center gap-3.5 rounded-[18px] border border-ink-100 bg-white p-4 text-left text-ink-900 transition active:scale-[0.99]"
+      >
+        <div className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-cream-100">
+          <Edit3 className="h-[22px] w-[22px] text-ink-700" strokeWidth={1.8} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[15px] font-bold tracking-tight">手入力する</div>
+          <div className="mt-0.5 text-[11px] leading-[1.6] text-ink-500">
+            5科目から複数選び、点数・単元を入力
           </div>
-          <div className="flex-1">
-            <div className="text-sm font-black text-ink-900">手入力する</div>
-            <div className="mt-0.5 text-[11px] text-ink-500">
-              5科目から複数選び、点数と単元を入力。
-            </div>
-          </div>
-        </button>
-      </div>
+        </div>
+        <ChevronRight className="h-3.5 w-3.5 flex-none text-ink-300" strokeWidth={2.3} />
+      </button>
 
-      <div className="mt-8 rounded-2xl bg-sky-50 p-4 text-[11px] text-sky-900">
-        <p className="font-bold">どちらも数十秒で終わります</p>
-        <p className="mt-1 text-sky-700">
-          学年・志望校に合わせた具体的な作戦が、診断後すぐ届きます。
+      {/* Trust strip */}
+      <div className="mt-7 rounded-[14px] bg-cream-100/60 p-4">
+        <div className="text-[11px] font-semibold text-ink-700">
+          どちらも30秒で終わります
+        </div>
+        <p className="mt-1 text-[11px] leading-[1.7] text-ink-500">
+          学年・志望校に合わせた具体的な作戦が、診断後すぐ届きます。問題文の中身は保存しません。
         </p>
       </div>
     </div>
@@ -950,40 +969,29 @@ function ManualForm({ prefill }: { prefill?: VisionResult | null }) {
 
 function StepIndicator({ step }: { step: Step }) {
   const labels = ["基本情報", "科目別点数", "単元（任意）"];
+  const current = step + 1;
+  const total = labels.length;
   return (
-    <div className="flex items-center gap-2">
-      {labels.map((label, i) => (
-        <div key={label} className="flex flex-1 items-center gap-2">
+    <div>
+      <div className="flex items-baseline justify-between">
+        <span className="text-[12px] font-semibold tracking-tight text-ink-700">
+          {labels[step]}
+        </span>
+        <span className="text-[11px] font-semibold tabular-nums text-ink-400">
+          {current} / {total}
+        </span>
+      </div>
+      <div className="mt-2 flex gap-1.5">
+        {labels.map((_, i) => (
           <div
+            key={i}
             className={cn(
-              "flex h-6 w-6 flex-none items-center justify-center rounded-full text-[10px] font-black",
-              i < step
-                ? "bg-mint-500 text-white"
-                : i === step
-                ? "bg-sky-500 text-white"
-                : "bg-cream-100 text-ink-400",
+              "h-[3px] flex-1 rounded-full transition-colors",
+              i <= step ? "bg-ink-900" : "bg-ink-100",
             )}
-          >
-            {i + 1}
-          </div>
-          <span
-            className={cn(
-              "text-[11px] font-bold",
-              i === step ? "text-ink-900" : "text-ink-400",
-            )}
-          >
-            {label}
-          </span>
-          {i < labels.length - 1 ? (
-            <div
-              className={cn(
-                "h-px flex-1",
-                i < step ? "bg-mint-500" : "bg-cream-200",
-              )}
-            />
-          ) : null}
-        </div>
-      ))}
+          />
+        ))}
+      </div>
     </div>
   );
 }

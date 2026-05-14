@@ -118,25 +118,79 @@ export function TodoView() {
 
   if (!hydrated) return <ListSkeleton rows={5} />;
 
+  // Compute counts per tab for header label
+  const counts = useMemo(() => {
+    let today = 0, todo = 0, done = 0;
+    for (const t of tasks) {
+      if (t.status === "done") done += 1;
+      else todo += 1;
+      if (
+        t.status !== "done" &&
+        (t.due === "today" || (t.dueDate && t.dueDate <= todayISO) || effectivePriority(t) === 1)
+      ) {
+        today += 1;
+      }
+    }
+    return { today, todo, done, all: tasks.length };
+  }, [tasks, todayISO]);
+
   return (
-    <div className="px-5 pb-8 pt-3 space-y-4">
-      {/* タブ */}
-      <div className="flex gap-1 overflow-x-auto no-scrollbar">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className={cn(
-              "flex-none h-9 rounded-full px-4 text-[12px] font-medium transition whitespace-nowrap",
-              tab === t.id
-                ? "bg-ink-900 text-white shadow-soft"
-                : "bg-white border border-ink-100/80 text-ink-600 hover:bg-cream-50",
-            )}
+    <div className="px-5 pb-8 pt-2 space-y-4">
+      {/* Header */}
+      <header className="flex items-end justify-between">
+        <div>
+          <div className="text-[11px] font-medium text-ink-400">やること</div>
+          <h1
+            className="mt-1 text-[28px] font-extrabold leading-[1.1] tracking-[-0.025em] text-ink-900"
+            style={{ fontFamily: "var(--font-display)" }}
           >
-            {t.label}
-          </button>
-        ))}
+            今日{" "}
+            <span className="tabular-nums text-sky-500">
+              {counts.today - tasks.filter((t) => t.status === "done" && (t.due === "today" || (t.dueDate && t.dueDate <= todayISO))).length}
+            </span>
+            <span className="text-[14px] font-semibold text-ink-400"> / {counts.today}</span>
+          </h1>
+        </div>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="タスクを追加"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-ink-900 text-white transition active:scale-[0.92]"
+        >
+          <Plus className="h-4 w-4" strokeWidth={2.4} />
+        </button>
+      </header>
+
+      {/* タブ — underline style */}
+      <div className="-mx-1 flex gap-5 overflow-x-auto border-b border-ink-100 no-scrollbar">
+        {TABS.map((t) => {
+          const active = tab === t.id;
+          const n = counts[t.id] ?? 0;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={cn(
+                "relative flex flex-none items-center gap-1 pb-2.5 pt-1 text-[13px] transition",
+                active ? "font-bold text-ink-900" : "font-medium text-ink-400",
+              )}
+            >
+              <span>{t.label}</span>
+              <span
+                className={cn(
+                  "tabular-nums text-[11px]",
+                  active ? "text-ink-400" : "text-ink-300",
+                )}
+              >
+                {n}
+              </span>
+              {active ? (
+                <span className="absolute -bottom-px left-0 right-0 h-0.5 rounded-full bg-ink-900" />
+              ) : null}
+            </button>
+          );
+        })}
       </div>
 
       {/* 検索バー */}

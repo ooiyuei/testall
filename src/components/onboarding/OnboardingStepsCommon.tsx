@@ -68,18 +68,33 @@ export const RETURN_OPTIONS = makeTimeOptions(14 * 60, 23 * 60);
 export const BED_OPTIONS = makeTimeOptions(20 * 60, 26 * 60);
 
 // ── 共通: StepHeader ─────────────────────────────────
-export function StepHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+export function StepHeader({
+  title,
+  subtitle,
+  step,
+}: {
+  title: string;
+  subtitle?: string;
+  step?: string;
+}) {
   return (
     <div className="mb-7">
+      {step ? (
+        <div className="text-[11px] font-extrabold tracking-[0.04em] text-sky-500">
+          {step}
+        </div>
+      ) : null}
       <h1
-        className="text-[26px] font-bold leading-tight text-ink-900"
-        style={{ letterSpacing: "-0.02em" }}
+        className="mt-2 text-[28px] font-extrabold leading-[1.15] tracking-[-0.025em] text-ink-900"
+        style={{ fontFamily: "var(--font-display)" }}
       >
         {title}
       </h1>
-      {subtitle && (
-        <p className="mt-2 text-[13px] leading-relaxed text-ink-500">{subtitle}</p>
-      )}
+      {subtitle ? (
+        <p className="mt-2.5 text-[13px] leading-[1.75] text-ink-500">
+          {subtitle}
+        </p>
+      ) : null}
     </div>
   );
 }
