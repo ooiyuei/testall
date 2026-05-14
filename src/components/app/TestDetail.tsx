@@ -113,6 +113,7 @@ export function TestDetail({ id }: { id: string }) {
         score={input.score}
         fullScore={input.fullScore}
         summary={diagnosis.summary}
+        trend={computeTrend(state.tests, test.id, input.subject)}
       />
 
       {/* Level / Gap */}
@@ -211,6 +212,12 @@ export function TestDetail({ id }: { id: string }) {
 
 /* ---------- Score Header ---------- */
 
+type Trend = {
+  delta: number;          // 前回比 % (符号付き)
+  prevTestName: string;
+  prevPct: number;
+} | null;
+
 type ScoreHeaderProps = {
   subject: string;
   testName: string;
@@ -219,6 +226,7 @@ type ScoreHeaderProps = {
   score: number;
   fullScore: number;
   summary: string;
+  trend?: Trend;
 };
 
 function ScoreHeader({
@@ -229,6 +237,7 @@ function ScoreHeader({
   score,
   fullScore,
   summary,
+  trend,
 }: ScoreHeaderProps) {
   return (
     <section className="rounded-2xl border border-cream-200 bg-gradient-to-br from-sky-50/80 to-mint-50/40 p-5 shadow-soft">
@@ -256,6 +265,23 @@ function ScoreHeader({
           <div className="mt-0.5 text-[11px] text-ink-400 tabular-nums">
             {score} / {fullScore}
           </div>
+          {/* 前回比トレンド */}
+          {trend ? (
+            <div
+              className={cn(
+                "mt-1.5 inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums",
+                trend.delta > 0
+                  ? "bg-mint-100 text-mint-600"
+                  : trend.delta < 0
+                    ? "bg-coral-300/20 text-coral-500"
+                    : "bg-cream-100 text-ink-500",
+              )}
+              title={`前回 ${trend.prevTestName}: ${trend.prevPct}%`}
+            >
+              {trend.delta > 0 ? "↑" : trend.delta < 0 ? "↓" : "—"}
+              {trend.delta > 0 ? "+" : ""}{trend.delta}%
+            </div>
+          ) : null}
         </div>
       </div>
       <blockquote className="mt-4 border-l-2 border-sky-300 pl-3">
@@ -263,6 +289,34 @@ function ScoreHeader({
       </blockquote>
     </section>
   );
+}
+
+// 同科目の直前テストとの差分計算
+function computeTrend(
+  tests: { id: string; createdAt: string; input: { subject: string; testName: string; score: number; fullScore: number } }[],
+  currentId: string,
+  subject: string,
+): Trend {
+  const sameSubject = tests
+    .filter((t) => t.input.subject === subject)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const idx = sameSubject.findIndex((t) => t.id === currentId);
+  if (idx < 0 || idx + 1 >= sameSubject.length) return null;
+  const current = sameSubject[idx];
+  const prev = sameSubject[idx + 1];
+  const currentPct =
+    current.input.fullScore > 0
+      ? Math.round((current.input.score / current.input.fullScore) * 100)
+      : 0;
+  const prevPct =
+    prev.input.fullScore > 0
+      ? Math.round((prev.input.score / prev.input.fullScore) * 100)
+      : 0;
+  return {
+    delta: currentPct - prevPct,
+    prevTestName: prev.input.testName,
+    prevPct,
+  };
 }
 
 /* ---------- Info Card ---------- */
