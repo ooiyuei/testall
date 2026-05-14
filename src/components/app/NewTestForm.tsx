@@ -49,6 +49,15 @@ const CAUSE_OPTIONS: { id: MissCause; label: string; tone: string }[] = [
   { id: "careless", label: "ケアレス", tone: "bg-sky-100 text-sky-700" },
 ];
 
+// 科目選択行の説明テキスト (mock ⑮ に準拠)
+const SUBJECT_SUBTITLE: Record<string, string> = {
+  japanese: "現代文 · 古文 · 漢文",
+  math: "I+A · II+B · III",
+  english: "リーディング · リスニング",
+  science: "物 · 化 · 生 · 地学",
+  social: "日 · 世 · 地 · 公",
+};
+
 export function NewTestForm() {
   const [mode, setMode] = useState<Mode>("select");
   const [prefill, setPrefill] = useState<VisionResult | null>(null);
@@ -1067,7 +1076,7 @@ function BasicStep({
             {form.selectedCategories.length} 科目
           </span>
         </div>
-        <ul className="mt-2 grid grid-cols-3 gap-2">
+        <ul className="mt-2 flex flex-col gap-2">
           {CATEGORY_DEFS.filter((c) => c.id !== "info").map((cat) => {
             const active = form.selectedCategories.includes(cat.id);
             return (
@@ -1076,28 +1085,40 @@ function BasicStep({
                   type="button"
                   onClick={() => toggleCategory(cat.id)}
                   className={cn(
-                    "relative flex h-20 w-full flex-col items-center justify-center gap-1 rounded-2xl border-2 transition",
+                    "flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3.5 text-left transition active:scale-[0.99]",
                     active
-                      ? "border-sky-500 bg-sky-50"
-                      : "border-cream-200 bg-white hover:bg-cream-50",
+                      ? "border-[1.5px] border-ink-900 shadow-[0_4px_16px_-8px_rgba(20,19,15,0.18)]"
+                      : "border border-ink-100",
                   )}
                 >
                   <span
                     className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-xl text-sm font-black",
+                      "flex h-9 w-9 flex-none items-center justify-center rounded-xl text-[14px] font-extrabold",
                       cat.tone,
                     )}
                   >
                     {cat.shortName}
                   </span>
-                  <span className="text-xs font-bold text-ink-900">
-                    {cat.name}
-                  </span>
-                  {active ? (
-                    <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-sky-500 text-white">
-                      <Check className="h-3 w-3" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] font-bold tracking-tight text-ink-900">
+                      {cat.name}
                     </span>
-                  ) : null}
+                    <span className="mt-0.5 block text-[11px] text-ink-500">
+                      {SUBJECT_SUBTITLE[cat.id] ?? cat.name}
+                    </span>
+                  </span>
+                  <span
+                    className={cn(
+                      "flex h-6 w-6 flex-none items-center justify-center rounded-full transition",
+                      active
+                        ? "bg-ink-900 text-white"
+                        : "border-[1.5px] border-ink-200 bg-white",
+                    )}
+                  >
+                    {active ? (
+                      <Check className="h-3 w-3" strokeWidth={3} />
+                    ) : null}
+                  </span>
                 </button>
               </li>
             );
