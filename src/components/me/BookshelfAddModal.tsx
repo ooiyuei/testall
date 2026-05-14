@@ -48,7 +48,7 @@ type LookupCustom = {
 
 type LookupOk =
   | { ok: true; source: "local"; textbook: Textbook }
-  | { ok: true; source: "openbd"; custom: LookupCustom };
+  | { ok: true; source: "openbd" | "community"; custom: LookupCustom };
 
 type LookupFail = { ok: false; error: string };
 
@@ -515,12 +515,14 @@ function LookupSheet({
         };
       }
       const c = state.result.custom;
+      const badge =
+        state.result.source === "community" ? "コミュニティ" : "OpenBD";
       return {
         title: c.title,
         publisher: c.publisher,
         author: c.author,
         coverUrl: c.coverUrl,
-        badge: "OpenBD",
+        badge,
       };
     }
     return null;

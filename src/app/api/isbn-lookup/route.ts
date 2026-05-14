@@ -1,13 +1,20 @@
 // ISBN から書籍情報を引く API
 // 1) ローカル textbook DB に登録済みなら Textbook をそのまま返す
-// 2) なければ OpenBD (https://api.openbd.jp) で照会して title/author/publisher/cover を返す
-// 3) 見つからなければ { ok: false, error: "not_found" }
+// 2) Supabase の community_textbooks (UGC) にあればそれを返す
+// 3) なければ OpenBD (https://api.openbd.jp) で照会して title/author/publisher/cover を返す
+// 4) ヒットしたら community_textbooks に upsert (次のユーザーで使える)
+// 5) 見つからなければ { ok: false, error: "not_found" }
 //
 // OpenBD は無料・API キー不要・国内書籍カバー率が高い
 
 import { NextResponse } from "next/server";
 import { TEXTBOOKS, findByIsbn } from "@/lib/master/textbooks";
 import type { Textbook } from "@/lib/master";
+import {
+  fetchCommunityTextbook,
+  upsertCommunityTextbook,
+  guessSubjectFromTitle,
+} from "@/lib/master/community-textbooks";
 
 export const runtime = "nodejs";
 export const maxDuration = 15;
@@ -22,7 +29,7 @@ type CustomBook = {
 };
 
 type OkExisting = { ok: true; source: "local"; textbook: Textbook };
-type OkCustom = { ok: true; source: "openbd"; custom: CustomBook };
+type OkCustom = { ok: true; source: "openbd" | "community"; custom: CustomBook };
 type Fail = { ok: false; error: string };
 
 // ISBN を 13桁正規化 (ハイフン除去・10桁→13桁変換)
@@ -121,7 +128,30 @@ export async function GET(
     return NextResponse.json({ ok: true, source: "local", textbook: local });
   }
 
-  // 2) OpenBD
+  // 2) Supabase の community_textbooks (UGC) — 過去にユーザーが追加した書籍
+  const community = await fetchCommunityTextbook(isbn);
+  if (community) {
+    const custom: CustomBook = {
+      isbn,
+      title: community.title,
+      author: community.author ?? undefined,
+      publisher: community.publisher ?? undefined,
+      coverUrl: community.cover_url ?? undefined,
+    };
+    // 使われた回数を増やす (fire-and-forget)
+    upsertCommunityTextbook({
+      isbn,
+      title: community.title,
+      author: community.author,
+      publisher: community.publisher,
+      cover_url: community.cover_url,
+      pages: community.pages,
+      subject_hint: community.subject_hint,
+    }).catch(() => {});
+    return NextResponse.json({ ok: true, source: "community", custom });
+  }
+
+  // 3) OpenBD
   let openbd: CustomBook | null = null;
   try {
     openbd = await fetchOpenBd(isbn);
@@ -136,11 +166,21 @@ export async function GET(
     );
   }
 
-  // 3) OpenBD でヒットしたタイトルで DB ファジーマッチ
+  // 4) OpenBD でヒットしたタイトルで DB ファジーマッチ
   const fuzzy = fuzzyFindByTitle(openbd.title);
   if (fuzzy) {
     return NextResponse.json({ ok: true, source: "local", textbook: fuzzy });
   }
+
+  // 5) Community DB に保存 (次のユーザーで使える、fire-and-forget)
+  upsertCommunityTextbook({
+    isbn,
+    title: openbd.title,
+    author: openbd.author,
+    publisher: openbd.publisher,
+    cover_url: openbd.coverUrl,
+    subject_hint: guessSubjectFromTitle(openbd.title),
+  }).catch(() => {});
 
   return NextResponse.json({ ok: true, source: "openbd", custom: openbd });
 }

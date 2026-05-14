@@ -15,15 +15,17 @@ import { AddEntityModal, type AddEntityKind } from "@/components/master/AddEntit
 import {
   GradeStep,
   SchoolStep,
-  DeviationStep,
-  TargetDevStep,
-  UnivTypesStep,
-  TargetUnisStep,
   StudyTimeStep,
   ScheduleStep,
   WeekendStep,
   StrengthsStep,
-} from "./OnboardingSteps";
+} from "./OnboardingStepsCommon";
+import {
+  DeviationStep,
+  TargetDevStep,
+  UnivTypesStep,
+  TargetUnisStep,
+} from "./OnboardingStepsDev";
 
 // ── ステップ定義 ──────────────────────────────────────
 const STEPS = [
