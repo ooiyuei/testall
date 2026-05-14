@@ -26,7 +26,7 @@ const steps = [
     n: "04",
     icon: Timer,
     tone: "bg-sun-200 text-ink-900",
-    title: "45分ブロックで動く",
+    title: "25分ブロックで動く",
     body: "「数学/二次関数 例題12〜15、4問中3問を答えを見ず解ける」まで具体化。集中モードでスマホを閉じよう。",
   },
   {
@@ -48,7 +48,7 @@ export function Solution() {
           </div>
           <h2 className="mt-4 text-3xl font-black leading-tight text-ink-900 sm:text-5xl">
             テストを入れると、<br />
-            <span className="text-sky-500">今日の45分</span>まで決まる。
+            <span className="text-sky-500">今日の25分</span>まで決まる。
           </h2>
           <p className="mt-6 max-w-2xl text-base text-ink-600 sm:text-lg">
             塾のカウンセラー・参考書ルート・週間計画・今日のタスクを、AIが1本につないでくれます。

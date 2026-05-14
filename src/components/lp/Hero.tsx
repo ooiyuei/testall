@@ -20,7 +20,7 @@ export function Hero() {
           </div>
 
           <h1 className="mt-6 text-[40px] font-black leading-[1.15] tracking-tight text-ink-900 sm:text-[56px] md:text-[64px]">
-            今日の<span className="text-sky-500">45分</span>を、
+            今日の<span className="text-sky-500">25分</span>を、
             <br />
             一緒に整える。
           </h1>
@@ -29,7 +29,7 @@ export function Hero() {
             模試・校内テストの結果を入れるだけ。
             <br />
             <span className="font-bold text-ink-900">
-              苦手分析 → 参考書ルート → 今日の45分
+              苦手分析 → 参考書ルート → 今日の25分
             </span>
             まで、AIが一緒に整える受験OS。
           </p>

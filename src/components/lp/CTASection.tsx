@@ -6,7 +6,7 @@ export function CTASection() {
     <section className="relative py-24">
       <div className="mx-auto max-w-3xl px-5 text-center">
         <h2 className="text-3xl font-black leading-tight text-ink-900 sm:text-5xl">
-          今日の<span className="text-sky-500">45分</span>から、<br />
+          今日の<span className="text-sky-500">25分</span>から、<br />
           一緒に始めましょう。
         </h2>
         <p className="mt-6 text-base text-ink-600 sm:text-lg">
