@@ -27,6 +27,7 @@ import { AiChat } from "./AiChat";
 import { StreakHeatmap } from "./StreakHeatmap";
 import { LoginBonus } from "./LoginBonus";
 import { InstallPrompt } from "./InstallPrompt";
+import { DailyTip } from "./DailyTip";
 import { HomeSkeleton } from "@/components/ui/Skeleton";
 
 const WEEKDAY_LABEL = ["月", "火", "水", "木", "金", "土", "日"];
@@ -178,6 +179,9 @@ export function HomeView() {
       </section>
 
       {needsOnboarding ? <OnboardingPrompt /> : null}
+
+      {/* 今日のヒント (1日1回、ルールベース) */}
+      <DailyTip />
 
       {/* 今日のおすすめ */}
       {hydrated ? <WeeklyReviewCard /> : null}
