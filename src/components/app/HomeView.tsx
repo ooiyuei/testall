@@ -152,7 +152,7 @@ export function HomeView() {
   if (!hydrated) return <HomeSkeleton />;
 
   return (
-    <div className="px-5 pb-8 pt-3">
+    <div className="px-5 pb-8 pt-3 [&>section]:animate-fade-in-up">
       {state.profile?.onboardedAt ? <GuideTour /> : null}
       {state.profile?.onboardedAt ? <LoginBonus /> : null}
       {state.profile?.onboardedAt ? <InstallPrompt /> : null}
