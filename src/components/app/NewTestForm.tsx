@@ -1626,11 +1626,13 @@ function buildHistoryContext(): TestInput["history"] {
   }));
   const cutoffMs = Date.now() - 14 * 24 * 60 * 60 * 1000;
   const recentBlockLogs = (store.blockLogs ?? [])
-    .filter((b) => new Date(b.completedAt).getTime() >= cutoffMs)
-    .map((b) => ({
-      date: b.completedAt.slice(0, 10),
-      rating: b.rating,
-    }));
+    .filter((b) => b?.completedAt && new Date(b.completedAt).getTime() >= cutoffMs)
+    .map((b) => {
+      const v = b.completedAt;
+      const date = typeof v === "string" ? v.slice(0, 10)
+        : new Date(v as unknown as number).toISOString().slice(0, 10);
+      return { date, rating: b.rating };
+    });
   const bookshelf = (store.profile?.bookshelfItems ?? []).map((b) => ({
     name: b.name,
     kind: b.kind,

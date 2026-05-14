@@ -63,6 +63,17 @@ import { Card } from "@/components/ui/Card";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { MeSkeleton } from "@/components/ui/Skeleton";
 
+// completedAt は通常 ISO 文字列だが、旧データや破損データで number/null が来る場合に
+// 備え、常に YYYY-MM-DD を返すよう正規化する。
+function toDateString(v: unknown): string | null {
+  if (typeof v === "string") return v.slice(0, 10);
+  if (typeof v === "number") {
+    try { return new Date(v).toISOString().slice(0, 10); } catch { return null; }
+  }
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  return null;
+}
+
 export function MeView() {
   const { state, hydrated } = useStore();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -913,12 +924,14 @@ function ExpTrendSection() {
       dailyMap.set(d, (dailyMap.get(d) ?? 0) + 10);
     }
     for (const bl of state.blockLogs ?? []) {
-      const d = bl.completedAt.slice(0, 10);
+      const d = toDateString(bl.completedAt);
+      if (!d) continue;
       dailyMap.set(d, (dailyMap.get(d) ?? 0) + 50);
     }
     for (const task of state.tasks ?? []) {
       if (task.status === "done" && task.completedAt) {
-        const d = task.completedAt.slice(0, 10);
+        const d = toDateString(task.completedAt);
+        if (!d) continue;
         const gain = 30 * Math.max(1, task.blocks ?? 1);
         dailyMap.set(d, (dailyMap.get(d) ?? 0) + gain);
       }

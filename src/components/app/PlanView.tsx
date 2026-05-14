@@ -205,7 +205,13 @@ export function PlanView() {
             const isToday = cellYmd === todayYmd;
             const isSelected = cellYmd === selectedDate;
             const cellEvents = eventsForDate(cellYmd);
-            const hasLog = state.blockLogs.some((l) => l.completedAt.slice(0, 10) === cellYmd);
+            const hasLog = (state.blockLogs ?? []).some((l) => {
+              const v = l?.completedAt;
+              const ymd = typeof v === "string" ? v.slice(0, 10)
+                : typeof v === "number" ? new Date(v).toISOString().slice(0, 10)
+                : null;
+              return ymd === cellYmd;
+            });
             return (
               <li key={i}>
                 <button

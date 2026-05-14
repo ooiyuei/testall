@@ -222,14 +222,7 @@ export function HomeView() {
         </section>
       ) : null}
 
-      {/* 今日のヒント */}
-      <DailyTip />
-
-      {/* AI のおすすめ系 */}
-      {hydrated ? <WeeklyReviewCard /> : null}
-      {hydrated ? <TodaySuggestion state={state} /> : null}
-
-      {/* 縦タイムライン (今日のブロック) */}
+      {/* 縦タイムライン (今日のブロック) — PDFの主役 */}
       {totalCount > 0 && latest && blocks.length > 0 ? (
         <section className="mt-5">
           <div className="relative">
@@ -307,6 +300,11 @@ export function HomeView() {
 
       {/* 気分入力カード (まだの場合は前面に) */}
       {hydrated && !todayMoodLog ? <MoodCheckCard /> : null}
+
+      {/* 今日のヒント・週次レビュー・AIおすすめ — PDFには無いがプロダクト価値で残す。タイムラインの邪魔をしないよう下に配置。 */}
+      <DailyTip />
+      {hydrated ? <WeeklyReviewCard /> : null}
+      {hydrated ? <TodaySuggestion state={state} /> : null}
 
       {/* 学習ヒートマップ */}
       {hydrated ? (
