@@ -1,19 +1,19 @@
 "use client";
 
-// ホーム — Apple HIG ベースのクリーンレイアウト
-// 主役: 今日の目標 (MoodCheckCard 後の数字)
-// 次: 今日のブロック一覧
-// 補足: 今週の進捗 / AI からの一言
+// ホーム — HomeAfterB スタイル (タイムライン主導)
+// 主役: 縦タイムラインで done/now/next を一気に把握できる
+// 上: コンパクトな pill ヘッダ (アバター + 日付 + ストリーク)
+// 中: 「今日のプラン X ブロック残り / あと N 分」 + 縦タイムライン
+// 下: 今週 / 今日の気分 2列、その下にプロダクトカード群
 
 import Link from "next/link";
 import { useMemo } from "react";
 import {
   CheckCircle2,
   ChevronRight,
-  Clock,
   Flame,
   Play,
-  Sparkles,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
@@ -30,7 +30,13 @@ import { InstallPrompt } from "./InstallPrompt";
 import { DailyTip } from "./DailyTip";
 import { HomeSkeleton } from "@/components/ui/Skeleton";
 
-const WEEKDAY_LABEL = ["月", "火", "水", "木", "金", "土", "日"];
+const MOOD_LABELS: Record<string, string> = {
+  "today-off": "休む",
+  less: "少なめ",
+  normal: "並",
+  more: "大盛",
+  max: "特盛",
+};
 
 function weekdayIndex(d: Date): number {
   // Mon=0 .. Sun=6
@@ -65,7 +71,6 @@ export function HomeView() {
   });
   if (nextIdx >= 0) blockStatus[nextIdx] = "now";
 
-  // 今日の実完了数 (6時リセット起点・全ソース)
   const todayISO = currentDayISO(now);
   const todayCompletedTotal = useMemo(
     () =>
@@ -75,18 +80,21 @@ export function HomeView() {
     [state.blockLogs, todayISO],
   );
 
-  // 今日の目標 (mood log があればそれ、なければ latest test の blocks 数)
   const todayMoodLog = useMemo(
     () => state.dailyMoodLogs?.find((l) => l.dateISO === todayISO),
     [state.dailyMoodLogs, todayISO],
   );
   const todayTarget = todayMoodLog?.finalBlocks ?? blocks.length;
 
-  // 今日の進み: 完了数を todayCompletedTotal / target (mood log 優先) で出す
-  const doneCount = todayCompletedTotal > 0 ? todayCompletedTotal : blockStatus.filter((s) => s === "done").length;
+  const doneCount =
+    todayCompletedTotal > 0
+      ? todayCompletedTotal
+      : blockStatus.filter((s) => s === "done").length;
   const totalCount = Math.max(todayTarget, doneCount);
+  const remainingBlocks = Math.max(0, totalCount - doneCount);
+  const remainingMin = remainingBlocks * 25;
 
-  // 週間ストリーク (連続日数)
+  // 週間ストリーク
   const streakDays = useMemo(() => {
     const dateSet = new Set(
       state.blockLogs.map((b) => currentDayISO(new Date(b.completedAt))),
@@ -132,47 +140,62 @@ export function HomeView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.blockLogs, todayIdx]);
 
+  const weeklyTotal = weeklyCounts.reduce((a, b) => a + b, 0);
+  const weeklyMax = Math.max(...weeklyCounts, 1);
+
   const dateLabel = useMemo(
     () =>
       new Intl.DateTimeFormat("ja-JP", {
-        month: "long",
+        month: "numeric",
         day: "numeric",
-        weekday: "short",
+        weekday: "narrow",
       }).format(now),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
-  const greeting = state.profile?.name
-    ? `おかえり、${state.profile.name}`
-    : "おかえりなさい";
+  const greeting = (() => {
+    const h = now.getHours();
+    if (h < 5) return "おやすみ前に";
+    if (h < 11) return "おはよう";
+    if (h < 17) return "こんにちは";
+    return "こんばんは";
+  })();
 
+  const userInitial = state.profile?.name?.[0] ?? "T";
   const needsOnboarding = hydrated && !state.profile?.onboardedAt;
+  const moodLabel = todayMoodLog?.mood ? MOOD_LABELS[todayMoodLog.mood] : "未入力";
 
-  // ハイドレート中はスケルトンで形を見せる (FOUC 防止)
   if (!hydrated) return <HomeSkeleton />;
 
   return (
-    <div className="px-5 pb-8 pt-3 [&>section]:animate-fade-in-up">
+    <div className="px-5 pb-8 pt-2 [&>section]:animate-fade-in-up">
       {state.profile?.onboardedAt ? <GuideTour /> : null}
       {state.profile?.onboardedAt ? <LoginBonus /> : null}
       {state.profile?.onboardedAt ? <InstallPrompt /> : null}
-      {/* Hero greeting — Apple HIG 風に大胆なタイポグラフィ */}
-      <section className="mb-6 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[11px] font-medium tracking-wide text-ink-400">
-            {dateLabel}
+
+      {/* Compact pill header — avatar + date/greeting / streak */}
+      <section className="mt-1.5 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-ink-900 text-[13px] font-extrabold text-white">
+            {userInitial}
           </div>
-          <h1 className="mt-1.5 text-[26px] font-bold leading-[1.15] tracking-[-0.02em] text-ink-900">
-            {greeting}
-          </h1>
+          <div className="min-w-0">
+            <div className="text-[11px] font-medium text-ink-400">
+              {dateLabel}
+            </div>
+            <div className="truncate text-[14px] font-bold text-ink-900">
+              {greeting}
+              {state.profile?.name ? `、${state.profile.name}` : ""}
+            </div>
+          </div>
         </div>
         {streakDays > 0 ? (
-          <div className="flex flex-none items-center gap-1 rounded-full border border-coral-300/30 bg-coral-300/8 px-3 py-1.5 text-coral-500 shadow-soft">
-            <Flame className="h-3.5 w-3.5" strokeWidth={2.4} />
-            <span className="text-[12px] font-bold tabular-nums leading-none">
+          <div className="flex flex-none items-center gap-1 rounded-full border border-ink-100 bg-white px-2.5 py-1.5">
+            <Flame className="h-3.5 w-3.5 text-coral-500" strokeWidth={2.4} />
+            <span className="text-[12px] font-bold tabular-nums text-ink-900">
               {streakDays}
-              <span className="ml-0.5 text-[10px] font-medium">日</span>
+              <span className="ml-0.5 text-[10px] font-medium text-ink-500">日</span>
             </span>
           </div>
         ) : null}
@@ -180,121 +203,110 @@ export function HomeView() {
 
       {needsOnboarding ? <OnboardingPrompt /> : null}
 
-      {/* 今日のヒント (1日1回、ルールベース) */}
+      {/* Headline — "今日のプラン" + 残ブロック・残時間 */}
+      {totalCount > 0 ? (
+        <section className="mt-6">
+          <div className="text-[11px] font-medium tracking-wide text-ink-400">
+            今日のプラン
+          </div>
+          <h1
+            className="mt-1 text-[28px] font-extrabold leading-[1.2] tracking-[-0.025em] text-ink-900"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            <span className="text-sky-500">{remainingBlocks}</span> ブロック残り
+            <br />
+            <span className="font-bold text-ink-400">
+              {remainingBlocks === 0 ? "今日は完了！" : `あと ${remainingMin}分`}
+            </span>
+          </h1>
+        </section>
+      ) : null}
+
+      {/* 今日のヒント */}
       <DailyTip />
 
-      {/* 今日のおすすめ */}
+      {/* AI のおすすめ系 */}
       {hydrated ? <WeeklyReviewCard /> : null}
       {hydrated ? <TodaySuggestion state={state} /> : null}
 
-      {/* 今日の準備 (気分 + 帰宅) */}
-      {hydrated ? <MoodCheckCard /> : null}
-
-      {/* 今日の進み — Hero カード化 */}
-      {totalCount > 0 ? (
-        <section className="mt-5 rounded-2xl border border-ink-100/80 bg-white p-5 shadow-soft">
-          <div className="flex items-baseline justify-between gap-2">
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
-                Today
-              </div>
-              <div className="mt-1.5 flex items-baseline gap-1.5">
-                <span className="text-[44px] font-bold leading-none tabular-nums tracking-[-0.03em] text-ink-900">
-                  {doneCount}
-                </span>
-                <span className="text-lg font-bold text-ink-300">/</span>
-                <span className="text-lg font-bold tabular-nums text-ink-400">
-                  {totalCount}
-                </span>
-                <span className="ml-1.5 text-[11px] font-medium text-ink-500">
-                  ブロック完了
-                </span>
-              </div>
-            </div>
-            <Link
-              href="/app/focus"
-              className="inline-flex h-10 flex-none items-center gap-1 rounded-full bg-ink-900 px-4 text-[12px] font-bold text-white shadow-soft transition active:scale-[0.96] hover:bg-ink-800"
-            >
-              <Play className="h-3 w-3" strokeWidth={2.5} fill="currentColor" />
-              はじめる
-            </Link>
-          </div>
-
-          <div className="mt-5 h-2 overflow-hidden rounded-full bg-cream-200/60">
-            <div
-              className="h-full rounded-full bg-mint-500 transition-all duration-500"
-              style={{
-                width: `${totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100)}%`,
-              }}
-            />
+      {/* 縦タイムライン (今日のブロック) */}
+      {totalCount > 0 && latest && blocks.length > 0 ? (
+        <section className="mt-5">
+          <div className="relative">
+            {blocks.map((b, i) => (
+              <TimelineRow
+                key={i}
+                time={b.startTime}
+                subject={`${b.subject} / ${b.topic}`}
+                source={b.source}
+                completion={b.completion}
+                status={blockStatus[i]}
+                connect={i < blocks.length - 1}
+                href={`/app/focus/run?testId=${latest.id}&block=${i}`}
+              />
+            ))}
           </div>
         </section>
       ) : (
         <EmptyTodayCard />
       )}
 
-      {/* 今週の流れ */}
-      <section className="mt-7">
-        <SectionLabel
-          title="今週の流れ"
-          right={
-            <Link
-              href="/app/plan"
-              className="flex items-center gap-0.5 text-[11px] font-medium text-sky-500"
-            >
-              週間計画
+      {/* Footer 2-col — 今週 / 今日の気分 */}
+      {totalCount > 0 ? (
+        <section className="mt-5 grid grid-cols-2 gap-2.5">
+          <Link
+            href="/app/plan"
+            className="rounded-2xl border border-ink-100/80 bg-white p-3.5 transition active:scale-[0.99]"
+          >
+            <div className="text-[10px] font-semibold text-ink-400">今週</div>
+            <div className="mt-1 flex items-baseline gap-1">
+              <span className="text-[22px] font-extrabold tabular-nums tracking-[-0.02em] text-ink-900">
+                {weeklyTotal}
+              </span>
+              <span className="text-[11px] text-ink-400">ブロック</span>
+            </div>
+            <div className="mt-2 flex h-[18px] items-end gap-[3px]">
+              {weeklyCounts.map((n, i) => {
+                const isToday = i === todayIdx;
+                const pct = Math.max(8, Math.round((n / weeklyMax) * 100));
+                return (
+                  <div
+                    key={i}
+                    className="flex-1 overflow-hidden rounded-[3px] bg-cream-100"
+                  >
+                    <div
+                      className={cn(
+                        "ml-0 mt-auto h-full origin-bottom transition-all",
+                        isToday ? "bg-ink-900" : "bg-mint-500",
+                        n === 0 && "opacity-0",
+                      )}
+                      style={{ height: `${pct}%` }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </Link>
+          <div className="rounded-2xl border border-ink-100/80 bg-white p-3.5">
+            <div className="text-[10px] font-semibold text-ink-400">今日の気分</div>
+            <div className="mt-1 flex items-baseline gap-1">
+              <span
+                className="text-[22px] font-extrabold tracking-[-0.02em] text-ink-900"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {moodLabel}
+              </span>
+            </div>
+            <div className="mt-2 inline-flex items-center gap-0.5 text-[11px] font-semibold text-sky-500">
+              {todayMoodLog ? "変更" : "入力する"}
               <ChevronRight className="h-3 w-3" />
-            </Link>
-          }
-        />
-        <ul className="mt-3 grid grid-cols-7 gap-1.5">
-          {WEEKDAY_LABEL.map((d, i) => {
-            const isToday = i === todayIdx;
-            const past = i < todayIdx;
-            const count = weeklyCounts[i] ?? 0;
-            const hasBlocks = count > 0;
-            return (
-              <li key={d}>
-                <div
-                  className={cn(
-                    "flex flex-col items-center gap-1.5 rounded-xl py-2.5 transition",
-                    isToday
-                      ? "bg-ink-900 text-white"
-                      : hasBlocks
-                        ? "bg-mint-50 border border-mint-200"
-                        : "bg-white border border-ink-100/70",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "text-[10px] font-bold",
-                      isToday ? "text-white/70" : hasBlocks ? "text-mint-600" : "text-ink-400",
-                    )}
-                  >
-                    {d}
-                  </span>
-                  <span
-                    className={cn(
-                      "flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold tabular-nums",
-                      hasBlocks
-                        ? isToday
-                          ? "bg-white/20 text-white"
-                          : "bg-mint-500 text-white"
-                        : isToday
-                          ? "bg-white/20 text-white"
-                          : past
-                            ? "bg-cream-100 text-ink-400"
-                            : "bg-cream-100 text-ink-300",
-                    )}
-                  >
-                    {hasBlocks ? count : isToday ? "•" : past ? "—" : ""}
-                  </span>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {/* 気分入力カード (まだの場合は前面に) */}
+      {hydrated && !todayMoodLog ? <MoodCheckCard /> : null}
 
       {/* 学習ヒートマップ */}
       {hydrated ? (
@@ -303,89 +315,104 @@ export function HomeView() {
         </section>
       ) : null}
 
-      {/* 今日のブロック */}
-      {totalCount > 0 && latest ? (
-        <section className="mt-7">
-          <SectionLabel
-            title="今日の25分ブロック"
-            right={
-              <Link
-                href="/app/focus"
-                className="flex items-center gap-0.5 text-[11px] font-medium text-sky-500"
-              >
-                集中モード
-                <ChevronRight className="h-3 w-3" />
-              </Link>
-            }
-          />
-          <ul className="mt-3 space-y-2">
-            {blocks.map((b, i) => (
-              <li key={i}>
-                <BlockCard
-                  testId={latest.id}
-                  blockIdx={i}
-                  block={b}
-                  status={blockStatus[i]}
-                />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
       {/* AI チャット */}
       {hydrated ? <AiChat state={state} /> : null}
-
-      {/* AI からのひとこと — 一旦削除 (TODO v0.7 で復活) */}
-      {false && latest ? (
-        <section className="mt-7 rounded-2xl border border-ink-100/80 bg-white p-4">
-          <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-mint-50 text-mint-600">
-              <Sparkles className="h-[18px] w-[18px]" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-mint-600">
-                AI からのひとこと
-              </div>
-              <p className="mt-1 text-[13px] leading-[1.7] text-ink-700">
-                {latest.diagnosis.encouragement}
-              </p>
-              <Link
-                href={`/app/test/${latest.id}`}
-                className="mt-2 inline-flex items-center gap-0.5 text-[11px] font-bold text-sky-500"
-              >
-                診断レポートを見る
-                <ChevronRight className="h-3 w-3" />
-              </Link>
-            </div>
-          </div>
-        </section>
-      ) : null}
     </div>
   );
 }
 
-function SectionLabel({
-  title,
-  right,
+function TimelineRow({
+  time,
+  subject,
+  source,
+  completion,
+  status,
+  connect,
+  href,
 }: {
-  title: string;
-  right?: React.ReactNode;
+  time: string;
+  subject: string;
+  source: string;
+  completion?: string;
+  status: "done" | "now" | "next";
+  connect: boolean;
+  href: string;
 }) {
-  // 日本語タイトルは uppercase / wide tracking を適用しない (英字専用効果のため)
-  const isAscii = /^[\x00-\x7F]+$/.test(title);
+  const done = status === "done";
+  const now = status === "now";
+
   return (
-    <div className="flex items-baseline justify-between">
-      <h2
-        className={
-          isAscii
-            ? "text-[11px] font-bold uppercase tracking-[0.18em] text-ink-400"
-            : "text-[11px] font-medium text-ink-500"
-        }
-      >
-        {title}
-      </h2>
-      {right}
+    <div className="flex gap-3">
+      {/* time col */}
+      <div className="w-12 flex-none pt-1.5">
+        <div
+          className={cn(
+            "text-[12px] font-bold tabular-nums tracking-tight",
+            now ? "text-ink-900" : "text-ink-400",
+          )}
+        >
+          {time}
+        </div>
+      </div>
+      {/* dot + connector */}
+      <div className="relative w-4 flex-none">
+        <div
+          className={cn(
+            "absolute top-2 left-1 h-2 w-2 rounded-full",
+            done && "bg-mint-500",
+            now && "bg-sky-500 ring-[5px] ring-sky-500/20",
+            !done && !now && "border-2 border-ink-200 bg-white",
+          )}
+        />
+        {connect ? (
+          <div className="absolute top-[18px] -bottom-2 left-[7.5px] w-px bg-ink-100" />
+        ) : null}
+      </div>
+      {/* content */}
+      <div className="flex-1 pb-4">
+        {!now ? (
+          <div className="py-1">
+            <div
+              className={cn(
+                "text-[14px] font-bold tracking-tight",
+                done ? "text-ink-400 line-through" : "text-ink-900",
+              )}
+            >
+              {subject}
+            </div>
+            <div className="mt-0.5 text-[11px] text-ink-500">{source}</div>
+            {done ? (
+              <div className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-mint-600">
+                <CheckCircle2 className="h-3 w-3" /> 完了
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <div className="rounded-2xl border-[1.5px] border-sky-500 bg-white p-4 shadow-[0_0_0_4px_rgba(0,113,227,0.08),0_8px_24px_-10px_rgba(0,113,227,0.18)]">
+            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-sky-600">
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
+              NEXT UP
+            </div>
+            <div className="mt-1.5 text-[16px] font-extrabold tracking-tight text-ink-900">
+              {subject}
+            </div>
+            <div className="mt-0.5 text-[11px] text-ink-500">{source}</div>
+            {completion ? (
+              <div className="mt-2.5 flex items-center gap-1.5 rounded-lg bg-cream-100/70 px-2.5 py-2 text-[11px] text-ink-700">
+                <Target className="h-3 w-3 flex-none text-sky-500" />
+                {completion}
+              </div>
+            ) : null}
+            <Link
+              href={href}
+              className="mt-3 flex h-11 items-center justify-center gap-1.5 rounded-full bg-ink-900 text-[13px] font-bold text-white transition active:scale-[0.98]"
+            >
+              <Play className="h-3 w-3" strokeWidth={2.5} fill="currentColor" />
+              25分はじめる
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -393,7 +420,6 @@ function SectionLabel({
 function EmptyTodayCard() {
   return (
     <section className="mt-5 space-y-2.5">
-      {/* 即・25分タイマー */}
       <div className="rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50/80 to-mint-50/40 p-5">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-white text-sky-500">
@@ -408,7 +434,7 @@ function EmptyTodayCard() {
             </p>
             <Link
               href="/app/focus/run"
-              className="mt-3 inline-flex h-10 items-center gap-1 rounded-full bg-sky-500 px-4 text-[12px] font-bold text-white active:scale-[0.97] transition"
+              className="mt-3 inline-flex h-10 items-center gap-1 rounded-full bg-sky-500 px-4 text-[12px] font-bold text-white transition active:scale-[0.97]"
             >
               <Play className="h-3.5 w-3.5" strokeWidth={2.4} />
               25分はじめる
@@ -417,7 +443,6 @@ function EmptyTodayCard() {
         </div>
       </div>
 
-      {/* テスト追加で AI 診断 */}
       <div className="rounded-2xl border border-ink-100/80 bg-white p-5 text-center">
         <div className="text-[13px] font-bold text-ink-900">
           テストを追加すると、今日の25分をAIが整えてくれます
@@ -427,7 +452,7 @@ function EmptyTodayCard() {
         </p>
         <Link
           href="/app/test/new"
-          className="mt-3 inline-flex h-9 items-center gap-1 rounded-full bg-ink-900 px-4 text-[11px] font-bold text-white active:scale-[0.97] transition"
+          className="mt-3 inline-flex h-9 items-center gap-1 rounded-full bg-ink-900 px-4 text-[11px] font-bold text-white transition active:scale-[0.97]"
         >
           最初のテストを追加
         </Link>
@@ -440,7 +465,7 @@ export function OnboardingPrompt() {
   return (
     <Link
       href="/onboarding"
-      className="mb-4 flex items-center justify-between rounded-2xl border border-sky-200 bg-sky-50/60 p-4 active:scale-[0.99] transition"
+      className="mt-4 flex items-center justify-between rounded-2xl border border-sky-200 bg-sky-50/60 p-4 transition active:scale-[0.99]"
     >
       <div>
         <div className="text-[10px] font-bold tracking-[0.04em] text-sky-600">
@@ -455,80 +480,5 @@ export function OnboardingPrompt() {
       </div>
       <ChevronRight className="h-5 w-5 text-sky-500" />
     </Link>
-  );
-}
-
-function BlockCard({
-  testId,
-  blockIdx,
-  block,
-  status,
-}: {
-  testId: string;
-  blockIdx: number;
-  block: Block;
-  status: "done" | "now" | "next";
-}) {
-  const done = status === "done";
-  const now = status === "now";
-
-  return (
-    <article
-      className={cn(
-        "flex items-stretch gap-3 rounded-2xl border p-3 transition",
-        now
-          ? "border-sky-300 bg-white shadow-[0_0_0_3px_rgba(0,113,227,0.08)]"
-          : done
-          ? "border-ink-100/70 bg-cream-50/70"
-          : "border-ink-100/80 bg-white",
-      )}
-    >
-      <div
-        className={cn(
-          "flex w-14 flex-none flex-col items-center justify-center gap-0.5 rounded-xl",
-          done
-            ? "bg-mint-50 text-mint-600"
-            : now
-            ? "bg-sky-50 text-sky-600"
-            : "bg-cream-100 text-ink-500",
-        )}
-      >
-        <span className="text-sm font-bold tabular-nums">{block.startTime}</span>
-        <span className="text-[9px] font-bold uppercase tracking-wider">
-          {done ? "完了" : now ? "次" : "予定"}
-        </span>
-      </div>
-      <div className="min-w-0 flex-1">
-        <div
-          className={cn(
-            "text-[14px] font-bold",
-            done ? "text-ink-400 line-through" : "text-ink-900",
-          )}
-        >
-          {block.subject} / {block.topic}
-        </div>
-        <div className="mt-0.5 text-[11px] text-ink-500">{block.source}</div>
-        <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-cream-100/70 px-2 py-1.5">
-          <Clock className="h-3 w-3 flex-none text-ink-400" />
-          <span className="text-[11px] text-ink-700">{block.completion}</span>
-        </div>
-      </div>
-      {done ? (
-        <CheckCircle2 className="h-6 w-6 flex-none self-center text-mint-500" />
-      ) : (
-        <Link
-          href={`/app/focus/run?testId=${testId}&block=${blockIdx}`}
-          className={cn(
-            "flex flex-none items-center justify-center self-center rounded-full px-4 py-2 text-[11px] font-bold transition",
-            now
-              ? "bg-ink-900 text-white"
-              : "bg-cream-100 text-ink-700 border border-ink-100/80",
-          )}
-          aria-label="開始"
-        >
-          <Play className="h-3 w-3" strokeWidth={2.5} />
-        </Link>
-      )}
-    </article>
   );
 }
