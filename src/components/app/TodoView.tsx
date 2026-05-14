@@ -116,8 +116,6 @@ export function TodoView() {
 
   const filterCount = (priorityFilter !== "all" ? 1 : 0) + (tagFilter !== "all" ? 1 : 0);
 
-  if (!hydrated) return <ListSkeleton rows={5} />;
-
   // Compute counts per tab for header label
   const counts = useMemo(() => {
     let today = 0, todo = 0, done = 0;
@@ -133,6 +131,8 @@ export function TodoView() {
     }
     return { today, todo, done, all: tasks.length };
   }, [tasks, todayISO]);
+
+  if (!hydrated) return <ListSkeleton rows={5} />;
 
   return (
     <div className="px-5 pb-8 pt-2 space-y-4">
