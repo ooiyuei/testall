@@ -559,13 +559,33 @@ function FinishView({
 }) {
   return (
     <div className="space-y-4">
-      {/* お疲れさまカード */}
-      <section className="rounded-2xl bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.10)]">
+      {/* お疲れさまカード — セレブレーション演出付き */}
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white to-mint-50/50 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] animate-fade-in-up">
+        {/* 装飾スパークル (絶対配置の dot 4つ) */}
+        <span
+          className="pointer-events-none absolute right-3 top-3 h-1.5 w-1.5 rounded-full bg-mint-400 pulse-soft"
+          aria-hidden
+        />
+        <span
+          className="pointer-events-none absolute right-12 top-6 h-1 w-1 rounded-full bg-sun-300 pulse-soft"
+          style={{ animationDelay: "0.4s" }}
+          aria-hidden
+        />
+        <span
+          className="pointer-events-none absolute right-7 top-10 h-1 w-1 rounded-full bg-sky-300 pulse-soft"
+          style={{ animationDelay: "0.8s" }}
+          aria-hidden
+        />
+        <span
+          className="pointer-events-none absolute right-16 top-3 h-1 w-1 rounded-full bg-mint-300 pulse-soft"
+          style={{ animationDelay: "1.2s" }}
+          aria-hidden
+        />
         <div className="text-[10px] font-bold uppercase tracking-widest text-mint-600">
           Session Complete
         </div>
         <h2 className="mt-1 text-2xl font-black text-ink-900 leading-tight">
-          お疲れさま
+          お疲れさま 🎉
         </h2>
         <p className="mt-1 text-sm text-ink-400">25分、走り切りました</p>
         {block ? (
