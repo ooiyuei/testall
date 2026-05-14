@@ -189,10 +189,11 @@ export function SearchView() {
         ) : null}
       </div>
 
-      {useRemote ? (
+      {/* リモート接続インジケータは PDF デザインでは非表示。検索中のみ控えめに出す。 */}
+      {useRemote && remoteLoading ? (
         <div className="flex items-center gap-1.5 text-[11px] font-medium text-ink-400">
           <Cloud className="h-3.5 w-3.5 text-mint-500" strokeWidth={1.75} />
-          {remoteLoading ? "Supabase 検索中…" : "Supabase 接続中"}
+          検索中…
         </div>
       ) : null}
 

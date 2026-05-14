@@ -379,11 +379,6 @@ function TimelineRow({
               {subject}
             </div>
             <div className="mt-0.5 text-[11px] text-ink-500">{source}</div>
-            {done ? (
-              <div className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-mint-600">
-                <CheckCircle2 className="h-3 w-3" /> 完了
-              </div>
-            ) : null}
           </div>
         ) : (
           <div className="rounded-2xl border-[1.5px] border-sky-500 bg-white p-4 shadow-[0_0_0_4px_rgba(0,113,227,0.08),0_8px_24px_-10px_rgba(0,113,227,0.18)]">

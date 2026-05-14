@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Mic, MicOff, RotateCcw, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Send, Mic, MicOff, RotateCcw, Sparkles, ArrowUpRight } from "lucide-react";
 import { addChatMessage, clearChat } from "@/lib/store";
 import type { StoreState, ChatMessage } from "@/lib/store";
 import { cn } from "@/lib/cn";
@@ -166,12 +167,17 @@ export function AiChat({ state }: { state: StoreState }) {
   return (
     <section className="mt-7">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-1.5">
+        <Link
+          href="/app/ai"
+          className="flex items-center gap-1.5 active:opacity-70"
+          aria-label="AI コーチを開く"
+        >
           <Sparkles className="h-3.5 w-3.5 text-mint-600" strokeWidth={2.5} />
           <h2 className="text-[11px] font-medium text-ink-500">
             AI コーチ Sara
           </h2>
-        </div>
+          <ArrowUpRight className="h-3 w-3 text-ink-400" />
+        </Link>
         {messages.length > 0 && (
           <button
             type="button"

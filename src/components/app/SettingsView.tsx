@@ -9,6 +9,7 @@ import {
   BookOpen,
   ChevronRight,
   Clock,
+  CreditCard,
   Download,
   FileText,
   Globe,
@@ -16,14 +17,18 @@ import {
   Home as HomeIcon,
   Lock,
   LogOut,
+  Mail,
   MapPin,
   Moon,
   Plus,
   Shield,
+  Sparkles,
   Trash2,
   TriangleAlert,
   Upload,
+  User,
   Utensils,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
@@ -78,17 +83,42 @@ export function SettingsView() {
         設定
       </h1>
 
-      {/* アプリ設定 */}
+      {/* アカウント — PDF 順に最上位 */}
       <section>
-        <SectionLabel title="アプリ" className="mb-2" />
+        <SectionLabel title="アカウント" className="mb-2" />
         <SettingsGroup>
-          <SettingsRow icon={Bell} tone="primary" label="通知" value="近日対応" disabled />
-          <SettingsRow icon={Moon} tone="neutral" label="外観" value="ライト" disabled />
-          <SettingsRow icon={Globe} tone="success" label="言語" value="日本語" disabled />
+          <SettingsRow icon={Mail} tone="primary" label="メールアドレス" value={user?.email ?? "—"} disabled />
+          <SettingsRow icon={User} tone="neutral" label="表示名" value={state.profile?.name ?? "—"} disabled />
+          <SettingsRow icon={Sparkles} tone="success" label="連携サービス" value="Google" disabled />
         </SettingsGroup>
       </section>
 
-      {/* プロフィール / 学習 */}
+      {/* 通知 */}
+      <section>
+        <SectionLabel title="通知" className="mb-2" />
+        <SettingsGroup>
+          <SettingsRow icon={Bell} tone="primary" label="毎日のリマインド" value="近日対応" disabled />
+          <SettingsRow icon={Clock} tone="neutral" label="ブロック開始通知" value="近日対応" disabled />
+          <SettingsRow icon={FileText} tone="neutral" label="週次レポート" value="近日対応" disabled />
+        </SettingsGroup>
+      </section>
+
+      {/* プラン */}
+      <section>
+        <SectionLabel title="プラン" className="mb-2" />
+        <SettingsGroup>
+          <SettingsRow icon={Zap} tone="primary" label="現在のプラン" value="Free" disabled />
+          <SettingsRow icon={CreditCard} tone="neutral" label="支払い方法" value="—" disabled />
+        </SettingsGroup>
+      </section>
+
+      {/* 学習 — ブロック時間 / 休憩時間 を含む */}
+      <section>
+        <SectionLabel title="学習" className="mb-2" />
+        <PlanningEditor />
+      </section>
+
+      {/* プロフィール詳細 */}
       <section>
         <SectionLabel title="プロフィール" className="mb-2" />
         <SettingsGroup>
@@ -101,12 +131,6 @@ export function SettingsView() {
       <section>
         <SectionLabel title="固定の予定" className="mb-2" />
         <FixedSlotsEditor />
-      </section>
-
-      {/* 1日の予定 */}
-      <section>
-        <SectionLabel title="1日の予定" className="mb-2" />
-        <PlanningEditor />
       </section>
 
       {/* データ */}
@@ -126,12 +150,9 @@ export function SettingsView() {
         </SettingsGroup>
       </section>
 
-      {/* アカウント */}
+      {/* サインアウト + 危険ゾーン */}
       <section>
-        <SectionLabel title="アカウント" className="mb-2" />
-        {user?.email ? (
-          <p className="mb-2 px-1 text-[11px] font-medium text-ink-500">{user.email}</p>
-        ) : null}
+        <SectionLabel title="セッション" className="mb-2" />
         <SettingsGroup>
           <li>
             <button
