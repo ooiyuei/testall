@@ -36,11 +36,12 @@ function buildSuggestions(state: StoreState): Suggestion[] {
 
   // テスト得点率を科目ごとに集計して弱点科目を抽出
   const buckets: Record<string, number[]> = {};
-  for (const t of state.tests) {
+  for (const t of state.tests ?? []) {
+    if (!t?.input) continue;
     const subjectName = t.input.subject ?? "";
-    const pct = t.input.fullScore > 0
-      ? Math.round((t.input.score / t.input.fullScore) * 100)
-      : null;
+    const fullScore = t.input.fullScore ?? 0;
+    const score = t.input.score ?? 0;
+    const pct = fullScore > 0 ? Math.round((score / fullScore) * 100) : null;
     if (pct === null) continue;
     if (!buckets[subjectName]) buckets[subjectName] = [];
     buckets[subjectName].push(pct);
