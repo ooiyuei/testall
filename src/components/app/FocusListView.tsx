@@ -104,8 +104,8 @@ export function FocusListView() {
         <div className="mt-0.5 text-xs text-ink-500">{active.source}</div>
 
         <div className="mt-4 rounded-2xl bg-sky-50 p-3.5">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-sky-700">
-            <Clock className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-sky-700">
+            <Clock className="h-3.5 w-3.5" strokeWidth={2.2} />
             完了条件
           </div>
           <div className="mt-1 text-sm font-bold text-ink-900">
@@ -122,7 +122,7 @@ export function FocusListView() {
         </Link>
       </section>
 
-      <h3 className="mt-6 text-xs font-bold uppercase tracking-widest text-ink-500">
+      <h3 className="mt-6 text-[11px] font-medium text-ink-500">
         今日の全ブロック
       </h3>
       <ul className="mt-2 space-y-2.5">
