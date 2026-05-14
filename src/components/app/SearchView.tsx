@@ -419,21 +419,29 @@ function ChipRow({
   value: string;
   onChange: (v: string) => void;
 }) {
+  // 日本語ラベルは uppercase / wide tracking を適用しない
+  const isAscii = /^[\x00-\x7F]+$/.test(label);
   return (
     <div>
-      <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
+      <div
+        className={
+          isAscii
+            ? "text-[10px] font-bold uppercase tracking-widest text-ink-500"
+            : "text-[11px] font-medium text-ink-500"
+        }
+      >
         {label}
       </div>
-      <div className="mt-1 flex flex-wrap gap-1.5">
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
         {options.map((o) => (
           <button
             key={o.value}
             type="button"
             onClick={() => onChange(o.value)}
             className={cn(
-              "h-7 rounded-full px-2.5 text-[10px] font-bold transition",
+              "h-7 rounded-full px-3 text-[11px] font-bold transition active:scale-[0.96]",
               value === o.value
-                ? "bg-sky-500 text-white"
+                ? "bg-sky-500 text-white shadow-soft"
                 : "bg-cream-50 text-ink-700 hover:bg-cream-100",
             )}
           >

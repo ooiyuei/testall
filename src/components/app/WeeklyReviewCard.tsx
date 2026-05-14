@@ -143,7 +143,7 @@ export function WeeklyReviewCard() {
 
       {/* 気分 */}
       <div className="mt-4">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+        <div className="text-[10px] font-bold tracking-wide text-ink-500">
           どうだった？
         </div>
         <ul className="mt-2 grid grid-cols-2 gap-1.5">
@@ -166,7 +166,7 @@ export function WeeklyReviewCard() {
 
       {/* 理解度 */}
       <div className="mt-4">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+        <div className="text-[10px] font-bold tracking-wide text-ink-500">
           理解度
         </div>
         <ul className="mt-2 flex gap-1 rounded-xl bg-cream-100/70 p-1">
@@ -193,7 +193,7 @@ export function WeeklyReviewCard() {
 
       {/* AI 推奨 */}
       <div className="mt-4 rounded-xl bg-white p-3">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+        <div className="text-[10px] font-bold tracking-wide text-ink-500">
           次週の推奨
         </div>
         <div className="mt-1 flex items-baseline justify-between">

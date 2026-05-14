@@ -168,8 +168,8 @@ export function AiChat({ state }: { state: StoreState }) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
           <Sparkles className="h-3.5 w-3.5 text-mint-600" strokeWidth={2.5} />
-          <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-ink-400">
-            AI に相談
+          <h2 className="text-[11px] font-medium text-ink-500">
+            AI コーチ Sara
           </h2>
         </div>
         {messages.length > 0 && (
@@ -187,7 +187,7 @@ export function AiChat({ state }: { state: StoreState }) {
       {/* クイックプロンプト (初回表示) */}
       {messages.length === 0 && !loading && (
         <div className="mb-3 rounded-2xl border border-mint-200/70 bg-mint-50/40 p-3">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-mint-600">
+          <div className="text-[10px] font-bold tracking-wide text-mint-600">
             こんなこと聞けます
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">

@@ -89,7 +89,7 @@ export function StreakHeatmap() {
   return (
     <section className="rounded-2xl border border-ink-100/80 bg-white p-5">
       <div className="flex items-baseline justify-between">
-        <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-ink-400">
+        <h2 className="text-[11px] font-medium text-ink-500">
           学習ヒートマップ
         </h2>
         <span className="text-[10px] font-medium text-ink-400">直近 5週</span>

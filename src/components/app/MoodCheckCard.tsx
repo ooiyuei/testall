@@ -99,7 +99,7 @@ export function MoodCheckCard() {
   if (tooLate && !decided) {
     return (
       <section className="rounded-2xl border border-ink-100/80 bg-cream-50 p-5 text-center">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+        <div className="text-[10px] font-bold tracking-wide text-ink-500">
           今日はもう
         </div>
         <p className="mt-2 text-[15px] font-bold leading-[1.6] text-ink-900">
@@ -115,7 +115,7 @@ export function MoodCheckCard() {
   if (decided && mood === "today-off") {
     return (
       <section className="rounded-2xl border border-ink-100/80 bg-cream-50 p-5 text-center">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+        <div className="text-[10px] font-bold tracking-wide text-ink-500">
           今日は完全休養
         </div>
         <p className="mt-2 text-[15px] font-bold leading-[1.6] text-ink-900">
@@ -144,7 +144,7 @@ export function MoodCheckCard() {
               <Sparkles className="h-[18px] w-[18px]" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-600">
+              <div className="text-[10px] font-bold tracking-wide text-sky-600">
                 今日の目標
               </div>
               <div className="mt-1 flex items-baseline gap-2">
@@ -184,7 +184,7 @@ export function MoodCheckCard() {
   return (
     <section className="rounded-2xl border border-ink-100/80 bg-white p-5">
       <div className="flex items-baseline justify-between">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+        <div className="text-[10px] font-bold tracking-wide text-ink-500">
           今日の準備
         </div>
         <span className="text-[10px] font-medium text-ink-400 tabular-nums">
