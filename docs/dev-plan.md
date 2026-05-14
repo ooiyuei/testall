@@ -1,89 +1,110 @@
-# Testall 開発計画 — モックアップから「動くアプリ」へ
+# Testall 開発計画
 
-> 課金は後回し。動くアプリ (認証・データ永続化・AI 入力) の完成を最優先。
+> 「テスト結果を、次の25分でやるべき勉強に変える」受験戦略OS
+> 高校生・浪人生向け / モバイルファースト PWA
 
 ---
 
-## 完了済み
+## 完了済み (本番運用可能レベル)
 
-### Phase 1 — UX 残務（即効）
-- ホーム「一日は6時リセット」(dailyMoodLogs を 06:00 〜 翌05:59 単位で扱う)
-- 気分選択に「今日はできない」5択目
-- 経験値の変化グラフ (ExpTrend)
-- 高校編集モーダル (HighschoolEditModal)
+### Phase 1 — UX 残務
+- ホーム「6時リセット」
+- 気分選択 5 択 (today-off 含む)
+- 経験値変化グラフ
+- 高校編集モーダル
 - TodaySchedule × TODO タスク紐付け
 
-### Phase 2 — データ永続化基盤
-- 2-1: Supabase Auth (Google OAuth、`/signin` `/signup`、認証ガード)
-- 2-2: profile/tests/blockLogs/tasks/events/dailyMoodLogs/planning/weeklyGoals 全テーブル Supabase 同期
-- RLS: `user_id = auth.uid()` で本人のみ
+### Phase 2 — データ永続化
+- 2-1 Supabase Auth (Google OAuth、magic link、ゲストモード)
+- 2-2 全データ Supabase 同期 (profile/tests/blockLogs/tasks/events/dailyMoodLogs/planning/weeklyGoals)
+- RLS: user_id = auth.uid()
 
-### Phase 3 — AI 入力 (Claude Vision)
-- 写真撮影 → Claude Vision で OCR + 採点
-- `/api/diagnose-from-image` 実装、UI のプレビュー画面付き
+### Phase 3 — AI 入力
+- 写真 → Claude Vision で OCR + 採点 (`/api/diagnose-from-image`)
+- confidence (high/medium/low) + notes
+- バリデーション (score>fullScore 禁止、subject 正規化)
 
-### Phase 4 — 計画 & タスクの高度化
-- 4-1: 計画ドラッグ&ドロップ (dnd-kit、WeeklyTaskBoard)
-- 4-2: 「今日のおすすめ」サジェスト (TodaySuggestion)
-- 4-3: AI チャット (Sara、Anthropic SDK、音声入力)
+### Phase 4 — 計画 & タスク
+- dnd-kit で計画ドラッグ&ドロップ
+- TodaySuggestion (AI 提案)
+- AI チャット Sara (Anthropic SDK、音声入力)
 
-### Phase 5 — PWA + 初回ガイド
-- manifest.json / icon-192 / icon-512 / appleWebApp
-- GuideTour (3 ステップのチュートリアル)
+### Phase 5-10 — 機能拡充
+- PWA + GuideTour + Service Worker + Install Prompt
+- 固定スロット (食事/お風呂/部活)
+- 週次振り返り
+- 単元 proficiency 永続化
+- 偏差値自動補正 (直近 3 件平均)
+- ホーム進捗 blockLogs 実数連動
+- LoadingState / ErrorState
+- StreakHeatmap (35 日 / 連続日数 / 最長記録)
+- Export/Import JSON
+- ヘルプページ
+- magic link メールサインイン + ゲスト
+- not-found / error / loading グローバル
+- diagnose API フォールバック
+- 自由学習タイマー
+- Sentry 統合 (DSN 設定待ち)
+- ログインボーナス
 
-### Phase 6 — 計画システム高度化
-- 6-1: 固定スロット (食事/お風呂/部活) 編集 UI
-- 6-2: 週次振り返り (WeeklyReviewCard、日月曜自動表示)
-- 6-3: 単元 proficiency の永続化
+### Phase 11 — 科目構造刷新
+- 国語: 現代文 / 古文 / 漢文 分離
+- 数学: Ⅰ・A / Ⅱ・B・C / Ⅲ・C
+- 同カテゴリ内 複数サブ科目選択可
+- 詳細入力フロー (出題形式・配点・問題数・正答数 SliderRow)
+- 点数 + 偏差値 スライダー化
 
-### Phase 7 — データ精度
-- 7-1: テスト保存後の偏差値自動補正 (直近3件平均)
-- 7-2: ホーム進捗を blockLogs 実数と連動、連続日数バッジ、週間ヒートマップ
+### Phase A — 参考書 DB 拡充
+- NDL + openBD で **2,770 冊バルク取得**
+- 合計 **約 2,888 冊** (Studyplus 並み)
+- カバー画像 / 著者 / 出版社 / ページ数
+- 主要シリーズ網羅: チャート 113 / ターゲット 82 / 実況中継 53 / 重要問題集 49 / 赤本 11
 
-### Phase 8 — 空状態 + エラー
-- 8-1: テスト無しでも 25分タイマー即起動可能
-- 8-2: LoadingState / ErrorState コンポーネントで統一
+### Phase C — UGC (Community Textbooks)
+- `community_textbooks` テーブル (Supabase)
+- ISBN ベースで全ユーザー共有
+- バーコードスキャンで未知の書籍を自動登録
+- use_count で人気度トラッキング
+- /api/isbn-lookup: local → community → openbd → upsert
 
-### Phase 9 — ストリーク可視化
-- StreakHeatmap (直近35日、現在連続/最長記録)
-
-### Phase 10 — Export/Import + ヘルプ
-- 設定 → データ → JSON export/import
-- /app/help に 8 セクションのヘルプ
-
-### Phase 11 — 認証 + エラーページ
-- メール magic link サインイン
-- 「アカウントなしで試す」ゲストモード
-- not-found / error / loading グローバル画面
-- diagnose API がフォールバック診断を返す (degraded フラグ付き)
-
-### Phase 12 — コピー統一
-- 「45分」→「25分」を全画面で統一
-
-### Phase 13 — ログインボーナス
-- 1日1回バナー (連続日数で文言変化、7日ごとマイルストーン)
-
-### Phase 14-15 — タイマー改善
-- 自由学習 (testId 無し) も blockLog に記録
-- ヒートマップ・連続日数に反映
-
-### Phase 16-17 — PWA 仕上げ
-- Service Worker (本番のみ、cache-first 静的アセット / network-first API)
-- インストールプロンプト (iOS / Android Chrome 対応)
-
-### Phase 18-19 — AI 信頼性
-- chat API モデル名修正 (`claude-sonnet-4-5`)
-- chat API もフォールバック応答対応
-- システムプロンプトを 25分単位に修正
+### UI/UX プロクオリティ化
+- UI 監査 (`docs/ui-audit.md`) 19 項目
+- 共通コンポーネント: Button / Card / Chip / IconBadge / Stat / SectionLabel / Toast / Skeleton
+- Apple HIG 準拠 (palt 廃止、ProN→Pro、letter-spacing -0.02em)
+- タップターゲット 44px (MoodCard / BottomNav 49px / AppHeader)
+- rounded-3xl → rounded-2xl 統一
+- 日本語ラベルの uppercase tracking 全廃
+- タップフィードバック統一 (mobile auto scale 0.97 + opacity 0.92)
+- focus-visible リング sky-500
+- HomeView Hero (26px tracking-[-0.02em])
+- MeView リファクタ (990 → 781 行、グラデーションアバター)
+- FocusRun リファクタ (深い夜空グラデ + 3 段階カラーリング blue→mint→sun + glow)
+- TestDetail リファクタ (引用 blockquote + severity 太線 + 末尾 CTA)
+- OnboardingFlow リファクタ (1437 → 383 行 + 2 ファイル分割)
+- SettingsView 刷新 (絵文字 → Lucide / IconBadge / DangerZone)
+- Toast 通知システム (alert() 全置換)
 
 ---
 
-## 残・将来課題
+## 残課題
 
-- Stripe 課金 (無料: テスト1件、有料: 無制限)
+### Phase B — AI 深掘り (200 冊)
+- `scripts/enrich-textbooks.ts` で Claude API に目次・強み・推奨対象を生成依頼
+- ANTHROPIC_API_KEY が `.env.local` に必要
+- 5-10 分で完了
+- 出力: `src/lib/master/textbooks-enriched.ts`
+- 結果は `getAllTextbooks()` で自動マージ済み
+
+### 運用準備
+- **Sentry DSN セット** (`.env.local` + Vercel 環境変数)
+- **Stripe 課金** (無料: テスト1件、有料: 無制限)
 - Apple OAuth
-- メール magic link の本番動作確認
-- 通知 (Web Push、毎朝の気分リマインド)
-- 計画ボード: ドラッグの精度・UX 改善
-- AI チャットの会話履歴 RAG 化 (テスト結果・blockLog 文脈付き)
+- 通知 (Web Push)
 - E2E テスト (Playwright)
+
+### 将来の v0.6+
+- 主要 200 冊の目次手書きレビュー
+- 共通テスト予想問題集を科目別に分割
+- 参考書 relatedIds (シリーズ連携)
+- 計画ボードのドラッグ UX 改善
+- AI チャットの会話履歴 RAG 化
