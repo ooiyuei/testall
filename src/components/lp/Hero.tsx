@@ -85,9 +85,9 @@ export function Hero() {
                 </div>
 
                 <div className="mt-4 rounded-2xl bg-white p-4 shadow-soft">
-                  <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-ink-400">
+                  <div className="flex items-center justify-between text-[11px] font-medium text-ink-500">
                     <span>今日の進み</span>
-                    <span className="text-sky-600">1 / 3 完了</span>
+                    <span className="font-bold text-sky-600 tabular-nums">1 / 3 完了</span>
                   </div>
                   <div className="mt-2 h-2 overflow-hidden rounded-full bg-cream-200">
                     <div className="h-full w-1/3 rounded-full bg-sky-500" />

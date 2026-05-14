@@ -143,7 +143,7 @@ export function SubjectAreaDetail({ area }: { area: SubjectAreaId }) {
       {/* 偏差値推移 */}
       <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+          <h2 className="text-[11px] font-medium text-ink-500">
             偏差値の推移
           </h2>
           <span className="text-[10px] font-medium text-ink-500 tabular-nums">
@@ -158,7 +158,7 @@ export function SubjectAreaDetail({ area }: { area: SubjectAreaId }) {
       {/* 領域・単元 */}
       <section>
         <div className="flex items-baseline justify-between">
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+          <h2 className="text-[11px] font-medium text-ink-500">
             領域・単元
           </h2>
           <ul className="flex gap-1 rounded-xl bg-cream-100/70 p-1">
@@ -189,7 +189,7 @@ export function SubjectAreaDetail({ area }: { area: SubjectAreaId }) {
               <ul className="mt-2 space-y-2">
                 {s.domains.map((d) => (
                   <li key={d.id}>
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+                    <div className="text-[11px] font-medium text-ink-500">
                       {d.name}
                     </div>
                     <ul className="mt-1 flex flex-wrap gap-1">
@@ -236,7 +236,7 @@ export function SubjectAreaDetail({ area }: { area: SubjectAreaId }) {
         <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
           <div className="flex items-center gap-1.5">
             <Sparkles className="h-3 w-3 text-ink-400" />
-            <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+            <h2 className="text-[11px] font-medium text-ink-500">
               必要な能力
             </h2>
           </div>
