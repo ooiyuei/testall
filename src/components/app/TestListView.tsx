@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, Plus } from "lucide-react";
+import { ChevronRight, Plus, TrendingDown, TrendingUp } from "lucide-react";
 import { useStore } from "@/lib/hooks/useStore";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { cn } from "@/lib/cn";
 
 export function TestListView() {
   const { state, hydrated } = useStore();
@@ -13,6 +14,21 @@ export function TestListView() {
   }
 
   const tests = state.tests;
+
+  // 同科目の前回テストとの差分
+  function getTrend(currentId: string, subject: string, currentPct: number): number | null {
+    const sameSubject = tests
+      .filter((t) => t.input.subject === subject)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const idx = sameSubject.findIndex((t) => t.id === currentId);
+    if (idx < 0 || idx + 1 >= sameSubject.length) return null;
+    const prev = sameSubject[idx + 1];
+    const prevPct =
+      prev.input.fullScore > 0
+        ? Math.round((prev.input.score / prev.input.fullScore) * 100)
+        : 0;
+    return currentPct - prevPct;
+  }
 
   return (
     <div className="px-5 pb-8 pt-3">
@@ -33,6 +49,7 @@ export function TestListView() {
                   : done >= total
                   ? "今日完了"
                   : `進行中 ${done}/${total}`;
+              const trend = getTrend(t.id, t.input.subject, pct);
               return (
                 <li key={t.id}>
                   <Link
@@ -44,8 +61,28 @@ export function TestListView() {
                       <span>%</span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-black text-ink-900">
-                        {t.input.testName}
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-black text-ink-900 truncate">
+                          {t.input.testName}
+                        </span>
+                        {trend !== null && trend !== 0 ? (
+                          <span
+                            className={cn(
+                              "inline-flex flex-none items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold tabular-nums",
+                              trend > 0
+                                ? "bg-mint-100 text-mint-600"
+                                : "bg-coral-300/20 text-coral-500",
+                            )}
+                            title={`前回比 ${trend > 0 ? "+" : ""}${trend}%`}
+                          >
+                            {trend > 0 ? (
+                              <TrendingUp className="h-2.5 w-2.5" strokeWidth={2.4} />
+                            ) : (
+                              <TrendingDown className="h-2.5 w-2.5" strokeWidth={2.4} />
+                            )}
+                            {trend > 0 ? "+" : ""}{trend}
+                          </span>
+                        ) : null}
                       </div>
                       <div className="mt-0.5 text-[11px] text-ink-500">
                         {t.input.subject} ·{" "}
