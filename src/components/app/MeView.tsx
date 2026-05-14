@@ -62,17 +62,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { Card } from "@/components/ui/Card";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { MeSkeleton } from "@/components/ui/Skeleton";
-
-// completedAt は通常 ISO 文字列だが、旧データや破損データで number/null が来る場合に
-// 備え、常に YYYY-MM-DD を返すよう正規化する。
-function toDateString(v: unknown): string | null {
-  if (typeof v === "string") return v.slice(0, 10);
-  if (typeof v === "number") {
-    try { return new Date(v).toISOString().slice(0, 10); } catch { return null; }
-  }
-  if (v instanceof Date) return v.toISOString().slice(0, 10);
-  return null;
-}
+import { toDateString } from "@/lib/date-safe";
 
 export function MeView() {
   const { state, hydrated } = useStore();
@@ -883,13 +873,17 @@ function DeviationTrendSection() {
   for (const area of ["japanese","math","english","science","history","civics","info"] as SubjectAreaId[]) {
     const def = SUBJECT_AREAS.find((a) => a.id === area)!;
     const points = tests
-      .filter((t) => guessArea(t.input.subject) === area)
-      .map((t) => ({
-        date: t.createdAt.slice(0, 10),
-        value:
+      .filter((t) => t?.input && guessArea(t.input.subject) === area)
+      .map((t) => {
+        const date = toDateString(t.createdAt) ?? "";
+        const fullScore = t.input.fullScore ?? 0;
+        const score = t.input.score ?? 0;
+        const value =
           t.input.deviation ??
-          Math.round((t.input.score / t.input.fullScore) * 100 / 2 + 35),
-      }))
+          (fullScore > 0 ? Math.round((score / fullScore) * 100 / 2 + 35) : 0);
+        return { date, value };
+      })
+      .filter((p) => p.date)
       .sort((a, b) => a.date.localeCompare(b.date));
     if (points.length > 0) {
       series.push({ name: def.name, color: COLORS[area], points });
@@ -937,7 +931,8 @@ function ExpTrendSection() {
       }
     }
     for (const test of state.tests ?? []) {
-      const d = test.createdAt.slice(0, 10);
+      const d = toDateString(test.createdAt);
+      if (!d) continue;
       dailyMap.set(d, (dailyMap.get(d) ?? 0) + 200);
     }
 

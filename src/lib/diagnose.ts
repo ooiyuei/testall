@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Diagnosis, TestInput, MissCause, PastTestSummary } from "./types";
 import { getCachedDiagnosis, setCachedDiagnosis } from "./diagnose-cache";
+import { toISOSafe } from "./date-safe";
 
 const SYSTEM_PROMPT = `あなたは「Testall」という受験戦略OSのAI学習マネージャーです。
 役割は、生徒のテスト結果・志望校・所有参考書・使える時間から、
@@ -90,7 +91,7 @@ function computeTrend(
 
   const sameSubject = pastTests.filter((t) => t.subject === currentSubject);
   const pool = sameSubject.length >= 2 ? sameSubject : pastTests;
-  const sorted = [...pool].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const sorted = [...pool].sort((a, b) => toISOSafe(b.createdAt).localeCompare(toISOSafe(a.createdAt)));
 
   const newest = sorted[0];
   const oldest = sorted[sorted.length - 1];
@@ -99,7 +100,7 @@ function computeTrend(
   const daysDiff = Math.max(
     1,
     Math.round(
-      (new Date(newest.createdAt).getTime() - new Date(oldest.createdAt).getTime()) /
+      (new Date(toISOSafe(newest.createdAt) || 0).getTime() - new Date(toISOSafe(oldest.createdAt) || 0).getTime()) /
         86_400_000,
     ),
   );
@@ -186,14 +187,15 @@ function buildUserPrompt(input: TestInput): string {
 
   if (history?.pastTests && history.pastTests.length > 0) {
     const sorted = [...history.pastTests]
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .sort((a, b) => toISOSafe(b.createdAt).localeCompare(toISOSafe(a.createdAt)))
       .slice(0, 5);
     historyLines.push(
       `直近のテスト履歴 (新→古):`,
       ...sorted.map((t) => {
         const dev = t.deviation ? `偏差値${t.deviation}` : "";
         const weak = t.weakUnits?.length ? ` / 苦手: ${t.weakUnits.slice(0, 3).join("・")}` : "";
-        return `- ${t.createdAt.slice(0, 10)} ${t.subject} ${t.testName}: ${t.scorePct}%${dev ? ` (${dev})` : ""}${weak}`;
+        const dateStr = toISOSafe(t.createdAt).slice(0, 10);
+        return `- ${dateStr} ${t.subject} ${t.testName}: ${t.scorePct}%${dev ? ` (${dev})` : ""}${weak}`;
       }),
     );
     // 構造化トレンドメトリクス

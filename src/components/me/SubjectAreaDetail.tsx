@@ -59,12 +59,20 @@ export function SubjectAreaDetail({ area }: { area: SubjectAreaId }) {
   const trendSeries = useMemo<TrendSeries[]>(() => {
     if (!areaDef) return [];
     const pts = (state.tests ?? [])
-      .filter((t) => guessArea(t.input.subject) === area)
-      .map((t) => ({
-        date: t.createdAt.slice(0, 10),
-        value: t.input.deviation ?? Math.round((t.input.score / t.input.fullScore) * 100 / 2 + 35),
-        label: t.input.testName,
-      }))
+      .filter((t) => t?.input && guessArea(t.input.subject) === area)
+      .map((t) => {
+        const raw = t.createdAt;
+        const date = typeof raw === "string" ? raw.slice(0, 10)
+          : typeof raw === "number" ? new Date(raw).toISOString().slice(0, 10)
+          : "";
+        const fullScore = t.input.fullScore ?? 0;
+        const score = t.input.score ?? 0;
+        const value =
+          t.input.deviation ??
+          (fullScore > 0 ? Math.round((score / fullScore) * 100 / 2 + 35) : 0);
+        return { date, value, label: t.input.testName };
+      })
+      .filter((p) => p.date)
       .sort((a, b) => a.date.localeCompare(b.date));
     if (pts.length === 0) return [];
     return [{ name: areaDef.name, color: "rgb(0, 113, 227)", points: pts }];

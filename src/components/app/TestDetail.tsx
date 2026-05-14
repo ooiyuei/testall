@@ -320,9 +320,13 @@ function computeTrend(
   currentId: string,
   subject: string,
 ): Trend {
+  const sortKey = (v: unknown): string =>
+    typeof v === "string" ? v
+      : typeof v === "number" ? new Date(v).toISOString()
+      : "";
   const sameSubject = tests
-    .filter((t) => t.input.subject === subject)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    .filter((t) => t?.input?.subject === subject)
+    .sort((a, b) => sortKey(b.createdAt).localeCompare(sortKey(a.createdAt)));
   const idx = sameSubject.findIndex((t) => t.id === currentId);
   if (idx < 0 || idx + 1 >= sameSubject.length) return null;
   const current = sameSubject[idx];

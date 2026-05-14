@@ -8,6 +8,7 @@ import type { TestInput, SubjectInput } from "./types";
 import type { DeviationBucket } from "./store";
 import { DEVIATION_BUCKETS, bucketMid } from "./store";
 import { guessArea } from "./master/subjects/guessArea";
+import { toISOSafe } from "./date-safe";
 import type { SubjectAreaId } from "./master/subjects";
 
 // 得点率 → 偏差値の粗い推定 (50% → 50, 80% → 60, 95% → 65)
@@ -70,7 +71,7 @@ export function updateProfileFromTests(
 
   // 直近 N 件
   const recent = [...tests]
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .sort((a, b) => toISOSafe(b.createdAt).localeCompare(toISOSafe(a.createdAt)))
     .slice(0, maxRecent);
 
   // 教科ごとに集計
