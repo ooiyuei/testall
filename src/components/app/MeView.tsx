@@ -61,6 +61,7 @@ import { guessArea, PRIMARY_AREAS } from "@/lib/master/subjects/guessArea";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Card } from "@/components/ui/Card";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { MeSkeleton } from "@/components/ui/Skeleton";
 
 export function MeView() {
   const { state, hydrated } = useStore();
@@ -69,7 +70,7 @@ export function MeView() {
   const [bookshelfModal, setBookshelfModal] = useState(false);
 
   if (!hydrated) {
-    return <LoadingState />;
+    return <MeSkeleton />;
   }
 
   const profile = state.profile;

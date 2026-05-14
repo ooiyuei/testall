@@ -26,6 +26,7 @@ import {
   type SubjectCategory,
 } from "@/lib/curriculum";
 import { readStore, saveTest, setProfile } from "@/lib/store";
+import { preprocessImage } from "@/lib/image-preprocess";
 import { updateProfileFromTests } from "@/lib/auto-deviation";
 import type {
   Diagnosis,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import type { ChatMessage } from "@/lib/store";
+import { getChatCache, setChatCache } from "@/lib/chat-cache";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -91,6 +92,12 @@ export async function POST(req: Request) {
     });
   }
 
+  // キャッシュヒット確認 (5分以内の同一質問+コンテキスト)
+  const cached = getChatCache(body.userMessage, body.context);
+  if (cached) {
+    return NextResponse.json({ ok: true, text: cached, cached: true });
+  }
+
   try {
     const client = new Anthropic({ apiKey });
 
@@ -111,6 +118,10 @@ export async function POST(req: Request) {
 
     const text =
       response.content[0].type === "text" ? response.content[0].text : "";
+
+    if (text) {
+      setChatCache(body.userMessage, body.context, text);
+    }
 
     return NextResponse.json({ ok: true, text });
   } catch (e) {
