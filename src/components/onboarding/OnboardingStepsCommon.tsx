@@ -313,6 +313,7 @@ export function SchoolStep({
 }
 
 // ── Step 7: 勉強時間 ─────────────────────────────────
+// PDF/Design Canvas 準拠: 大きな数字 + スライダー風 (実体は離散ボタン)
 function TimeOptionPicker({
   label,
   options,
@@ -324,24 +325,65 @@ function TimeOptionPicker({
   selectedIdx: number;
   onChange: (i: number) => void;
 }) {
+  const idx = Math.max(0, Math.min(options.length - 1, selectedIdx));
+  const current = options[idx];
+  const maxIdx = options.length - 1;
+  const pct = maxIdx > 0 ? (idx / maxIdx) * 100 : 0;
+  // hour 表示: 例 "180" -> "3", "30" -> "0.5"
+  const hours = current.minutes / 60;
+  const hoursDisplay = Number.isInteger(hours) ? String(hours) : hours.toFixed(1);
   return (
-    <div className="rounded-2xl border border-cream-200 bg-white p-4">
-      <p className="mb-3 text-[13px] font-bold text-ink-800">{label}</p>
-      <div className="grid grid-cols-5 gap-1.5">
-        {options.map((o, i) => (
-          <button
-            key={o.label}
-            type="button"
-            onClick={() => onChange(i)}
-            aria-pressed={selectedIdx === i}
-            className={cn(
-              "flex flex-col items-center justify-center rounded-xl py-3 text-[12px] font-bold transition active:scale-[0.97]",
-              selectedIdx === i ? "bg-sky-500 text-white shadow-sm" : "bg-cream-50 text-ink-600 hover:bg-cream-100",
-            )}
-          >
-            {o.label}
-          </button>
-        ))}
+    <div className="rounded-2xl border border-ink-100/80 bg-white p-5">
+      <p className="text-[12px] font-medium text-ink-500">{label}</p>
+      {/* 大きな数字 */}
+      <div className="mt-2 flex items-baseline justify-center gap-1.5">
+        <span
+          className="text-[48px] font-extrabold leading-[0.95] tracking-[-0.03em] tabular-nums text-ink-900"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          {hoursDisplay}
+        </span>
+        <span className="text-[14px] font-semibold text-ink-400">時間 / 日</span>
+      </div>
+      {/* スライダー風トラック */}
+      <input
+        type="range"
+        min={0}
+        max={maxIdx}
+        step={1}
+        value={idx}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="sr-only"
+        aria-label={label}
+      />
+      <div className="mt-4 relative h-1.5 rounded-full bg-cream-200">
+        <div
+          className="absolute left-0 top-0 h-full rounded-full bg-ink-900 transition-[width]"
+          style={{ width: `${pct}%` }}
+        />
+        {/* タップで idx を切り替えるオーバーレイ */}
+        <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${options.length}, 1fr)` }}>
+          {options.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onChange(i)}
+              aria-label={`${options[i].label}`}
+              className="h-full"
+            />
+          ))}
+        </div>
+        {/* つまみ */}
+        <div
+          className="absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-ink-900 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] transition-[left]"
+          style={{ left: `${pct}%` }}
+        />
+      </div>
+      {/* 軸ラベル (最小・中央・最大) */}
+      <div className="mt-2 flex justify-between text-[10px] font-medium text-ink-400 tabular-nums">
+        <span>{options[0].label}</span>
+        <span>{options[Math.floor(maxIdx / 2)].label}</span>
+        <span>{options[maxIdx].label}</span>
       </div>
     </div>
   );
@@ -528,13 +570,19 @@ export function WeekendStep({
 }
 
 // ── Step 10: 得意・苦手 ──────────────────────────────
+// PDF/Design Canvas 準拠: 1行 = 教科ラベル + 4チップ (得意/普通/苦手/超苦手)
+// 選択 = 色付き背景 (mint/ink/sun/coral) + 白文字
 type Proficiency = "good" | "fair" | "weak" | "bad";
 
-const PROFICIENCY_OPTIONS: { id: Proficiency; label: string; active: string }[] = [
-  { id: "good", label: "得意", active: "bg-mint-100 text-mint-600 border-mint-300" },
-  { id: "fair", label: "まあまあ", active: "bg-sky-100 text-sky-600 border-sky-200" },
-  { id: "weak", label: "苦手", active: "bg-sun-100 text-amber-600 border-amber-200" },
-  { id: "bad", label: "超苦手", active: "bg-coral-100 text-red-500 border-red-200" },
+const PROFICIENCY_OPTIONS: {
+  id: Proficiency;
+  label: string;
+  activeBg: string;
+}[] = [
+  { id: "good", label: "得意", activeBg: "bg-mint-500 text-white" },
+  { id: "fair", label: "普通", activeBg: "bg-ink-700 text-white" },
+  { id: "weak", label: "苦手", activeBg: "bg-sun-400 text-white" },
+  { id: "bad", label: "超苦手", activeBg: "bg-coral-500 text-white" },
 ];
 
 export function StrengthsStep({
@@ -550,28 +598,31 @@ export function StrengthsStep({
 
   return (
     <>
-      <StepHeader title="教科の得意・苦手" subtitle="AIが重点的に補強する教科を判断します。" />
-      <div className="space-y-3">
+      <StepHeader title="得意・苦手をざっくり" subtitle="AIが重点的に補強する教科を判断します。" />
+      <div className="space-y-2">
         {SUBJECT_AREAS.map((s) => (
-          <div key={s.id} className="rounded-2xl border border-cream-200 bg-white p-4">
-            <div className="mb-3 text-[14px] font-bold text-ink-900">{s.label}</div>
-            <div className="grid grid-cols-4 gap-1.5">
-              {PROFICIENCY_OPTIONS.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => set(s.id, p.id)}
-                  aria-pressed={value[s.id] === p.id}
-                  className={cn(
-                    "rounded-xl border py-3 text-[12px] font-bold transition active:scale-[0.97]",
-                    value[s.id] === p.id
-                      ? p.active
-                      : "border-cream-200 bg-cream-50 text-ink-600 hover:bg-cream-100",
-                  )}
-                >
-                  {p.label}
-                </button>
-              ))}
+          <div key={s.id} className="flex items-center gap-2.5 py-1.5">
+            <span className="w-9 text-[13px] font-bold text-ink-900">{s.label}</span>
+            <div className="flex flex-1 gap-1.5">
+              {PROFICIENCY_OPTIONS.map((p) => {
+                const active = value[s.id] === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => set(s.id, p.id)}
+                    aria-pressed={active}
+                    className={cn(
+                      "flex-1 rounded-lg py-2 text-[11px] font-bold transition active:scale-[0.97]",
+                      active
+                        ? p.activeBg
+                        : "border border-ink-100 bg-cream-50 text-ink-400 hover:bg-white",
+                    )}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         ))}
