@@ -100,53 +100,74 @@ export function StepHeader({
 }
 
 // ── 共通: BucketPicker ───────────────────────────────
+// PDF/Design Canvas 準拠: 中央に大きな数字 + バケツグリッド(黒選択)
+const BUCKET_DESCRIPTIONS: Record<string, string> = {
+  lt45: "まだまだ",
+  "45-50": "少し",
+  "50-55": "まあまあ",
+  "55-60": "普通",
+  "60-65": "よく",
+  "65-70": "かなり",
+  "70-75": "トップ",
+  gte75: "最上位",
+};
 export function BucketPicker({
-  label,
   value,
   onChange,
-  tone = "sky",
 }: {
-  label: string;
+  label?: string;
   value: DeviationBucket;
   onChange: (v: DeviationBucket) => void;
   tone?: "sky" | "peach";
 }) {
-  const idx = Math.max(0, DEVIATION_BUCKETS.findIndex((b) => b.id === value));
-  const current = DEVIATION_BUCKETS[idx];
-  const max = DEVIATION_BUCKETS.length - 1;
-  const accentClass = tone === "sky" ? "accent-sky-500" : "accent-peach-400";
+  const current = DEVIATION_BUCKETS.find((b) => b.id === value) ?? DEVIATION_BUCKETS[3];
   return (
-    <div className="rounded-2xl border border-ink-100/80 bg-white p-5">
-      <div className="flex items-baseline justify-between">
-        <div className="text-[12px] font-medium text-ink-500">{label}</div>
-        <span
-          className={cn(
-            "text-4xl font-bold tabular-nums",
-            tone === "sky" ? "text-sky-500" : "text-peach-400",
-          )}
-        >
-          {current.label}
-        </span>
+    <div>
+      {/* 大きな数字 + ±2 */}
+      <div className="text-center">
+        <div className="inline-flex items-baseline gap-1">
+          <span
+            className="text-[88px] font-extrabold leading-[0.95] tracking-[-0.04em] tabular-nums text-ink-900"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            {current.mid}
+          </span>
+          <span className="text-[20px] font-semibold text-ink-400">± 2</span>
+        </div>
       </div>
-      <input
-        type="range"
-        min={0}
-        max={max}
-        step={1}
-        value={idx}
-        onChange={(e) => onChange(DEVIATION_BUCKETS[Number(e.target.value)].id)}
-        className={cn("mt-4 w-full h-2", accentClass)}
-        aria-label={label}
-      />
-      <div className="mt-2 flex justify-between text-[10px] font-medium text-ink-400 tabular-nums">
-        <span>~45</span><span>50</span><span>55</span>
-        <span>60</span><span>65</span><span>70</span><span>75~</span>
+      {/* 4列 × 2行 グリッド */}
+      <div className="mt-8 grid grid-cols-4 gap-2">
+        {DEVIATION_BUCKETS.map((b) => {
+          const active = b.id === value;
+          return (
+            <button
+              key={b.id}
+              type="button"
+              onClick={() => onChange(b.id)}
+              aria-pressed={active}
+              className={cn(
+                "flex flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-3 transition active:scale-[0.97]",
+                active
+                  ? "bg-ink-900 text-white"
+                  : "border border-ink-100 bg-white text-ink-900 hover:bg-cream-50",
+              )}
+            >
+              <span className="text-[12px] font-bold tabular-nums tracking-[-0.01em]">
+                {b.label}
+              </span>
+              <span className={cn("text-[10px] font-medium", active ? "text-white/60" : "text-ink-400")}>
+                {BUCKET_DESCRIPTIONS[b.id] ?? ""}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
 // ── Step 1: 学年 ─────────────────────────────────────
+// PDF/Design Canvas 準拠: 2x2 グリッド、選択=黒背景+白文字
 export function GradeStep({
   value,
   onChange,
@@ -160,31 +181,26 @@ export function GradeStep({
         title="学年を教えて"
         subtitle="学年に合った単元・参考書ルートを準備します。"
       />
-      <div className="grid gap-3">
-        {GRADES.map((g) => (
-          <button
-            key={g.id}
-            type="button"
-            onClick={() => onChange(g.id)}
-            aria-pressed={value === g.id}
-            className={cn(
-              "flex h-14 items-center justify-between rounded-2xl border-2 px-5 text-left transition active:scale-[0.99]",
-              value === g.id
-                ? "border-sky-500 bg-sky-50 ring-2 ring-sky-500/20"
-                : "border-cream-200 bg-white hover:bg-cream-50",
-            )}
-          >
-            <span className="text-[16px] font-bold text-ink-900">{g.name}</span>
-            <span
+      <div className="grid grid-cols-2 gap-2">
+        {GRADES.map((g) => {
+          const active = value === g.id;
+          return (
+            <button
+              key={g.id}
+              type="button"
+              onClick={() => onChange(g.id)}
+              aria-pressed={active}
               className={cn(
-                "flex h-5 w-5 items-center justify-center rounded-full border-2",
-                value === g.id ? "border-sky-500 bg-sky-500" : "border-cream-300 bg-white",
+                "flex h-14 items-center justify-center rounded-xl text-[14px] font-bold transition active:scale-[0.98]",
+                active
+                  ? "bg-ink-900 text-white"
+                  : "border border-ink-100 bg-cream-50 text-ink-900 hover:bg-white",
               )}
             >
-              {value === g.id && <span className="h-2 w-2 rounded-full bg-white" />}
-            </span>
-          </button>
-        ))}
+              {g.name}
+            </button>
+          );
+        })}
       </div>
     </>
   );
