@@ -159,6 +159,7 @@ type VisionDetail = {
 
 type PhotoState =
   | { status: "idle" }
+  | { status: "optimizing" }
   | { status: "analyzing" }
   | { status: "done"; result: VisionResult; detail?: VisionDetail; previewUrl: string }
   | { status: "error"; message: string };
@@ -178,15 +179,26 @@ function PhotoMode({
     if (!file) return;
 
     const previewUrl = URL.createObjectURL(file);
+
+    // Step 1: 画像を最適化（長辺 1024px / JPEG 0.85）
+    setPhotoState({ status: "optimizing" });
+    let base64: string;
+    let mediaType: string;
+    try {
+      const processed = await preprocessImage(file);
+      base64 = processed.base64;
+      mediaType = processed.mediaType;
+    } catch {
+      // 前処理失敗時は元ファイルをフォールバック
+      const buffer = await file.arrayBuffer();
+      base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+      mediaType = file.type || "image/jpeg";
+    }
+
+    // Step 2: Vision API に送信
     setPhotoState({ status: "analyzing" });
 
     try {
-      const buffer = await file.arrayBuffer();
-      const base64 = btoa(
-        String.fromCharCode(...new Uint8Array(buffer)),
-      );
-      const mediaType = file.type || "image/jpeg";
-
       const res = await fetch("/api/diagnose-from-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -265,6 +277,13 @@ function PhotoMode({
             onChange={handleFileChange}
           />
         </label>
+      ) : null}
+
+      {photoState.status === "optimizing" ? (
+        <div className="mt-5 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-cream-300 bg-cream-50 p-10">
+          <Loader2 className="h-8 w-8 animate-spin text-ink-400" />
+          <span className="text-sm font-bold text-ink-600">画像を最適化中…</span>
+        </div>
       ) : null}
 
       {photoState.status === "analyzing" ? (

@@ -53,11 +53,27 @@ export function LoginBonus() {
 
   const streak = getStreak(state.blockLogs ?? []);
   const totalLogins = (state.dailyMoodLogs ?? []).length;
+  // 特別なマイルストーン (お祝い演出)
+  const bigMilestone = [7, 14, 30, 50, 100, 200, 365].includes(streak);
   const isMilestone = streak > 0 && streak % 7 === 0;
 
   let title = "今日もよく来てくれました";
   let body = "+10 EXP";
-  if (streak >= 30) {
+  if (bigMilestone) {
+    title =
+      streak === 365
+        ? `🏆 1年連続達成！神`
+        : streak === 100
+          ? `100日連続！絶好調`
+          : streak === 50
+            ? `50日連続！すごい`
+            : streak === 30
+              ? `30日連続！もう習慣`
+              : streak === 14
+                ? `2週間連続！継続中`
+                : `1週間連続！その調子`;
+    body = `+${Math.min(50, streak * 5)} EXP のボーナス`;
+  } else if (streak >= 30) {
     title = `${streak}日連続！すごい`;
     body = `+${Math.min(50, streak * 5)} EXP のボーナス`;
   } else if (streak >= 7) {
@@ -74,24 +90,54 @@ export function LoginBonus() {
   return (
     <div
       className={cn(
-        "fixed inset-x-0 top-2 z-50 mx-auto flex w-full max-w-[460px] items-start gap-3 rounded-2xl border bg-white p-4 shadow-[0_10px_30px_-12px_rgba(50,46,41,0.25)] animate-slideDown",
-        isMilestone
-          ? "border-amber-200 bg-amber-50/70"
-          : "border-sky-200 bg-sky-50/40",
+        "fixed inset-x-0 top-2 z-50 mx-auto flex w-full max-w-[460px] items-start gap-3 rounded-2xl border bg-white p-4 shadow-[0_10px_30px_-12px_rgba(50,46,41,0.25)] animate-slideDown overflow-hidden",
+        bigMilestone
+          ? "border-amber-300 bg-gradient-to-br from-amber-50 to-sun-100"
+          : isMilestone
+            ? "border-amber-200 bg-amber-50/70"
+            : "border-sky-200 bg-sky-50/40",
       )}
       role="status"
       aria-live="polite"
     >
+      {/* マイルストーン時の装飾スパークル */}
+      {bigMilestone ? (
+        <>
+          <span
+            className="pointer-events-none absolute -right-2 -top-2 h-12 w-12 rounded-full bg-amber-300/30 blur-xl"
+            aria-hidden
+          />
+          <span
+            className="pointer-events-none absolute right-6 top-3 h-1.5 w-1.5 rounded-full bg-amber-400 pulse-soft"
+            aria-hidden
+          />
+          <span
+            className="pointer-events-none absolute right-14 top-6 h-1 w-1 rounded-full bg-sun-300 pulse-soft"
+            style={{ animationDelay: "0.5s" }}
+            aria-hidden
+          />
+          <span
+            className="pointer-events-none absolute right-10 bottom-4 h-1 w-1 rounded-full bg-amber-500 pulse-soft"
+            style={{ animationDelay: "1s" }}
+            aria-hidden
+          />
+        </>
+      ) : null}
+
       <div
         className={cn(
-          "flex h-9 w-9 flex-none items-center justify-center rounded-xl",
-          isMilestone ? "bg-amber-100 text-amber-600" : "bg-sky-100 text-sky-600",
+          "relative flex h-10 w-10 flex-none items-center justify-center rounded-xl",
+          bigMilestone
+            ? "bg-amber-200 text-amber-700"
+            : isMilestone
+              ? "bg-amber-100 text-amber-600"
+              : "bg-sky-100 text-sky-600",
         )}
       >
-        {streak >= 2 ? (
+        {bigMilestone ? (
+          <Gift className="h-5 w-5" strokeWidth={2.2} />
+        ) : streak >= 2 ? (
           <Flame className="h-4 w-4" strokeWidth={2.4} />
-        ) : isMilestone ? (
-          <Gift className="h-4 w-4" strokeWidth={2.2} />
         ) : (
           <Sparkles className="h-4 w-4" strokeWidth={2.2} />
         )}
