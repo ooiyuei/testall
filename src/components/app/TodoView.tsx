@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { ListSkeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { IconBadge } from "@/components/ui/IconBadge";
@@ -116,7 +116,7 @@ export function TodoView() {
 
   const filterCount = (priorityFilter !== "all" ? 1 : 0) + (tagFilter !== "all" ? 1 : 0);
 
-  if (!hydrated) return <LoadingState />;
+  if (!hydrated) return <ListSkeleton rows={5} />;
 
   return (
     <div className="px-5 pb-8 pt-3 space-y-4">

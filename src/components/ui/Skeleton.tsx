@@ -74,3 +74,43 @@ export function MeSkeleton() {
     </div>
   );
 }
+
+// 汎用リスト型スケルトン (TodoView/TestListView 等)
+export function ListSkeleton({ rows = 4 }: { rows?: number }) {
+  return (
+    <div className="px-5 pb-8 pt-4 space-y-3" aria-hidden>
+      <Skeleton className="h-12 w-full" rounded="lg" />
+      <div className="space-y-2">
+        {Array.from({ length: rows }).map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full" rounded="lg" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// カレンダー型 (PlanView)
+export function CalendarSkeleton() {
+  return (
+    <div className="px-5 pb-8 pt-4 space-y-4" aria-hidden>
+      <Skeleton className="h-32 w-full" rounded="lg" />
+      <Skeleton className="h-72 w-full" rounded="lg" />
+      <Skeleton className="h-24 w-full" rounded="lg" />
+    </div>
+  );
+}
+
+// 詳細型 (TestDetail / SubjectAreaDetail)
+export function DetailSkeleton() {
+  return (
+    <div className="px-5 pb-8 pt-4 space-y-4" aria-hidden>
+      <Skeleton className="h-32 w-full" rounded="lg" />
+      <div className="grid grid-cols-2 gap-2">
+        <Skeleton className="h-20" rounded="lg" />
+        <Skeleton className="h-20" rounded="lg" />
+      </div>
+      <Skeleton className="h-40 w-full" rounded="lg" />
+      <Skeleton className="h-40 w-full" rounded="lg" />
+    </div>
+  );
+}

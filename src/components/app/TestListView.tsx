@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { ChevronRight, Plus, TrendingDown, TrendingUp } from "lucide-react";
 import { useStore } from "@/lib/hooks/useStore";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { ListSkeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/cn";
 
 export function TestListView() {
   const { state, hydrated } = useStore();
 
   if (!hydrated) {
-    return <LoadingState />;
+    return <ListSkeleton rows={4} />;
   }
 
   const tests = state.tests;

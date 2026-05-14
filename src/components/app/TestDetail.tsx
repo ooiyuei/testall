@@ -18,7 +18,7 @@ import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
 import { deleteTest } from "@/lib/store";
 import type { MissCause, Weakness } from "@/lib/types";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { DetailSkeleton } from "@/components/ui/Skeleton";
 import { IconBadge } from "@/components/ui/IconBadge";
 import { toast } from "@/components/ui/Toast";
 
@@ -60,7 +60,7 @@ export function TestDetail({ id }: { id: string }) {
   const [deleteStep, setDeleteStep] = useState<0 | 1>(0);
 
   if (!hydrated) {
-    return <LoadingState />;
+    return <DetailSkeleton />;
   }
 
   const test = state.tests.find((t) => t.id === id);

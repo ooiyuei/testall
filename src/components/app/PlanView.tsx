@@ -20,7 +20,7 @@ import { deleteEvent, saveEvent } from "@/lib/store";
 import type { CalendarEvent, CalendarEventKind } from "@/lib/store";
 import { WeeklyGoalCard } from "./WeeklyGoalCard";
 import { WeeklyTaskBoard } from "./WeeklyTaskBoard";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { CalendarSkeleton } from "@/components/ui/Skeleton";
 import { IconBadge } from "@/components/ui/IconBadge";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { Button } from "@/components/ui/Button";
@@ -121,7 +121,7 @@ export function PlanView() {
     });
   }
 
-  if (!hydrated) return <LoadingState />;
+  if (!hydrated) return <CalendarSkeleton />;
 
   const latest = state.tests[0];
   const upcoming = events

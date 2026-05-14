@@ -11,4 +11,11 @@ export type { IconBadgeTone } from "./IconBadge";
 export { Stat } from "./Stat";
 export { LoadingState, ErrorState } from "./LoadingState";
 export { Toaster, toast } from "./Toast";
-export { Skeleton, HomeSkeleton, MeSkeleton } from "./Skeleton";
+export {
+  Skeleton,
+  HomeSkeleton,
+  MeSkeleton,
+  ListSkeleton,
+  CalendarSkeleton,
+  DetailSkeleton,
+} from "./Skeleton";
