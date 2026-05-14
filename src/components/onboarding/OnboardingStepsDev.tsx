@@ -296,29 +296,36 @@ export function TargetUnisStep({
     <>
       <StepHeader title="志望校を3つまで" subtitle="第1〜第3志望。後から変えてOK。" />
 
+      {/* 選択済リスト — PDF mock: 黒背景 + 白文字 + 白の偏差値数字 */}
       {value.length > 0 && (
         <ul className="mb-4 space-y-2">
           {value.map((tu, i) => {
             const u = allMerged.find((x) => x.id === tu.universityId);
             if (!u) return null;
+            const range = facultyDevRange(u);
             return (
-              <li key={tu.universityId} className="flex items-center gap-3 rounded-2xl border-2 border-sky-300 bg-sky-50 p-3.5">
-                <div className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-sky-500 text-[12px] font-bold text-white">
+              <li key={tu.universityId} className="flex items-center gap-3 rounded-xl bg-ink-900 px-3 py-2.5">
+                <span className="flex-none rounded-md bg-white/15 px-1.5 py-0.5 text-[10px] font-bold text-white">
                   第{i + 1}
-                </div>
+                </span>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[14px] font-bold text-ink-900">{u.name}</div>
-                  <div className="text-[11px] text-ink-500">
+                  <div className="text-[13px] font-bold text-white">{u.name}</div>
+                  <div className="text-[10px] text-white/65">
                     {u.tier ? `${TIER_LABEL[u.tier]} · ` : ""}{u.region}
                   </div>
                 </div>
+                {range ? (
+                  <span className="flex-none text-[16px] font-extrabold tabular-nums text-white">
+                    {range.min}
+                  </span>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => remove(tu.universityId)}
-                  className="flex h-8 w-8 flex-none items-center justify-center rounded-full text-ink-400 hover:bg-white transition"
+                  className="flex h-7 w-7 flex-none items-center justify-center rounded-full text-white/60 hover:bg-white/10 transition"
                   aria-label="外す"
                 >
-                  <Trash2 className="h-4 w-4" strokeWidth={1.75} />
+                  <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
                 </button>
               </li>
             );
@@ -339,16 +346,11 @@ export function TargetUnisStep({
         />
       </div>
 
+      {/* 結果リスト — PDF mock: 各行に大学名/学部 + 偏差値数字 (sky-500) */}
       <ul className="mt-3 space-y-1.5">
         {results.map(({ u, minDev, range, recLabel }) => {
           const selected = value.some((v) => v.universityId === u.id);
           const disabled = !selected && value.length >= 3;
-          const reach = range
-            ? minDev > deviation + 5 ? "挑戦"
-              : minDev > deviation ? "やや上"
-              : minDev > deviation - 5 ? "適正"
-              : "安全"
-            : "—";
           return (
             <li key={u.id}>
               <button
@@ -356,28 +358,34 @@ export function TargetUnisStep({
                 onClick={() => toggle(u.id)}
                 disabled={disabled}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-xl p-3.5 text-left transition",
-                  selected ? "bg-sky-50 ring-2 ring-sky-400/30"
-                  : disabled ? "bg-cream-50 opacity-50"
-                  : "bg-white hover:bg-cream-50",
+                  "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition active:scale-[0.99]",
+                  selected
+                    ? "bg-ink-900 text-white"
+                    : disabled
+                      ? "border border-ink-100 bg-cream-50 opacity-50"
+                      : "border border-ink-100 bg-cream-50 hover:bg-white",
                 )}
               >
                 <div className="min-w-0 flex-1">
-                  <div className="text-[14px] font-bold text-ink-900">{u.name}</div>
-                  <div className="mt-0.5 text-[11px] text-ink-500">
+                  <div className={cn("text-[13px] font-bold", selected ? "text-white" : "text-ink-900")}>
+                    {u.name}
+                  </div>
+                  <div className={cn("mt-0.5 text-[10px]", selected ? "text-white/65" : "text-ink-500")}>
                     {u.tier ? `${TIER_LABEL[u.tier]} · ` : ""}
-                    {range ? `偏差値 ${range.min}-${range.max} · ` : ""}
                     {u.region}
+                    {recLabel ? ` · ${recLabel}` : ""}
                   </div>
                 </div>
-                {recLabel && (
-                  <span className="flex-none rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-medium text-ink-500">
-                    {recLabel}
+                {range ? (
+                  <span
+                    className={cn(
+                      "flex-none text-[16px] font-extrabold tabular-nums",
+                      selected ? "text-white" : "text-sky-500",
+                    )}
+                  >
+                    {range.min}
                   </span>
-                )}
-                <span className={cn("flex-none rounded-full px-2 py-0.5 text-[10px] font-bold", reachTone(reach))}>
-                  {reach}
-                </span>
+                ) : null}
               </button>
             </li>
           );
