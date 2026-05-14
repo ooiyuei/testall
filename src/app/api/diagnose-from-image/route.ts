@@ -67,7 +67,21 @@ const SYSTEM_PROMPT = `あなたは日本の高校生向けテスト答案を読
 
 - スマホで撮影された画像は傾き・反射・影が混じる。読めない箇所は null + confidence を "low" に。
 - 解答用紙ではなく問題用紙だけが写っている場合、units だけ抽出して score は null。
-- 画像にテスト関連の情報が全く写っていない場合は全てのフィールドを null にし、notes に「テストではない画像」と書く。`;
+- 画像にテスト関連の情報が全く写っていない場合は全てのフィールドを null にし、notes に「テストではない画像」と書く。
+
+# 期待される入出力例（参照用 — 以下はモデルが学習のために使う例示であり、実際の抽出には入力画像のみを使うこと）
+
+## 例1: 数学テスト答案
+入力説明: 「数学Ⅰ・A 期末テスト」と書かれた答案。採点済みで合計 67 点 / 100 点。大問1（数と式）は 6 問中 4 問正解、大問2（二次関数）は 6 問中 2 問正解（式は書いてあるが符号ミス多数）、大問3（場合の数・確率）は 5 問中 5 問正解。
+期待出力:
+{"subject":"数学","testName":"数学Ⅰ・A 期末テスト","testNameSource":"image","score":67,"fullScore":100,"units":[{"unit":"数と式","correct":4,"total":6,"cause":"careless"},{"unit":"二次関数","correct":2,"total":6,"cause":"understanding"},{"unit":"場合の数・確率","correct":5,"total":5,"cause":null}],"confidence":{"overall":"high","score":"high","units":"high"},"notes":null}
+
+## 例2: 英語テスト答案
+入力説明: 「2年2学期 中間テスト 英語」と書かれた答案。合計 82 点 / 100 点。大問1（語彙・単語）は 10 問中 6 問正解（空白が目立つ）、大問2（長文読解）は 8 問中 7 問正解、大問3（英作文）は得点の記載が読めない。
+期待出力:
+{"subject":"英語","testName":"2年2学期 中間テスト 英語","testNameSource":"image","score":82,"fullScore":100,"units":[{"unit":"語彙・単語","correct":6,"total":10,"cause":"knowledge"},{"unit":"長文読解","correct":7,"total":8,"cause":"careless"},{"unit":"英作文","correct":null,"total":null,"cause":null}],"confidence":{"overall":"medium","score":"high","units":"medium"},"notes":"英作文の得点が読み取れなかったため units の confidence を medium に設定"}
+
+※ 上記は例示のみ。モデルは必ず実際に送られてくる画像から事実を抽出し、これらの例の数値を流用しないこと。`;
 
 // ---------------------------------------------------------------------------
 // 型定義 (UI 側と共有)

@@ -1,17 +1,16 @@
 "use client";
 
 // 探す画面
-// タブ: 大学 / 参考書 / 模試（高校・記事は探す対象外）
+// タブ: 大学 / 参考書 / 模試
 // 初期表示: 人気セクション
-// 大学フィルタ: 文系/理系 + 地域 + 難易度
-// 参考書フィルタ: 教科 + 難易度 + 出版社
-// 模試フィルタ: 主催者 + 学年
+// フィルタ: 大学(文系/理系/地域/難易度) / 参考書(教科/難易度/出版社) / 模試(主催/学年)
 
 import { useEffect, useMemo, useState } from "react";
 import {
   BookOpen,
   Building2,
   Check,
+  ChevronRight,
   Cloud,
   Filter,
   Plus,
@@ -25,7 +24,7 @@ import { useStore } from "@/lib/hooks/useStore";
 import { setProfile } from "@/lib/store";
 import { unifiedSearch } from "@/lib/master";
 import { UNIVERSITIES } from "@/lib/master/universities";
-import { TEXTBOOKS, getAllTextbooks } from "@/lib/master/textbooks";
+import { getAllTextbooks } from "@/lib/master/textbooks";
 import { MOCK_EXAMS } from "@/lib/master/mockexams";
 import {
   remoteEnabled,
@@ -34,7 +33,6 @@ import {
   remoteSearchUniversities,
 } from "@/lib/master/remote";
 import type {
-  Highschool,
   MockExam,
   MockExamProvider,
   Textbook,
@@ -46,6 +44,8 @@ import { TIER_LABEL } from "@/lib/master/universities";
 import { PUBLISHERS, SUBJECT_AREAS } from "@/lib/master/subjects";
 import type { SubjectAreaId } from "@/lib/master/subjects";
 import { AddEntityModal, type AddEntityKind } from "@/components/master/AddEntityModal";
+import { IconBadge } from "@/components/ui/IconBadge";
+import { SectionLabel } from "@/components/ui/SectionLabel";
 
 type Tab = "university" | "textbook" | "mock-exam";
 
@@ -55,30 +55,14 @@ const TABS: { id: Tab; label: string; icon: typeof Building2 }[] = [
   { id: "mock-exam", label: "模試", icon: ScrollText },
 ];
 
-// 人気どころ（最初に出すリスト）
 const POPULAR_UNI_IDS = [
-  "u-tokyo",
-  "u-kyoto",
-  "waseda",
-  "keio",
-  "hitotsubashi",
-  "titech",
-  "osaka",
-  "nagoya",
-  "sophia",
-  "rikadai",
-  "meiji",
-  "doshisha",
+  "u-tokyo", "u-kyoto", "waseda", "keio", "hitotsubashi",
+  "titech", "osaka", "nagoya", "sophia", "rikadai", "meiji", "doshisha",
 ];
 const POPULAR_BOOK_IDS = [
-  "tb-math-yellow-chart",
-  "tb-math-blue-chart",
-  "tb-math-1taich",
-  "tb-eng-target1900",
-  "tb-eng-system",
-  "tb-eng-vintage",
-  "tb-jp-genbun-akahon",
-  "tb-jp-kobun-tango",
+  "tb-math-yellow-chart", "tb-math-blue-chart", "tb-math-1taich",
+  "tb-eng-target1900", "tb-eng-system", "tb-eng-vintage",
+  "tb-jp-genbun-akahon", "tb-jp-kobun-tango",
 ];
 
 export function SearchView() {
@@ -88,7 +72,6 @@ export function SearchView() {
   const [addModal, setAddModal] = useState<AddEntityKind | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  // フィルタ
   const [uniArea, setUniArea] = useState<"all" | "humanities" | "sciences">("all");
   const [uniRegion, setUniRegion] = useState<string>("all");
   const [uniTier, setUniTier] = useState<string>("all");
@@ -98,7 +81,6 @@ export function SearchView() {
   const [examProvider, setExamProvider] = useState<"all" | MockExamProvider>("all");
   const [examGrade, setExamGrade] = useState<string>("all");
 
-  // リモート検索
   const [remoteRes, setRemoteRes] = useState<{
     universities: University[];
     textbooks: Textbook[];
@@ -110,10 +92,7 @@ export function SearchView() {
   useEffect(() => {
     if (!useRemote) return;
     const q = query.trim();
-    if (!q) {
-      setRemoteRes(null);
-      return;
-    }
+    if (!q) { setRemoteRes(null); return; }
     setRemoteLoading(true);
     const t = setTimeout(async () => {
       const [universities, textbooks, mockExams] = await Promise.all([
@@ -127,7 +106,6 @@ export function SearchView() {
     return () => clearTimeout(t);
   }, [query, useRemote]);
 
-  // 表示データ
   const items = useMemo(() => {
     if (tab === "university") {
       const all = remoteRes?.universities ?? (query.trim()
@@ -143,7 +121,6 @@ export function SearchView() {
       return filtered;
     }
     if (tab === "textbook") {
-      // bulk DB を含む全ての参考書から検索
       const allBooks = getAllTextbooks();
       const all = remoteRes?.textbooks ?? (query.trim()
         ? allBooks.filter((b) => {
@@ -157,10 +134,7 @@ export function SearchView() {
           })
         : allBooks);
       const filtered = applyBookFilter(all, bookArea, bookLevel, bookPublisher);
-      // 「使う順」rank 優先でソート
-      const sorted = [...filtered].sort(
-        (a, b) => (a.rank ?? 9999) - (b.rank ?? 9999),
-      );
+      const sorted = [...filtered].sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999));
       if (!query.trim()) {
         const popular = POPULAR_BOOK_IDS
           .map((id) => sorted.find((b) => b.id === id))
@@ -169,69 +143,67 @@ export function SearchView() {
       }
       return sorted.slice(0, 50);
     }
-    // mock-exam
     const all = remoteRes?.mockExams ?? (query.trim()
       ? unifiedSearch({ query, kinds: ["mock-exam"], limit: 30 }).mockExams.map((h) => h.entity)
       : MOCK_EXAMS);
     return applyExamFilter(all, examProvider, examGrade).slice(0, 30);
-  }, [
-    tab,
-    query,
-    remoteRes,
-    uniArea,
-    uniRegion,
-    uniTier,
-    bookArea,
-    bookLevel,
-    bookPublisher,
-    examProvider,
-    examGrade,
-  ]);
+  }, [tab, query, remoteRes, uniArea, uniRegion, uniTier, bookArea, bookLevel, bookPublisher, examProvider, examGrade]);
 
-  const addKind: AddEntityKind = tab as AddEntityKind;
   const filterCount =
-    (tab === "university"
+    tab === "university"
       ? (uniArea !== "all" ? 1 : 0) + (uniRegion !== "all" ? 1 : 0) + (uniTier !== "all" ? 1 : 0)
       : tab === "textbook"
       ? (bookArea !== "all" ? 1 : 0) + (bookLevel !== "all" ? 1 : 0) + (bookPublisher !== "all" ? 1 : 0)
-      : (examProvider !== "all" ? 1 : 0) + (examGrade !== "all" ? 1 : 0));
+      : (examProvider !== "all" ? 1 : 0) + (examGrade !== "all" ? 1 : 0);
+
+  const addKind: AddEntityKind = tab as AddEntityKind;
+  const tabLabel = tab === "university" ? "大学" : tab === "textbook" ? "参考書" : "模試";
 
   return (
-    <div className="px-5 pb-8 pt-3">
+    <div className="px-5 pb-8 pt-3 space-y-3">
       {/* 検索バー */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" strokeWidth={1.75} />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="大学・参考書・模試で検索"
-          className="h-11 w-full rounded-2xl border border-cream-200 bg-white pl-9 pr-3 text-sm text-ink-900 outline-none focus:border-sky-400"
+          className="h-12 w-full rounded-2xl border border-ink-100/80 bg-white pl-10 pr-10 text-[13px] text-ink-900 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
         />
+        {query ? (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-ink-200 text-ink-600"
+          >
+            <X className="h-3.5 w-3.5" strokeWidth={2} />
+          </button>
+        ) : null}
       </div>
 
       {useRemote ? (
-        <div className="mt-2 flex items-center gap-1 text-[10px] font-bold text-ink-500">
-          <Cloud className="h-3 w-3 text-mint-600" />
+        <div className="flex items-center gap-1.5 text-[11px] font-medium text-ink-400">
+          <Cloud className="h-3.5 w-3.5 text-mint-500" strokeWidth={1.75} />
           {remoteLoading ? "Supabase 検索中…" : "Supabase 接続中"}
         </div>
       ) : null}
 
-      {/* タブ + フィルタボタン */}
-      <div className="mt-3 flex items-center gap-2">
-        <ul className="flex flex-1 gap-2 overflow-x-auto">
+      {/* タブ + フィルタ */}
+      <div className="flex items-center gap-2">
+        <ul className="flex flex-1 gap-1.5 overflow-x-auto no-scrollbar">
           {TABS.map((t) => (
             <li key={t.id} className="flex-none">
               <button
                 type="button"
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  "flex h-9 items-center gap-1 rounded-full px-3 text-xs font-bold transition",
+                  "flex h-9 items-center gap-1.5 rounded-full px-3 text-[12px] font-medium transition",
                   tab === t.id
-                    ? "bg-sky-500 text-white shadow-soft"
-                    : "bg-white text-ink-700 border border-cream-200",
+                    ? "bg-ink-900 text-white shadow-soft"
+                    : "bg-white text-ink-700 border border-ink-100/80 hover:bg-cream-50",
                 )}
               >
-                <t.icon className="h-3.5 w-3.5" />
+                <t.icon className="h-3.5 w-3.5" strokeWidth={1.75} />
                 {t.label}
               </button>
             </li>
@@ -241,16 +213,16 @@ export function SearchView() {
           type="button"
           onClick={() => setFilterOpen((v) => !v)}
           className={cn(
-            "flex h-9 flex-none items-center gap-1 rounded-full px-3 text-xs font-bold transition",
+            "flex h-9 flex-none items-center gap-1.5 rounded-full px-3 text-[12px] font-medium transition",
             filterCount > 0
-              ? "bg-sun-300 text-ink-900"
-              : "bg-white text-ink-700 border border-cream-200",
+              ? "bg-ink-900 text-white"
+              : "bg-white text-ink-700 border border-ink-100/80 hover:bg-cream-50",
           )}
         >
-          <Filter className="h-3.5 w-3.5" />
+          <Filter className="h-3.5 w-3.5" strokeWidth={1.75} />
           絞り込み
           {filterCount > 0 ? (
-            <span className="ml-0.5 rounded-full bg-ink-900 px-1.5 text-[10px] text-white tabular-nums">
+            <span className="ml-0.5 rounded-full bg-white/20 px-1.5 tabular-nums text-[10px]">
               {filterCount}
             </span>
           ) : null}
@@ -259,57 +231,45 @@ export function SearchView() {
 
       {/* フィルタパネル */}
       {filterOpen ? (
-        <div className="mt-3 rounded-2xl border border-cream-200 bg-white p-3 shadow-soft">
+        <div className="rounded-2xl border border-cream-200 bg-white p-4 shadow-soft">
           {tab === "university" ? (
             <UniversityFilter
-              area={uniArea}
-              setArea={setUniArea}
-              region={uniRegion}
-              setRegion={setUniRegion}
-              tier={uniTier}
-              setTier={setUniTier}
+              area={uniArea} setArea={setUniArea}
+              region={uniRegion} setRegion={setUniRegion}
+              tier={uniTier} setTier={setUniTier}
             />
           ) : tab === "textbook" ? (
             <TextbookFilter
-              area={bookArea}
-              setArea={setBookArea}
-              level={bookLevel}
-              setLevel={setBookLevel}
-              publisher={bookPublisher}
-              setPublisher={setBookPublisher}
+              area={bookArea} setArea={setBookArea}
+              level={bookLevel} setLevel={setBookLevel}
+              publisher={bookPublisher} setPublisher={setBookPublisher}
             />
           ) : (
             <MockExamFilter
-              provider={examProvider}
-              setProvider={setExamProvider}
-              grade={examGrade}
-              setGrade={setExamGrade}
+              provider={examProvider} setProvider={setExamProvider}
+              grade={examGrade} setGrade={setExamGrade}
             />
           )}
         </div>
       ) : null}
 
-      {/* 「人気」見出し（クエリなし時） */}
+      {/* 人気見出し */}
       {!query.trim() ? (
-        <h2 className="mt-5 text-[10px] font-bold uppercase tracking-widest text-ink-500">
-          <Sparkles className="mr-1 inline-block h-3 w-3 align-baseline" />
-          人気の{tab === "university" ? "大学" : tab === "textbook" ? "参考書" : "模試"}
-        </h2>
+        <SectionLabel
+          title={`人気の${tabLabel}`}
+        />
       ) : null}
 
       {/* 結果リスト */}
-      <ul className="mt-2 space-y-1.5">
+      <ul className="space-y-2">
         {tab === "university"
-          ? items.map((u) => <UniversityRow key={(u as University).id} u={u as University} />)
+          ? items.map((u) => <UniversityCard key={(u as University).id} u={u as University} />)
           : tab === "textbook"
           ? items.map((b) => (
-              <TextbookRow
+              <TextbookCard
                 key={(b as Textbook).id}
                 b={b as Textbook}
-                owned={
-                  hydrated &&
-                  (state.profile?.textbooks ?? []).includes((b as Textbook).name)
-                }
+                owned={hydrated && (state.profile?.textbooks ?? []).includes((b as Textbook).name)}
                 onToggleOwn={(name) => {
                   const current = state.profile;
                   if (!current) return;
@@ -321,10 +281,10 @@ export function SearchView() {
                 }}
               />
             ))
-          : items.map((m) => <MockExamRow key={(m as MockExam).id} m={m as MockExam} />)}
+          : items.map((m) => <MockExamCard key={(m as MockExam).id} m={m as MockExam} />)}
         {items.length === 0 ? (
-          <li className="rounded-2xl bg-white p-6 text-center text-xs text-ink-500">
-            条件に該当なし
+          <li className="rounded-2xl border border-ink-100/80 bg-white p-8 text-center">
+            <p className="text-[13px] text-ink-500">条件に該当なし</p>
           </li>
         ) : null}
       </ul>
@@ -333,10 +293,10 @@ export function SearchView() {
       <button
         type="button"
         onClick={() => setAddModal(addKind)}
-        className="mt-4 flex w-full items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-cream-200 bg-white p-4 text-xs font-bold text-ink-500 hover:border-sky-300 hover:bg-sky-50"
+        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-cream-200 bg-white p-4 text-[12px] font-medium text-ink-500 hover:border-sky-300 hover:bg-sky-50 transition"
       >
-        <Plus className="h-3.5 w-3.5" />
-        一覧にない{tab === "university" ? "大学" : tab === "textbook" ? "参考書" : "模試"}を追加
+        <Plus className="h-3.5 w-3.5" strokeWidth={1.75} />
+        一覧にない{tabLabel}を追加
       </button>
 
       {addModal ? (
@@ -362,12 +322,8 @@ function applyUniFilter(
     if (tier !== "all" && u.tier !== tier) return false;
     if (area !== "all") {
       const cats = u.faculties.map((f) => f.category);
-      const isHumanities = cats.some((c) =>
-        ["letters", "law", "economics", "social"].includes(c),
-      );
-      const isSciences = cats.some((c) =>
-        ["science", "engineering", "medical", "agriculture", "info"].includes(c),
-      );
+      const isHumanities = cats.some((c) => ["letters", "law", "economics", "social"].includes(c));
+      const isSciences = cats.some((c) => ["science", "engineering", "medical", "agriculture", "info"].includes(c));
       if (area === "humanities" && !isHumanities) return false;
       if (area === "sciences" && !isSciences) return false;
     }
@@ -383,8 +339,6 @@ function applyBookFilter(
 ): Textbook[] {
   return arr.filter((b) => {
     if (area !== "all") {
-      // book.subject はカテゴリ id（japanese/math/.../social/info）。area は教科 (history/civics 含む)
-      // 旧 social は新 history と civics の両方を含むので、両方とも area として一致させる
       if (area === "history" || area === "civics") {
         if (b.subject !== "social" && b.subject !== area) return false;
       } else if (b.subject !== area) return false;
@@ -419,19 +373,9 @@ function ChipRow({
   value: string;
   onChange: (v: string) => void;
 }) {
-  // 日本語ラベルは uppercase / wide tracking を適用しない
-  const isAscii = /^[\x00-\x7F]+$/.test(label);
   return (
     <div>
-      <div
-        className={
-          isAscii
-            ? "text-[10px] font-bold uppercase tracking-widest text-ink-500"
-            : "text-[11px] font-medium text-ink-500"
-        }
-      >
-        {label}
-      </div>
+      <div className="text-[11px] font-medium text-ink-500">{label}</div>
       <div className="mt-1.5 flex flex-wrap gap-1.5">
         {options.map((o) => (
           <button
@@ -439,7 +383,7 @@ function ChipRow({
             type="button"
             onClick={() => onChange(o.value)}
             className={cn(
-              "h-7 rounded-full px-3 text-[11px] font-bold transition active:scale-[0.96]",
+              "h-7 rounded-full px-3 text-[11px] font-medium transition active:scale-[0.96]",
               value === o.value
                 ? "bg-sky-500 text-white shadow-soft"
                 : "bg-cream-50 text-ink-700 hover:bg-cream-100",
@@ -454,12 +398,7 @@ function ChipRow({
 }
 
 function UniversityFilter({
-  area,
-  setArea,
-  region,
-  setRegion,
-  tier,
-  setTier,
+  area, setArea, region, setRegion, tier, setTier,
 }: {
   area: "all" | "humanities" | "sciences";
   setArea: (v: "all" | "humanities" | "sciences") => void;
@@ -486,10 +425,7 @@ function UniversityFilter({
         onChange={setRegion}
         options={[
           { value: "all", label: "全国" },
-          ...["北海道", "東北", "関東", "中部", "関西", "中国", "四国", "九州"].map((r) => ({
-            value: r,
-            label: r,
-          })),
+          ...["北海道", "東北", "関東", "中部", "関西", "中国", "四国", "九州"].map((r) => ({ value: r, label: r })),
         ]}
       />
       <ChipRow
@@ -510,12 +446,7 @@ function UniversityFilter({
 }
 
 function TextbookFilter({
-  area,
-  setArea,
-  level,
-  setLevel,
-  publisher,
-  setPublisher,
+  area, setArea, level, setLevel, publisher, setPublisher,
 }: {
   area: "all" | SubjectAreaId;
   setArea: (v: "all" | SubjectAreaId) => void;
@@ -561,10 +492,7 @@ function TextbookFilter({
 }
 
 function MockExamFilter({
-  provider,
-  setProvider,
-  grade,
-  setGrade,
+  provider, setProvider, grade, setGrade,
 }: {
   provider: "all" | MockExamProvider;
   setProvider: (v: "all" | MockExamProvider) => void;
@@ -602,27 +530,54 @@ function MockExamFilter({
   );
 }
 
-// ───── 行コンポーネント ─────
-function UniversityRow({ u }: { u: University }) {
+// ───── カードコンポーネント ─────
+function UniversityCard({ u }: { u: University }) {
   const devs = u.faculties
     .map((f) => f.deviation)
     .filter((v): v is number => typeof v === "number");
   const minDev = devs.length ? Math.min(...devs) : undefined;
   const maxDev = devs.length ? Math.max(...devs) : undefined;
+
+  const tierTone: Record<string, string> = {
+    S: "bg-coral-300/30 text-coral-600",
+    A: "bg-peach-100 text-peach-500",
+    B: "bg-sky-100 text-sky-600",
+    C: "bg-mint-100 text-mint-600",
+    D: "bg-cream-100 text-ink-600",
+  };
+
   return (
-    <li className="rounded-2xl border border-cream-200 bg-white p-3 shadow-soft">
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="text-sm font-black text-ink-900">{u.name}</span>
-        {minDev !== undefined && maxDev !== undefined ? (
-          <span className="flex-none rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-bold text-ink-700 tabular-nums">
-            偏差値 {minDev}-{maxDev}
-          </span>
-        ) : null}
-      </div>
-      <div className="mt-0.5 text-[10px] text-ink-500">
-        {u.tier ? `${TIER_LABEL[u.tier]} · ` : ""}
-        {u.region} · 全{u.faculties.length}学部
-      </div>
+    <li>
+      <button
+        type="button"
+        className="w-full flex items-center gap-3 rounded-2xl border border-cream-200 bg-white p-3 shadow-soft text-left hover:bg-cream-50 transition"
+      >
+        <IconBadge tone="primary" size="md">
+          <Building2 strokeWidth={1.75} />
+        </IconBadge>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[14px] font-bold text-ink-900">{u.name}</span>
+            {u.tier ? (
+              <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", tierTone[u.tier] ?? "bg-cream-100 text-ink-600")}>
+                {TIER_LABEL[u.tier]}
+              </span>
+            ) : null}
+          </div>
+          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-ink-400">
+            <span>{u.region}</span>
+            <span>·</span>
+            <span>全{u.faculties.length}学部</span>
+            {minDev !== undefined && maxDev !== undefined ? (
+              <>
+                <span>·</span>
+                <span className="font-medium text-ink-600 tabular-nums">偏差値 {minDev}–{maxDev}</span>
+              </>
+            ) : null}
+          </div>
+        </div>
+        <ChevronRight className="h-4 w-4 flex-none text-ink-300" strokeWidth={1.75} />
+      </button>
     </li>
   );
 }
@@ -640,7 +595,7 @@ const LEVEL_TONE: Record<Textbook["level"], string> = {
   top: "bg-coral-300 text-white",
 };
 
-function TextbookRow({
+function TextbookCard({
   b,
   owned,
   onToggleOwn,
@@ -651,37 +606,38 @@ function TextbookRow({
 }) {
   return (
     <li className="rounded-2xl border border-cream-200 bg-white p-3 shadow-soft">
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-3">
+        <IconBadge tone="warning" size="md">
+          <BookOpen strokeWidth={1.75} />
+        </IconBadge>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <span
-              className={cn(
-                "flex-none rounded-full px-1.5 py-0.5 text-[9px] font-bold",
-                LEVEL_TONE[b.level],
-              )}
-            >
+          <div className="flex items-start gap-1.5 flex-wrap">
+            <span className={cn("mt-0.5 flex-none rounded-full px-2 py-0.5 text-[10px] font-medium", LEVEL_TONE[b.level])}>
               {LEVEL_LABEL[b.level]}
             </span>
-            <span className="text-sm font-black text-ink-900 line-clamp-1">
-              {b.name}
-            </span>
+            {b.rank !== undefined && b.rank <= 20 ? (
+              <span className="mt-0.5 flex-none rounded-full bg-sun-200 px-2 py-0.5 text-[10px] font-bold text-ink-800 tabular-nums">
+                #{b.rank}
+              </span>
+            ) : null}
           </div>
-          <div className="mt-1 text-[10px] text-ink-500">{b.publisher}</div>
+          <div className="mt-1 text-[13px] font-bold text-ink-900 line-clamp-1">{b.name}</div>
+          <div className="mt-0.5 text-[11px] text-ink-400">{b.publisher}</div>
           {b.description ? (
-            <p className="mt-1 text-[11px] text-ink-700">{b.description}</p>
+            <p className="mt-1 text-[11px] text-ink-600 line-clamp-2">{b.description}</p>
           ) : null}
         </div>
         <button
           type="button"
           onClick={() => onToggleOwn(b.name)}
           className={cn(
-            "flex h-9 flex-none items-center gap-1 rounded-full px-2.5 text-[10px] font-black transition",
+            "flex h-8 flex-none items-center gap-1 rounded-full px-2.5 text-[11px] font-medium transition",
             owned
               ? "bg-mint-500 text-white"
-              : "bg-cream-100 text-ink-700 hover:bg-cream-200",
+              : "bg-cream-100 text-ink-600 hover:bg-cream-200",
           )}
         >
-          {owned ? <Check className="h-3.5 w-3.5" /> : null}
+          {owned ? <Check className="h-3.5 w-3.5" strokeWidth={2} /> : null}
           持ってる
         </button>
       </div>
@@ -689,20 +645,37 @@ function TextbookRow({
   );
 }
 
-function MockExamRow({ m }: { m: MockExam }) {
+function MockExamCard({ m }: { m: MockExam }) {
+  const providerTone: Record<string, string> = {
+    kawai: "bg-sky-100 text-sky-700",
+    sundai: "bg-peach-100 text-peach-500",
+    toshin: "bg-mint-100 text-mint-600",
+    yozemi: "bg-sun-200 text-ink-700",
+    benesse: "bg-cream-100 text-ink-700",
+  };
+
   return (
-    <li className="rounded-2xl border border-cream-200 bg-white p-3 shadow-soft">
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="text-sm font-black text-ink-900 line-clamp-1">
-          {m.name}
-        </span>
-        <span className="flex-none rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-bold text-ink-700">
-          {PROVIDER_LABEL[m.provider]}
-        </span>
-      </div>
-      <div className="mt-0.5 text-[10px] text-ink-500">
-        {m.examDate ?? "—"} · {m.targetGrades.join("/")} · {m.year}
-      </div>
+    <li>
+      <button
+        type="button"
+        className="w-full flex items-center gap-3 rounded-2xl border border-cream-200 bg-white p-3 shadow-soft text-left hover:bg-cream-50 transition"
+      >
+        <IconBadge tone="info" size="md">
+          <ScrollText strokeWidth={1.75} />
+        </IconBadge>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", providerTone[m.provider] ?? "bg-cream-100 text-ink-600")}>
+              {PROVIDER_LABEL[m.provider]}
+            </span>
+          </div>
+          <div className="mt-0.5 text-[13px] font-bold text-ink-900 line-clamp-1">{m.name}</div>
+          <div className="mt-0.5 text-[11px] text-ink-400">
+            {m.examDate ?? "—"} · {m.targetGrades.join("/")} · {m.year}
+          </div>
+        </div>
+        <ChevronRight className="h-4 w-4 flex-none text-ink-300" strokeWidth={1.75} />
+      </button>
     </li>
   );
 }
