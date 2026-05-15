@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
 import { ListSkeleton } from "@/components/ui/Skeleton";
+import { EmptyState } from "@/components/ui/States";
 import { Button } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { IconBadge } from "@/components/ui/IconBadge";
@@ -275,17 +276,18 @@ export function TodoView() {
 
       {/* タスクリスト — PDF mock 通り日付グルーピング */}
       {visible.length === 0 ? (
-        <div className="rounded-2xl border border-ink-100/80 bg-white px-5 py-12 text-center">
-          <ListTodo className="mx-auto h-8 w-8 text-ink-300" strokeWidth={1.5} />
-          <p className="mt-3 text-[13px] font-medium text-ink-600">
-            {tab === "today"
+        <EmptyState
+          icon={<ListTodo className="h-8 w-8" strokeWidth={1.6} />}
+          title={
+            tab === "today"
               ? "今日のタスクはありません"
               : tab === "done"
-              ? "完了タスクはありません"
-              : "タスクがありません"}
-          </p>
-          <p className="mt-1 text-[11px] text-ink-400">「タスク追加」から登録してみよう</p>
-        </div>
+                ? "完了タスクはありません"
+                : "タスクがありません"
+          }
+          body="「タスク追加」から登録してみよう"
+          primary={{ label: "タスク追加", onClick: () => setOpen(true) }}
+        />
       ) : (
         <TaskGroupedList tasks={visible} todayISO={todayISO} />
       )}
