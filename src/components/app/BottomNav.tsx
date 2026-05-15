@@ -7,9 +7,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  CalendarRange,
   CheckSquare,
   Home,
+  Search as SearchIcon,
   Timer,
   User,
 } from "lucide-react";
@@ -24,9 +24,9 @@ type Tab = {
 
 const TABS: Tab[] = [
   { href: "/app",         label: "ホーム",     icon: Home,          match: (p) => p === "/app" },
-  { href: "/app/todo",    label: "やること",   icon: CheckSquare,   match: (p) => p.startsWith("/app/todo") },
+  { href: "/app/todo",    label: "TODO",       icon: CheckSquare,   match: (p) => p.startsWith("/app/todo") },
   { href: "/app/focus",   label: "集中",       icon: Timer,         match: (p) => p.startsWith("/app/focus") },
-  { href: "/app/plan",    label: "計画",       icon: CalendarRange, match: (p) => p.startsWith("/app/plan") },
+  { href: "/app/search",  label: "探す",       icon: SearchIcon,    match: (p) => p.startsWith("/app/search") },
   { href: "/app/me",      label: "マイ",       icon: User,          match: (p) => p.startsWith("/app/me") },
 ];
 

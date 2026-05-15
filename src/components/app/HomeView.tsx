@@ -25,6 +25,7 @@ import { GuideTour } from "./GuideTour";
 import { LoginBonus } from "./LoginBonus";
 import { InstallPrompt } from "./InstallPrompt";
 import { HomeSkeleton } from "@/components/ui/Skeleton";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 
 const MOOD_LABELS: Record<string, string> = {
   "today-off": "休む",
@@ -88,7 +89,15 @@ export function HomeView() {
       : blockStatus.filter((s) => s === "done").length;
   const totalCount = Math.max(todayTarget, doneCount);
   const remainingBlocks = Math.max(0, totalCount - doneCount);
+  // 人間に読みやすい時間表記 (例: 125 → "2時間5分", 25 → "25分")
   const remainingMin = remainingBlocks * 25;
+  const remainingTimeLabel = (() => {
+    if (remainingMin <= 0) return "0分";
+    if (remainingMin < 60) return `${remainingMin}分`;
+    const h = Math.floor(remainingMin / 60);
+    const m = remainingMin % 60;
+    return m === 0 ? `${h}時間` : `${h}時間${m}分`;
+  })();
 
   // 週間ストリーク
   const streakDays = useMemo(() => {
@@ -172,29 +181,13 @@ export function HomeView() {
       {state.profile?.onboardedAt ? <LoginBonus /> : null}
       {state.profile?.onboardedAt ? <InstallPrompt /> : null}
 
-      {/* Compact pill header — avatar + date/greeting / streak */}
-      <section className="mt-1.5 flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <div className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-ink-900 text-[13px] font-extrabold text-white">
-            {userInitial}
-          </div>
-          <div className="min-w-0">
-            <div className="text-[11px] font-medium text-ink-400">
-              {dateLabel}
-            </div>
-            <div className="truncate text-[14px] font-bold text-ink-900">
-              {greeting}
-              {state.profile?.name ? `、${state.profile.name}` : ""}
-            </div>
-          </div>
-        </div>
+      {/* 簡潔ヘッダー: 日付のみ (アバター/挨拶/streak は除去) */}
+      <section className="mt-1.5 flex items-center justify-between">
+        <div className="text-[11px] font-medium text-ink-400">{dateLabel}</div>
         {streakDays > 0 ? (
-          <div className="flex flex-none items-center gap-1 rounded-full border border-ink-100 bg-white px-2.5 py-1.5">
-            <Flame className="h-3.5 w-3.5 text-coral-500" strokeWidth={2.4} />
-            <span className="text-[12px] font-bold tabular-nums text-ink-900">
-              {streakDays}
-              <span className="ml-0.5 text-[10px] font-medium text-ink-500">日</span>
-            </span>
+          <div className="inline-flex items-center gap-1 text-[11px] font-bold text-coral-500">
+            <Flame className="h-3 w-3" strokeWidth={2.4} />
+            <span className="tabular-nums">{streakDays}日</span>
           </div>
         ) : null}
       </section>
@@ -214,7 +207,7 @@ export function HomeView() {
             <span className="text-sky-500">{remainingBlocks}</span> ブロック残り
             <br />
             <span className="font-bold text-ink-400">
-              {remainingBlocks === 0 ? "今日は完了！" : `あと ${remainingMin}分`}
+              {remainingBlocks === 0 ? "今日は完了！" : `あと ${remainingTimeLabel}`}
             </span>
           </h1>
         </section>
@@ -300,12 +293,21 @@ export function HomeView() {
         </section>
       ) : null}
 
-      {/* 気分入力カード (未入力 or 変更モード) */}
-      {hydrated && (!todayMoodLog || showMoodEditor) ? (
-        <MoodCheckCard
-          forceEdit={showMoodEditor}
-          onCommitted={() => setShowMoodEditor(false)}
-        />
+      {/* 未入力時は inline カード、変更時はボトムシート */}
+      {hydrated && !todayMoodLog && !showMoodEditor ? (
+        <MoodCheckCard />
+      ) : null}
+      {hydrated && showMoodEditor ? (
+        <BottomSheet
+          open={showMoodEditor}
+          onClose={() => setShowMoodEditor(false)}
+          title="今日の気分"
+        >
+          <MoodCheckCard
+            forceEdit
+            onCommitted={() => setShowMoodEditor(false)}
+          />
+        </BottomSheet>
       ) : null}
 
       {/* AI コーチへのリンク (フル画面チャットへ) — タイムラインの邪魔をしない控えめな配置 */}

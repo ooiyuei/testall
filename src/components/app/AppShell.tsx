@@ -12,7 +12,7 @@ import { AppHeader } from "./AppHeader";
 import { BottomNav } from "./BottomNav";
 
 function titleFromPath(path: string): { title?: string; back?: string; showAdd?: boolean } {
-  if (path === "/app")               return { title: "Testall", showAdd: true };
+  if (path === "/app")               return { title: "", showAdd: true };
   if (path === "/app/todo")          return { title: "", showAdd: true };
   if (path === "/app/focus")         return { title: "", showAdd: true };
   if (path.startsWith("/app/focus/run")) return { title: "" };

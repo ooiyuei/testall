@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowRight, ChevronLeft, Mail } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { signInWithGoogle, signInWithMagicLink } from "@/lib/auth";
+import { signInWithApple, signInWithGoogle, signInWithMagicLink } from "@/lib/auth";
 
 type Mode = "signin" | "signup";
 
@@ -32,9 +32,16 @@ export function AuthScreen({ mode }: { mode: Mode }) {
     try {
       if (method === "google") {
         await signInWithGoogle();
+      } else if (method === "apple") {
+        await signInWithApple();
       }
-    } catch {
-      setErrorMsg("ログインに失敗しました。もう一度お試しください。");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "";
+      if (msg.includes("provider") || msg.includes("not enabled")) {
+        setErrorMsg("Apple ログインは現在準備中です。Google またはメールで登録してください。");
+      } else {
+        setErrorMsg("ログインに失敗しました。もう一度お試しください。");
+      }
       setSubmitting(null);
     }
   }
@@ -187,9 +194,9 @@ export function AuthScreen({ mode }: { mode: Mode }) {
               <>
                 <SocialButton
                   variant="apple"
-                  disabled
-                  label="Appleで登録（準備中）"
-                  onClick={() => {}}
+                  submitting={submitting === "apple"}
+                  onClick={() => continueAs("apple")}
+                  label="Appleで登録"
                 />
                 <SocialButton
                   variant="google"
@@ -215,9 +222,9 @@ export function AuthScreen({ mode }: { mode: Mode }) {
                 />
                 <SocialButton
                   variant="apple"
-                  disabled
-                  label="Appleで続ける（準備中）"
-                  onClick={() => {}}
+                  submitting={submitting === "apple"}
+                  onClick={() => continueAs("apple")}
+                  label="Appleで続ける"
                 />
 
                 <div className="mt-4 flex items-center gap-3">

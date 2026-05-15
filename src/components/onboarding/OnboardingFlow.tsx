@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { nanoid } from "nanoid";
-import { bucketMid, readStore, setProfile } from "@/lib/store";
+import { bucketMid, readStore, setProfile, writeStore } from "@/lib/store";
+import { buildDemoSeed, isDemoSeeded, markDemoSeeded } from "@/lib/demo-seed";
 import type {
   DeviationBucket,
   StoredProfile,
@@ -271,7 +272,28 @@ export function OnboardingFlow() {
       onboardedAt: new Date().toISOString(),
     };
     setProfile(profile);
+    seedDemoIfFirstTime();
     router.push("/app");
+  }
+
+  function seedDemoIfFirstTime() {
+    if (isDemoSeeded()) return;
+    const store = readStore();
+    // 既にテスト/タスク/イベントが入っていればデモは入れない
+    if ((store.tests?.length ?? 0) > 0 || (store.tasks?.length ?? 0) > 0) {
+      markDemoSeeded();
+      return;
+    }
+    const demo = buildDemoSeed();
+    writeStore({
+      ...store,
+      tests: demo.tests,
+      tasks: demo.tasks,
+      events: demo.events,
+      blockLogs: demo.blockLogs,
+      dailyMoodLogs: demo.dailyMoodLogs,
+    });
+    markDemoSeeded();
   }
 
   function handleSkip() {
@@ -285,6 +307,7 @@ export function OnboardingFlow() {
       onboardedAt: existing?.onboardedAt ?? new Date().toISOString(),
       userId: existing?.userId ?? nanoid(12),
     } as StoredProfile);
+    seedDemoIfFirstTime();
     router.push("/app");
   }
 

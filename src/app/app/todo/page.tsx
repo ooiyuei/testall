@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { TodoView } from "@/components/app/TodoView";
 
 export const metadata = {
-  title: "やること",
+  title: "TODO",
 };
 
 export default function TodoPage() {
