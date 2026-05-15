@@ -634,7 +634,12 @@ function EventEditor({
           {!isNew ? (
             <button
               type="button"
-              onClick={() => onDelete(event.id)}
+              onClick={() => {
+                if (window.confirm(`「${event.title || "この予定"}」を削除しますか?`)) {
+                  onDelete(event.id);
+                  toast.success("予定を削除しました");
+                }
+              }}
               className="flex h-12 flex-none items-center justify-center rounded-2xl border border-coral-300/60 px-4 text-coral-500 transition hover:bg-coral-50"
               aria-label="削除"
             >

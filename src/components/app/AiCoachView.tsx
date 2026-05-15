@@ -10,7 +10,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Mic, MicOff, Send } from "lucide-react";
+import { ArrowLeft, Loader2, Mic, MicOff, Send } from "lucide-react";
 import { useStore } from "@/lib/hooks/useStore";
 import { addChatMessage, logDailyMood } from "@/lib/store";
 import type { ChatMessage } from "@/lib/store";
@@ -298,7 +298,7 @@ export function AiCoachView() {
             aria-label="送信"
             className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-ink-900 text-white transition disabled:opacity-40 active:scale-95"
           >
-            <Send className="h-4 w-4" strokeWidth={2.6} />
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" strokeWidth={2.6} />}
           </button>
         </div>
       </div>

@@ -196,12 +196,9 @@ export function FocusListView() {
         </section>
       ) : (
         <section className="mt-6 rounded-2xl border border-dashed border-cream-300 bg-white/60 p-5 text-center">
-          <div className="text-[13px] font-bold text-ink-700">
-            ブロックを使うにはテスト診断が必要
+          <div className="text-[14px] font-bold text-ink-900">
+            テストを登録すると、今日の勉強が自動で組まれます
           </div>
-          <p className="mt-1 text-[11px] text-ink-500">
-            テスト結果からAIが今日の25分を整えます。
-          </p>
           <Link
             href="/app/test/new"
             className="mt-3 inline-flex h-10 items-center gap-1 rounded-full bg-cream-100 px-4 text-[12px] font-bold text-ink-700"

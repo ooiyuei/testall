@@ -450,12 +450,9 @@ function EmptyTodayCard() {
       </div>
 
       <div className="rounded-2xl border border-ink-100/80 bg-white p-5 text-center">
-        <div className="text-[13px] font-bold text-ink-900">
-          テストを追加すると、今日の25分をAIが整えてくれます
+        <div className="text-[14px] font-bold text-ink-900">
+          テスト結果を登録する
         </div>
-        <p className="mt-1.5 text-[11px] leading-[1.7] text-ink-500">
-          模試・校内テストの結果から弱点と次の手を出します。
-        </p>
         <Link
           href="/app/test/new"
           className="mt-3 inline-flex h-9 items-center gap-1 rounded-full bg-ink-900 px-4 text-[11px] font-bold text-white transition active:scale-[0.97]"
@@ -475,14 +472,11 @@ export function OnboardingPrompt() {
     >
       <div>
         <div className="text-[10px] font-bold tracking-[0.04em] text-sky-600">
-          まずはプロフィール
+          プロフィール
         </div>
         <div className="mt-1 text-[14px] font-bold text-ink-900">
           学年・志望校・偏差値を入れる
         </div>
-        <p className="mt-0.5 text-[11px] leading-[1.6] text-ink-500">
-          ここを埋めるとAIが的確な作戦を出せます。
-        </p>
       </div>
       <ChevronRight className="h-5 w-5 text-sky-500" />
     </Link>

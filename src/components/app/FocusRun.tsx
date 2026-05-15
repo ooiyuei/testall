@@ -580,13 +580,9 @@ function FinishView({
           style={{ animationDelay: "1.2s" }}
           aria-hidden
         />
-        <div className="text-[10px] font-bold uppercase tracking-widest text-mint-600">
-          Session Complete
-        </div>
-        <h2 className="mt-1 text-2xl font-black text-ink-900 leading-tight">
-          お疲れさま 🎉
+        <h2 className="text-2xl font-black text-ink-900 leading-tight">
+          25分、完走
         </h2>
-        <p className="mt-1 text-sm text-ink-400">25分、走り切りました</p>
         {block ? (
           <div className="mt-4 rounded-xl bg-sky-50 p-3">
             <div className="text-[10px] font-bold uppercase tracking-widest text-sky-600">
@@ -601,12 +597,7 @@ function FinishView({
 
       {/* 自己評価 */}
       <section className="rounded-2xl bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.10)]">
-        <div className="text-[10px] font-bold uppercase tracking-widest text-ink-400">
-          Self Rating
-        </div>
-        <p className="mt-1 text-[11px] text-ink-400">
-          完了条件にどれくらい届いた？（1：ぜんぜん〜5：完璧）
-        </p>
+        <div className="text-[13px] font-bold text-ink-900">今回の達成度</div>
         <div
           className="mt-3 flex items-center justify-center gap-3"
           role="group"

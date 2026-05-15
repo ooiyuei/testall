@@ -204,19 +204,16 @@ export function MoodCheckCard({ forceEdit = false, onCommitted }: MoodCheckCardP
 
   return (
     <section className="rounded-2xl border border-ink-100/80 bg-white p-5">
+      {/* 「今日の準備」見出しは削除 (二段重ね回避) — 見出しは「今日の気分は？」のみ */}
       <div className="flex items-baseline justify-between">
-        <div className="text-[10px] font-bold tracking-wide text-ink-500">
-          今日の準備
-        </div>
+        <div className="text-[15px] font-bold text-ink-900">今日の気分は？</div>
         <span className="text-[10px] font-medium text-ink-400 tabular-nums">
-          今 {currentTime} → 就寝 {profile.defaultBedtime}
+          就寝 {profile.defaultBedtime}
         </span>
       </div>
 
       {/* PDF mock _ _ _ _ (2).png: 縦リスト型 */}
-      <div className="mt-3">
-        <div className="text-[15px] font-bold text-ink-900">今日の気分は？</div>
-        <ul className="mt-3 space-y-1.5">
+      <ul className="mt-3 space-y-1.5">
           {MOODS.map((m) => {
             const active = mood === m.id;
             const showBadge = m.id === "max" && showMaxBadge;
@@ -261,7 +258,6 @@ export function MoodCheckCard({ forceEdit = false, onCommitted }: MoodCheckCardP
             );
           })}
         </ul>
-      </div>
 
       {mood === "today-off" ? (
         <div className="mt-5 rounded-xl bg-cream-50/80 px-4 py-3 text-center">
@@ -296,7 +292,7 @@ export function MoodCheckCard({ forceEdit = false, onCommitted }: MoodCheckCardP
         onClick={commit}
         className="mt-3 flex h-11 w-full items-center justify-center gap-1 rounded-xl bg-ink-900 text-[13px] font-bold text-white active:scale-[0.98] transition"
       >
-        この設定で進める
+        決定
         <ArrowRight className="h-4 w-4" strokeWidth={2.4} />
       </button>
     </section>

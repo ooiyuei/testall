@@ -62,6 +62,7 @@ export function SettingsView() {
       router.push("/signin");
     } catch {
       setSigningOut(false);
+      toast.error("サインアウトに失敗しました");
     }
   }
 

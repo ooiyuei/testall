@@ -63,6 +63,7 @@ import { Card } from "@/components/ui/Card";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { MeSkeleton } from "@/components/ui/Skeleton";
 import { toDateString } from "@/lib/date-safe";
+import { toast } from "@/components/ui/Toast";
 
 export function MeView() {
   const { state, hydrated } = useStore();
@@ -675,7 +676,12 @@ function BookshelfCard({ item }: { item: BookshelfItem }) {
       ) : null}
       <button
         type="button"
-        onClick={() => removeBookshelfItem(item.id)}
+        onClick={() => {
+          if (window.confirm(`「${item.name}」を本棚から削除しますか?`)) {
+            removeBookshelfItem(item.id);
+            toast.success("本棚から削除しました");
+          }
+        }}
         className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full text-ink-300 hover:bg-cream-100 hover:text-ink-600 transition"
         aria-label="削除"
       >
@@ -763,9 +769,6 @@ function StatusCard({
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-center text-[10px] text-ink-400">
-        タップで偏差値推移・単元・能力値を確認
-      </p>
     </Card>
   );
 }

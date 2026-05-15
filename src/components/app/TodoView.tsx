@@ -20,6 +20,7 @@ import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/States";
+import { toast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { IconBadge } from "@/components/ui/IconBadge";
@@ -357,7 +358,10 @@ function TaskRow({ task, todayISO }: { task: StoredTask; todayISO: string }) {
     <article className="flex items-start gap-3 rounded-2xl border border-ink-100/80 bg-white px-4 py-3 transition active:bg-cream-50">
       <button
         type="button"
-        onClick={() => toggleTaskStatus(task.id)}
+        onClick={() => {
+          toggleTaskStatus(task.id);
+          if (!done) toast.success("完了");
+        }}
         aria-label={done ? "未完了に戻す" : "完了にする"}
         className={cn(
           "mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full transition",

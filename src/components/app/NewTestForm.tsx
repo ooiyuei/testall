@@ -152,15 +152,10 @@ function ModeSelect({
         <ChevronRight className="h-3.5 w-3.5 flex-none text-ink-300" strokeWidth={2.3} />
       </button>
 
-      {/* Trust strip */}
-      <div className="mt-7 rounded-[14px] bg-cream-100/60 p-4">
-        <div className="text-[11px] font-semibold text-ink-700">
-          どちらも30秒で終わります
-        </div>
-        <p className="mt-1 text-[11px] leading-[1.7] text-ink-500">
-          学年・志望校に合わせた具体的な作戦が、診断後すぐ届きます。問題文の中身は保存しません。
-        </p>
-      </div>
+      {/* プライバシー */}
+      <p className="mt-7 text-center text-[11px] text-ink-400">
+        問題文の中身は保存しません
+      </p>
     </div>
   );
 }
