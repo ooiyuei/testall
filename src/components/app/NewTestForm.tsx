@@ -1230,66 +1230,55 @@ function SubjectScoreInput({
   const pct = fullScore > 0 ? Math.round((score / fullScore) * 100) : 0;
 
   return (
-    <div className="rounded-xl bg-cream-50/60 p-3">
+    <div className="rounded-xl border border-ink-100/80 bg-white p-4">
       {showTitle ? (
         <div className="mb-2 text-[12px] font-bold text-ink-900">{title}</div>
       ) : null}
 
-      {/* 満点設定 (コンパクト) */}
-      <div className="flex items-center gap-2">
-        <span className="text-[10px] font-medium text-ink-500">満点</span>
+      {/* PDF mock _ _ _ _ (7).png 準拠: 大きな score / fullScore */}
+      <div className="flex items-baseline gap-1">
+        <input
+          type="number"
+          inputMode="numeric"
+          value={entry.score}
+          onChange={(e) => onChange({ score: e.target.value })}
+          placeholder="0"
+          className="w-[90px] bg-transparent text-[56px] font-extrabold leading-[0.95] tracking-[-0.03em] tabular-nums text-ink-900 outline-none placeholder:text-ink-200"
+          style={{ fontFamily: "var(--font-display)" }}
+        />
+        <span className="text-[20px] font-semibold text-ink-400">/</span>
         <input
           type="number"
           inputMode="numeric"
           value={entry.fullScore}
           onChange={(e) => onChange({ fullScore: e.target.value })}
-          className="h-8 w-16 rounded-lg border border-cream-200 bg-white px-2 text-right text-sm font-bold text-ink-900 outline-none focus:border-sky-400"
+          className="w-[60px] bg-transparent text-[20px] font-semibold text-ink-400 outline-none"
         />
-        <span className="text-[10px] font-medium text-ink-500">点</span>
+        {pct > 0 ? (
+          <span className="ml-auto self-start rounded-full bg-cream-100 px-2 py-0.5 text-[11px] font-bold tabular-nums text-ink-500">
+            {pct}%
+          </span>
+        ) : null}
       </div>
 
-      {/* 点数スライダー + 数値 */}
-      <div className="mt-2.5">
-        <div className="flex items-baseline justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
-            得点
-          </span>
-          <span className="text-[10px] font-medium tabular-nums text-ink-500">
-            {pct > 0 ? `${pct}%` : ""}
-          </span>
-        </div>
-        <div className="mt-1 flex items-center gap-2.5">
-          <input
-            type="range"
-            min={0}
-            max={fullScore}
-            step={1}
-            value={score}
-            onChange={(e) => onChange({ score: e.target.value })}
-            className="flex-1 accent-sky-500"
-          />
-          <input
-            type="number"
-            inputMode="numeric"
-            value={entry.score}
-            onChange={(e) => onChange({ score: e.target.value })}
-            placeholder="0"
-            className="h-9 w-16 flex-none rounded-lg border border-cream-200 bg-white px-2 text-right text-sm font-bold text-ink-900 outline-none focus:border-sky-400"
-          />
-        </div>
-      </div>
+      {/* 点数スライダー (細く) */}
+      <input
+        type="range"
+        min={0}
+        max={fullScore}
+        step={1}
+        value={score}
+        onChange={(e) => onChange({ score: e.target.value })}
+        className="mt-2 w-full accent-ink-900"
+        aria-label="得点スライダー"
+      />
 
-      {/* 偏差値 (任意) */}
-      <div className="mt-3 border-t border-cream-200/60 pt-2.5">
-        <div className="flex items-baseline justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
-            偏差値 <span className="font-medium normal-case tracking-normal text-ink-400">(任意)</span>
-          </span>
-          <span className="text-[10px] font-medium tabular-nums text-ink-500">
-            {entry.deviation ? `${entry.deviation}` : "—"}
-          </span>
-        </div>
-        <div className="mt-1 flex items-center gap-2.5">
+      {/* 偏差値 (任意 折りたたみ) */}
+      <details className="mt-3 border-t border-ink-100/60 pt-2.5">
+        <summary className="cursor-pointer text-[11px] font-medium text-ink-500">
+          偏差値 (任意) {entry.deviation ? <span className="ml-1 font-bold text-ink-900">{entry.deviation}</span> : null}
+        </summary>
+        <div className="mt-2 flex items-center gap-2.5">
           <input
             type="range"
             min={30}
@@ -1307,10 +1296,10 @@ function SubjectScoreInput({
             placeholder="—"
             min={20}
             max={90}
-            className="h-9 w-16 flex-none rounded-lg border border-cream-200 bg-white px-2 text-right text-sm font-bold text-ink-900 outline-none focus:border-sky-400"
+            className="h-9 w-16 flex-none rounded-lg border border-ink-100 bg-cream-50 px-2 text-right text-sm font-bold text-ink-900 outline-none focus:border-sky-400 focus:bg-white"
           />
         </div>
-      </div>
+      </details>
     </div>
   );
 }

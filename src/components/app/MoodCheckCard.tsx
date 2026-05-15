@@ -24,7 +24,20 @@ const MOODS: { id: Mood; label: string; delta: string }[] = [
   { id: "normal",    label: "並",       delta: "±0" },
   { id: "more",      label: "大盛",     delta: "+2" },
   { id: "max",       label: "特盛",     delta: "+4" },
-];
+] as const;
+
+const MOOD_SUBTITLES: Record<string, string> = {
+  "today-off": "完全休養",
+  less: "ゆるく整える",
+  normal: "いつもの量",
+  more: "集中できそう",
+  max: "今日は走り切る",
+};
+
+// PDF mock _ _ _ _ (2).png ラベル: 「できない」→「今日はやめる」
+const MOOD_LABELS_OVERRIDE: Record<string, string> = {
+  "today-off": "今日はやめる",
+};
 
 function nowHHmm(): string {
   const d = new Date();
@@ -192,49 +205,49 @@ export function MoodCheckCard() {
         </span>
       </div>
 
+      {/* PDF mock _ _ _ _ (2).png: 縦リスト型 */}
       <div className="mt-3">
-        <div className="text-[13px] font-bold text-ink-900">気分は？</div>
-        <ul className="mt-2 flex gap-1 rounded-xl bg-cream-100/70 p-1">
+        <div className="text-[15px] font-bold text-ink-900">今日の気分は？</div>
+        <ul className="mt-3 space-y-1.5">
           {MOODS.map((m) => {
             const active = mood === m.id;
-            const isOff = m.id === "today-off";
             const showBadge = m.id === "max" && showMaxBadge;
+            const sub = MOOD_SUBTITLES[m.id];
             return (
-              <li key={m.id} className="relative flex-1">
-                {showBadge && (
-                  <span className="pointer-events-none absolute -top-2 left-1/2 flex -translate-x-1/2 items-center gap-0.5 whitespace-nowrap rounded-full bg-amber-400 px-1.5 py-0.5 text-[8px] font-bold leading-none text-white shadow-sm">
-                    <Sparkles className="h-2 w-2" strokeWidth={2.5} />
-                    おすすめ
-                  </span>
-                )}
+              <li key={m.id}>
                 <button
                   type="button"
                   onClick={() => setMood(m.id)}
                   className={cn(
-                    "flex h-11 w-full flex-col items-center justify-center rounded-lg transition active:scale-[0.97]",
-                    active ? "bg-white shadow-soft" : "bg-transparent",
+                    "flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left transition active:scale-[0.99]",
+                    active
+                      ? "bg-ink-900 text-white"
+                      : "border border-ink-100/80 bg-white hover:bg-cream-50",
                   )}
                 >
-                  <span
-                    className={cn(
-                      "text-[12px] font-bold",
-                      active && isOff
-                        ? "text-ink-500"
-                        : active
-                          ? "text-ink-900"
-                          : "text-ink-500",
-                    )}
-                  >
-                    {m.label}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-[9px] font-medium tabular-nums",
-                      active ? "text-ink-400" : "text-ink-300",
-                    )}
-                  >
-                    {m.delta}
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className={cn("text-[14px] font-bold", active ? "text-white" : "text-ink-900")}>
+                      {MOOD_LABELS_OVERRIDE[m.id] ?? m.label}
+                    </div>
+                    <div className={cn("mt-0.5 text-[11px]", active ? "text-white/65" : "text-ink-500")}>
+                      {sub}
+                    </div>
+                  </div>
+                  {showBadge ? (
+                    <span className="inline-flex flex-none items-center gap-0.5 rounded-full bg-sun-400 px-1.5 py-0.5 text-[10px] font-bold text-ink-900">
+                      <Sparkles className="h-2.5 w-2.5" strokeWidth={2.5} /> おすすめ
+                    </span>
+                  ) : null}
+                  {m.delta && m.delta !== "±0" ? (
+                    <span
+                      className={cn(
+                        "flex-none text-[14px] font-bold tabular-nums",
+                        active ? "text-white" : m.delta.startsWith("+") ? "text-mint-600" : "text-coral-500",
+                      )}
+                    >
+                      {m.delta}
+                    </span>
+                  ) : null}
                 </button>
               </li>
             );
