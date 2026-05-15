@@ -57,12 +57,17 @@ export function AuthScreen({ mode }: { mode: Mode }) {
         await signInWithApple();
       }
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "";
-      if (msg.includes("provider") || msg.includes("not enabled") || msg.includes("validation_failed")) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // 開発・本番問わず詳細を画面に表示してデバッグ可能に
+      console.error("[auth] signInWithOAuth failed:", e);
+      if (msg.includes("not configured")) {
+        setErrorMsg("Supabase が未設定です。NEXT_PUBLIC_SUPABASE_URL を Vercel に設定してください。");
+      } else if (msg.includes("provider") || msg.includes("not enabled") || msg.includes("validation_failed")) {
         const provider = method === "google" ? "Google" : "Apple";
-        setErrorMsg(`${provider} ログインは現在準備中です。メール登録でお進みください。`);
+        setErrorMsg(`${provider} ログインプロバイダーが Supabase で未有効です。`);
       } else {
-        setErrorMsg("ログインに失敗しました。もう一度お試しください。");
+        // 原因不明 → エラーメッセージを生表示
+        setErrorMsg(`ログイン失敗: ${msg || "原因不明"}`);
       }
       setSubmitting(null);
     }
