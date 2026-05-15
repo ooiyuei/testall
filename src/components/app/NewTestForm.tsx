@@ -307,18 +307,59 @@ function PhotoMode({
         </label>
       ) : null}
 
-      {photoState.status === "optimizing" ? (
-        <div className="mt-5 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-cream-300 bg-cream-50 p-10">
-          <Loader2 className="h-8 w-8 animate-spin text-ink-400" />
-          <span className="text-sm font-bold text-ink-600">画像を最適化中…</span>
-        </div>
-      ) : null}
-
-      {photoState.status === "analyzing" ? (
-        <div className="mt-5 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-sky-200 bg-sky-50 p-10">
-          <Loader2 className="h-8 w-8 animate-spin text-sky-500" />
-          <span className="text-sm font-bold text-sky-700">解析中…</span>
-          <span className="text-[11px] text-sky-500">Claude が答案を読み取っています</span>
+      {/* PDF mock _ _ _ _ (8).png 準拠: 「答案を読み取り中…」+ スケルトン + 3段進捗 */}
+      {photoState.status === "optimizing" || photoState.status === "analyzing" ? (
+        <div className="mt-5">
+          <h2
+            className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.02em] text-ink-900"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            答案を読み取り中…
+          </h2>
+          <p className="mt-2 text-[12px] leading-[1.7] text-ink-500">
+            AIが科目・点数・単元を抽出しています。10秒ほど。
+          </p>
+          {/* スケルトンカード */}
+          <div className="relative mt-5 overflow-hidden rounded-2xl border border-ink-100/80 bg-white p-5">
+            <div className="space-y-2.5">
+              <div className="h-3 w-1/3 rounded-full bg-cream-200" />
+              <div className="h-2 w-2/3 rounded-full bg-cream-100" />
+              <div className="mt-6 h-2 w-full rounded-full bg-cream-100" />
+              <div className="h-2 w-5/6 rounded-full bg-cream-100" />
+              <div className="h-2 w-3/4 rounded-full bg-cream-100" />
+            </div>
+            {/* 走査ラインアニメ */}
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-full">
+              <div
+                className="h-1 w-full bg-gradient-to-b from-sky-400/0 via-sky-400/80 to-sky-400/0"
+                style={{ animation: "scan 1.6s ease-in-out infinite" }}
+              />
+            </div>
+          </div>
+          {/* 3段進捗 */}
+          <div className="mt-4 space-y-2.5 rounded-2xl border border-ink-100/80 bg-white p-4">
+            <ProgressStep
+              state={photoState.status === "optimizing" ? "active" : "done"}
+              label="画像を最適化"
+            />
+            <ProgressStep
+              state={
+                photoState.status === "optimizing"
+                  ? "pending"
+                  : "active"
+              }
+              label="答案を解析中"
+            />
+            <ProgressStep state="pending" label="科目・単元を抽出" />
+          </div>
+          <style jsx>{`
+            @keyframes scan {
+              0%   { transform: translateY(0); opacity: 0; }
+              30%  { opacity: 1; }
+              70%  { opacity: 1; }
+              100% { transform: translateY(140px); opacity: 0; }
+            }
+          `}</style>
         </div>
       ) : null}
 
@@ -518,6 +559,39 @@ type FormState = {
 function todayDate(): string {
   const d = new Date();
   return d.toISOString().slice(0, 10);
+}
+
+// PDF mock _ _ _ _ (8).png 進捗ステップ (done / active / pending)
+function ProgressStep({
+  state,
+  label,
+}: {
+  state: "done" | "active" | "pending";
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-2.5">
+      {state === "done" ? (
+        <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-mint-500 text-white">
+          <Check className="h-3 w-3" strokeWidth={3} />
+        </span>
+      ) : state === "active" ? (
+        <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-sky-500/15">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-sky-500" />
+        </span>
+      ) : (
+        <span className="h-5 w-5 flex-none rounded-full border-2 border-ink-200 bg-cream-50" />
+      )}
+      <span
+        className={cn(
+          "text-[12px] font-bold",
+          state === "done" ? "text-mint-600" : state === "active" ? "text-sky-600" : "text-ink-400",
+        )}
+      >
+        {label}
+      </span>
+    </div>
+  );
 }
 
 function defaultSubjectForCategory(
