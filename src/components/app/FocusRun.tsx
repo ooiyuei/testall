@@ -141,13 +141,21 @@ export function FocusRun() {
     >
       {/* Top bar */}
       <div className="flex items-center justify-between px-5 pt-safe-top pt-4">
-        <Link
-          href={testId ? `/app/test/${testId}` : "/app/focus"}
+        <button
+          type="button"
+          onClick={() => {
+            // タイマー稼働中は誤バック防止
+            if (phase === "running" || phase === "paused") {
+              const ok = window.confirm("タイマーを止めて戻りますか? 進捗は破棄されます。");
+              if (!ok) return;
+            }
+            router.push(testId ? `/app/test/${testId}` : "/app/focus");
+          }}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/80 backdrop-blur-sm transition hover:bg-white/15 active:scale-95"
           aria-label="戻る"
         >
           <ArrowLeft className="h-4 w-4" />
-        </Link>
+        </button>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/85">
           <span className="h-1.5 w-1.5 rounded-full bg-mint-500" />
           {phase === "running" ? "集中中" : phase === "paused" ? "一時停止" : phase === "finished" ? "完了" : "準備"}
@@ -648,7 +656,7 @@ function FinishView({
         </div>
       ) : null}
 
-      {/* 保存ボタン */}
+      {/* 保存ボタン — disabled 理由を明示 */}
       <button
         type="button"
         onClick={onSave}
@@ -657,11 +665,11 @@ function FinishView({
         className={cn(
           "flex h-14 w-full items-center justify-center rounded-2xl text-base font-black text-white transition",
           disabled
-            ? "bg-ink-300"
+            ? "bg-ink-300 cursor-not-allowed"
             : "bg-mint-500 shadow-[0_4px_20px_rgba(15,155,94,0.35)] active:scale-[0.98] hover:shadow-[0_6px_24px_rgba(15,155,94,0.45)]",
         )}
       >
-        {hasContext ? "記録して戻る" : "完了"}
+        {disabled ? "★ で達成度を選んで記録" : hasContext ? "記録して戻る" : "完了"}
       </button>
     </div>
   );

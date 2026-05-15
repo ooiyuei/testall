@@ -17,6 +17,7 @@ import {
 } from "@/lib/planning";
 import type { Mood } from "@/lib/planning";
 import { TodaySchedule } from "./TodaySchedule";
+import { toast } from "@/components/ui/Toast";
 
 const MOODS: { id: Mood; label: string; delta: string }[] = [
   { id: "today-off", label: "できない", delta: "—" },
@@ -115,6 +116,11 @@ export function MoodCheckCard({ forceEdit = false, onCommitted }: MoodCheckCardP
     });
     setDecided(true);
     onCommitted?.();
+    if (mood === "today-off") {
+      toast.success("今日はゆっくり休んでね 🌙");
+    } else {
+      toast.success(`今日は ${result.finalBlocks} ブロック`);
+    }
   }
 
   if (tooLate && !decided) {
