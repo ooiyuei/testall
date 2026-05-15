@@ -21,6 +21,7 @@ import { useStore } from "@/lib/hooks/useStore";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/States";
 import { toast } from "@/components/ui/Toast";
+import { reorderTasks } from "@/lib/store";
 import { Button } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { IconBadge } from "@/components/ui/IconBadge";
@@ -319,6 +320,24 @@ function fmtMonthDay(iso: string): string {
 }
 function TaskGroupedList({ tasks, todayISO }: { tasks: StoredTask[]; todayISO: string }) {
   const buckets = bucketize(tasks, todayISO);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+
+  function handleDrop(targetId: string) {
+    if (!draggingId || draggingId === targetId) return;
+    // 全タスクの ID 並び (バケツ順) を作り、draggingId を targetId の位置に移動
+    const allIds = buckets.flatMap((b) => b.tasks.map((t) => t.id));
+    const from = allIds.indexOf(draggingId);
+    const to = allIds.indexOf(targetId);
+    if (from < 0 || to < 0) return;
+    const next = [...allIds];
+    next.splice(from, 1);
+    next.splice(to, 0, draggingId);
+    reorderTasks(next);
+    setDraggingId(null);
+    setOverId(null);
+  }
+
   return (
     <div className="space-y-5">
       {buckets.map((b) => {
@@ -337,7 +356,32 @@ function TaskGroupedList({ tasks, todayISO }: { tasks: StoredTask[]; todayISO: s
             </header>
             <ul className="space-y-2">
               {b.tasks.map((t) => (
-                <li key={t.id}>
+                <li
+                  key={t.id}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = "move";
+                    setDraggingId(t.id);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (overId !== t.id) setOverId(t.id);
+                  }}
+                  onDragLeave={() => setOverId(null)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    handleDrop(t.id);
+                  }}
+                  onDragEnd={() => {
+                    setDraggingId(null);
+                    setOverId(null);
+                  }}
+                  className={cn(
+                    "transition",
+                    draggingId === t.id && "opacity-30",
+                    overId === t.id && draggingId !== t.id && "translate-y-1",
+                  )}
+                >
                   <TaskRow task={t} todayISO={todayISO} />
                 </li>
               ))}

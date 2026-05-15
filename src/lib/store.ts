@@ -540,6 +540,24 @@ export function deleteTask(id: string): StoreState {
   return next;
 }
 
+/** タスクの並び順を入れ替え (drag&drop の最終結果を受け取る) */
+export function reorderTasks(orderedIds: string[]): StoreState {
+  const current = readStore();
+  const byId = new Map((current.tasks ?? []).map((t) => [t.id, t]));
+  const reordered: StoredTask[] = [];
+  // 渡された順に並べる
+  for (const id of orderedIds) {
+    const t = byId.get(id);
+    if (t) {
+      reordered.push(t);
+      byId.delete(id);
+    }
+  }
+  // 残ったタスク (orderedIds に含まれないもの) は末尾に
+  for (const t of byId.values()) reordered.push(t);
+  return writeStore({ ...current, tasks: reordered });
+}
+
 export function toggleTaskStatus(id: string): StoreState {
   const current = readStore();
   let toggled: StoredTask | undefined;

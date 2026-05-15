@@ -37,8 +37,9 @@ export function AuthScreen({ mode }: { mode: Mode }) {
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "";
-      if (msg.includes("provider") || msg.includes("not enabled")) {
-        setErrorMsg("Apple ログインは現在準備中です。Google またはメールで登録してください。");
+      if (msg.includes("provider") || msg.includes("not enabled") || msg.includes("validation_failed")) {
+        const provider = method === "google" ? "Google" : "Apple";
+        setErrorMsg(`${provider} ログインは現在準備中です。メール登録でお進みください。`);
       } else {
         setErrorMsg("ログインに失敗しました。もう一度お試しください。");
       }
