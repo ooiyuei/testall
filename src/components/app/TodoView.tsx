@@ -195,25 +195,27 @@ export function TodoView() {
         })}
       </div>
 
-      {/* 検索バー */}
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" strokeWidth={1.75} />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="タスクを検索"
-          className="h-12 w-full rounded-2xl border border-ink-100/80 bg-white pl-10 pr-10 text-[13px] text-ink-900 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-        />
-        {query ? (
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-ink-200 text-ink-600"
-          >
-            <X className="h-3.5 w-3.5" strokeWidth={2} />
-          </button>
-        ) : null}
-      </div>
+      {/* 検索バー — タスクが少ない時は表示しない (Progressive Disclosure) */}
+      {tasks.length >= 10 ? (
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" strokeWidth={1.75} />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="タスクを検索"
+            className="h-12 w-full rounded-2xl border border-ink-100/80 bg-white pl-10 pr-10 text-[13px] text-ink-900 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+          />
+          {query ? (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-ink-200 text-ink-600"
+            >
+              <X className="h-3.5 w-3.5" strokeWidth={2} />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       {/* フィルタ (タスク追加ボタンは右上の + 黒丸に一元化) */}
       <div className="flex items-center">

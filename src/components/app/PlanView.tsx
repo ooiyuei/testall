@@ -356,19 +356,32 @@ export function PlanView() {
         )}
       </section>
 
-      {/* AIの週間プラン */}
-      {latest ? (
-        <section>
-          <SectionLabel title="AIの週間プラン" />
+      {/* AIの週間プラン — 今日明日のみデフォルト表示、残り「もっと見る」で展開 */}
+      {latest && latest.diagnosis.weekPlan.length > 0 ? (
+        <details className="group">
+          <summary className="flex cursor-pointer items-center justify-between list-none">
+            <SectionLabel title="AIの週間プラン" />
+            <span className="text-[11px] font-medium text-sky-500 group-open:hidden">
+              週全体を見る ∨
+            </span>
+            <span className="hidden text-[11px] font-medium text-ink-400 group-open:inline">
+              閉じる ∧
+            </span>
+          </summary>
           <ul className="mt-3 space-y-2">
             {latest.diagnosis.weekPlan.map((w, i) => {
-              const isToday = i === weekdayIndex(today);
+              const todayWdayIdx = weekdayIndex(today);
+              const isToday = i === todayWdayIdx;
+              const isTomorrow = i === (todayWdayIdx + 1) % 7;
+              // デフォルトでは今日と明日のみ表示 (open 時のみ全曜日)
+              const alwaysShow = isToday || isTomorrow;
               return (
                 <li
                   key={i}
                   className={cn(
                     "flex items-center gap-3 rounded-2xl border p-3 shadow-soft",
                     isToday ? "border-sky-300 bg-white ring-2 ring-sky-100" : "border-cream-200 bg-white",
+                    !alwaysShow && "hidden group-open:flex",
                   )}
                 >
                   <div
@@ -390,8 +403,8 @@ export function PlanView() {
               );
             })}
           </ul>
-        </section>
-      ) : (
+        </details>
+      ) : !latest ? (
         <section className="rounded-2xl border border-dashed border-cream-300 bg-white/60 p-6 text-center">
           <p className="text-sm font-bold text-ink-700">テストを追加するとAIが週間プランを出します</p>
           <div className="mt-3 flex justify-center">
@@ -401,7 +414,7 @@ export function PlanView() {
             </Button>
           </div>
         </section>
-      )}
+      ) : null}
 
       {/* WeeklyGoalCard / WeeklyTaskBoard は情報密度削減のため削除
           (今週の目標は黒ヒーローカードに一元化、タスクボードは TodoView に集約) */}

@@ -137,13 +137,17 @@ function OnboardingFooter({
   totalSteps,
   canProceed,
   onNext,
+  onFinishEarly,
 }: {
   stepIdx: number;
   totalSteps: number;
   canProceed: boolean;
   onNext: () => void;
+  onFinishEarly?: () => void;
 }) {
   const isLast = stepIdx === totalSteps - 1;
+  // 必須3項目 (学年=0, 偏差値=2, 志望校=5) を終えたら「ここまでで始める」を表示
+  const canFinishEarly = stepIdx >= 5 && !isLast && onFinishEarly;
 
   return (
     <footer className="sticky bottom-0 z-10 border-t border-ink-100/60 bg-cream-50/90 px-5 py-4 backdrop-blur-xl">
@@ -165,6 +169,15 @@ function OnboardingFooter({
           </>
         )}
       </button>
+      {canFinishEarly ? (
+        <button
+          type="button"
+          onClick={onFinishEarly}
+          className="mt-2 block w-full text-center text-[12px] font-medium text-ink-500 underline-offset-2 hover:underline"
+        >
+          ここまでで始める · 残りはマイページから
+        </button>
+      ) : null}
     </footer>
   );
 }
@@ -372,6 +385,7 @@ export function OnboardingFlow() {
         totalSteps={STEPS.length}
         canProceed={canProceed()}
         onNext={next}
+        onFinishEarly={finish}
       />
 
       {addModal && (
