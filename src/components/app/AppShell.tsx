@@ -13,10 +13,10 @@ import { BottomNav } from "./BottomNav";
 
 function titleFromPath(path: string): { title?: string; back?: string; showAdd?: boolean } {
   if (path === "/app")               return { title: "Testall", showAdd: true };
-  if (path === "/app/todo")          return { title: "TODO", showAdd: true };
-  if (path === "/app/focus")         return { title: "集中", showAdd: true };
+  if (path === "/app/todo")          return { title: "", showAdd: true };
+  if (path === "/app/focus")         return { title: "", showAdd: true };
   if (path.startsWith("/app/focus/run")) return { title: "" };
-  if (path === "/app/plan")          return { title: "計画", showAdd: true };
+  if (path === "/app/plan")          return { title: "", showAdd: true };
   if (path === "/app/me")            return { title: "マイページ", showAdd: true };
   if (path === "/app/me/settings")   return { title: "設定", back: "/app/me", showAdd: false };
   if (path.startsWith("/app/me/subjects/")) return { title: "", back: "/app/me", showAdd: false };

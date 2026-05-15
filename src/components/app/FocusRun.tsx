@@ -147,11 +147,9 @@ export function FocusRun() {
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <span
-          className="text-[10px] font-bold uppercase tracking-widest text-white/40"
-          style={{ fontFamily: "'SF Pro Text', -apple-system, sans-serif" }}
-        >
-          Focus Mode
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/85">
+          <span className="h-1.5 w-1.5 rounded-full bg-mint-500" />
+          {phase === "running" ? "集中中" : phase === "paused" ? "一時停止" : phase === "finished" ? "完了" : "準備"}
         </span>
         <button
           type="button"

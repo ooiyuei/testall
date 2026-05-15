@@ -130,9 +130,17 @@ export function PlanView() {
   const selectedEvents = selectedDate ? eventsForDate(selectedDate) : [];
 
   return (
-    <div className="px-5 pb-8 pt-3 space-y-5">
-      <WeeklyGoalCard />
-      <WeeklyTaskBoard tasks={state.tasks ?? []} />
+    <div className="px-5 pb-8 pt-2 space-y-5">
+      {/* 大タイトル — PDF mock _ _ _ _ _ _.png */}
+      <header>
+        <div className="text-[11px] font-medium tracking-wider text-ink-400">計画</div>
+        <h1
+          className="mt-1 text-[28px] font-extrabold leading-[1.1] tracking-[-0.025em] text-ink-900"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          {cursor.getFullYear()}年 <span className="text-sky-500">{cursor.getMonth() + 1}月</span>
+        </h1>
+      </header>
 
       {/* 今週の目標 — ⑤ design (dark hero) */}
       {latest ? (
@@ -368,6 +376,10 @@ export function PlanView() {
           </div>
         </section>
       )}
+
+      {/* 補足セクション (PDF mock には無いが機能として残す) */}
+      <WeeklyGoalCard />
+      <WeeklyTaskBoard tasks={state.tasks ?? []} />
 
       {/* イベントエディタ */}
       {editor.open && editor.event ? (

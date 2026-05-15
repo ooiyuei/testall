@@ -273,7 +273,7 @@ export function TodoView() {
         </div>
       ) : null}
 
-      {/* タスクリスト */}
+      {/* タスクリスト — PDF mock 通り日付グルーピング */}
       {visible.length === 0 ? (
         <div className="rounded-2xl border border-ink-100/80 bg-white px-5 py-12 text-center">
           <ListTodo className="mx-auto h-8 w-8 text-ink-300" strokeWidth={1.5} />
@@ -287,13 +287,7 @@ export function TodoView() {
           <p className="mt-1 text-[11px] text-ink-400">「タスク追加」から登録してみよう</p>
         </div>
       ) : (
-        <ul className="space-y-2">
-          {visible.map((t) => (
-            <li key={t.id}>
-              <TaskRow task={t} todayISO={todayISO} />
-            </li>
-          ))}
-        </ul>
+        <TaskGroupedList tasks={visible} todayISO={todayISO} />
       )}
 
       {open ? <TaskModal onClose={() => setOpen(false)} /> : null}
@@ -301,75 +295,113 @@ export function TodoView() {
   );
 }
 
+// 日付バケット定義 — PDF mock の "今日 5/14 (1/3)" 形式
+type Bucket = { id: string; label: string; date?: string; tasks: StoredTask[] };
+function bucketize(tasks: StoredTask[], todayISO: string): Bucket[] {
+  const tomorrow = new Date(todayISO);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowISO = tomorrow.toISOString().slice(0, 10);
+  const buckets: Bucket[] = [
+    { id: "today", label: "今日", date: todayISO, tasks: [] },
+    { id: "tomorrow", label: "明日", date: tomorrowISO, tasks: [] },
+    { id: "this-week", label: "今週中", tasks: [] },
+    { id: "someday", label: "後で", tasks: [] },
+  ];
+  for (const t of tasks) {
+    const dd = t.dueDate;
+    if (dd && dd <= todayISO) buckets[0].tasks.push(t);
+    else if (dd === tomorrowISO || t.due === "tomorrow") buckets[1].tasks.push(t);
+    else if (t.due === "today") buckets[0].tasks.push(t);
+    else if (t.due === "this-week") buckets[2].tasks.push(t);
+    else buckets[3].tasks.push(t);
+  }
+  return buckets.filter((b) => b.tasks.length > 0);
+}
+function fmtMonthDay(iso: string): string {
+  const [, m, d] = iso.split("-");
+  return `${Number(m)}/${Number(d)}`;
+}
+function TaskGroupedList({ tasks, todayISO }: { tasks: StoredTask[]; todayISO: string }) {
+  const buckets = bucketize(tasks, todayISO);
+  return (
+    <div className="space-y-5">
+      {buckets.map((b) => {
+        const done = b.tasks.filter((t) => t.status === "done").length;
+        const total = b.tasks.length;
+        return (
+          <section key={b.id}>
+            <header className="mb-2 flex items-baseline justify-between text-[11px] font-medium text-ink-500">
+              <span>
+                {b.label}
+                {b.date ? ` · ${fmtMonthDay(b.date)}` : ""}
+              </span>
+              <span className="tabular-nums text-ink-400">
+                {done} / {total}
+              </span>
+            </header>
+            <ul className="space-y-2">
+              {b.tasks.map((t) => (
+                <li key={t.id}>
+                  <TaskRow task={t} todayISO={todayISO} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+// PDF mock: シンプルな1行 + ミドット連結のメタ情報
+// ○ タイトル
+//   ●教科 · 25分 · 課題 (遅延赤バッジ)
 function TaskRow({ task, todayISO }: { task: StoredTask; todayISO: string }) {
   const done = task.status === "done";
   const area = SUBJECT_AREAS.find((a) => a.id === task.subjectArea);
-  const effective = effectivePriority(task);
-  const isDueToday = !done && (task.due === "today" || (task.dueDate && task.dueDate <= todayISO));
-
+  const overdue = !done && task.dueDate ? task.dueDate < todayISO : false;
   return (
-    <article
-      className={cn(
-        "flex items-start gap-3 rounded-2xl border bg-white p-3 shadow-soft transition",
-        isDueToday ? "border-sky-300 ring-1 ring-sky-100" : "border-cream-200",
-        done && "opacity-50",
-      )}
-    >
+    <article className="flex items-start gap-3 rounded-2xl border border-ink-100/80 bg-white px-4 py-3 transition active:bg-cream-50">
       <button
         type="button"
         onClick={() => toggleTaskStatus(task.id)}
         aria-label={done ? "未完了に戻す" : "完了にする"}
         className={cn(
-          "mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-full border-2 transition",
+          "mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full transition",
           done
-            ? "border-mint-500 bg-mint-500 text-white"
-            : "border-ink-200 bg-white hover:border-sky-400",
+            ? "bg-mint-500 text-white"
+            : "border-2 border-ink-200 bg-white hover:border-sky-400",
         )}
       >
-        {done ? <Check className="h-3.5 w-3.5" strokeWidth={2.5} /> : null}
+        {done ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
       </button>
-
       <div className="min-w-0 flex-1">
         <div
           className={cn(
-            "text-[14px] font-medium leading-snug",
+            "text-[14px] font-bold leading-snug",
             done ? "text-ink-400 line-through" : "text-ink-900",
           )}
         >
           {task.title}
         </div>
-        <div className="mt-1.5 flex flex-wrap items-center gap-1">
-          <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", PRIORITY_TONE[effective])}>
-            <Flag className="inline h-2.5 w-2.5 mr-0.5" strokeWidth={1.75} />
-            {PRIORITY_LABEL[effective]}
-          </span>
-          {task.due ? (
-            <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-medium text-ink-700">
-              {DUE_LABEL[task.due]}
-            </span>
-          ) : null}
-          <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", TAG_TONE[task.tag])}>
-            {TAG_LABEL[task.tag]}
-          </span>
+        <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-ink-500">
           {area ? (
-            <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", area.tone)}>
+            <span className="inline-flex items-center gap-1">
+              <span className={cn("h-1.5 w-1.5 rounded-full", area.tone || "bg-ink-300")} />
               {area.shortName}
             </span>
           ) : null}
-          <span className="rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-medium text-ink-500 tabular-nums">
-            {task.blocks * 25}分
-          </span>
+          <span className="text-ink-300">·</span>
+          <span className="tabular-nums">{task.blocks * 25}分</span>
+          <span className="text-ink-300">·</span>
+          <span>{TAG_LABEL[task.tag]}</span>
+          {overdue ? (
+            <span className="ml-1 rounded-full bg-coral-500/10 px-1.5 py-0.5 text-[10px] font-bold text-coral-500">
+              遅延
+            </span>
+          ) : null}
         </div>
       </div>
-
-      <button
-        type="button"
-        onClick={() => deleteTask(task.id)}
-        className="mt-0.5 flex h-7 w-7 flex-none items-center justify-center rounded-full text-ink-300 hover:bg-cream-100 hover:text-ink-500 transition"
-        aria-label="削除"
-      >
-        <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-      </button>
     </article>
   );
 }
