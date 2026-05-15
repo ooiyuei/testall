@@ -18,7 +18,13 @@ export function getSupabase(): SupabaseClient | null {
     return null;
   }
   client = createClient(url, key, {
-    auth: { persistSession: true },
+    auth: {
+      persistSession: true,
+      // PKCE フローを明示 (デフォルトは implicit でハッシュフラグメントに token が来る)
+      flowType: "pkce",
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
   });
   return client;
 }
