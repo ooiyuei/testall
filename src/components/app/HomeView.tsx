@@ -26,6 +26,7 @@ import { LoginBonus } from "./LoginBonus";
 import { InstallPrompt } from "./InstallPrompt";
 import { HomeSkeleton } from "@/components/ui/Skeleton";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { TodaySchedule } from "./TodaySchedule";
 
 const MOOD_LABELS: Record<string, string> = {
   "today-off": "休む",
@@ -308,6 +309,20 @@ export function HomeView() {
             onCommitted={() => setShowMoodEditor(false)}
           />
         </BottomSheet>
+      ) : null}
+
+      {/* 寝るまでのスケジュール — mood 決定後にパッと見える位置に */}
+      {hydrated && todayMoodLog && todayMoodLog.mood !== "today-off" && state.planning ? (
+        <section className="mt-5">
+          <TodaySchedule
+            finalBlocks={todayMoodLog.finalBlocks}
+            bedtime={state.planning.defaultBedtime}
+            wakeupTime={state.profile?.wakeupTime ?? "07:00"}
+            returnTime={state.planning.defaultReturnTime}
+            tasks={state.tasks}
+            fixedSlots={state.fixedSlots}
+          />
+        </section>
       ) : null}
 
       {/* AI コーチへのリンク (フル画面チャットへ) — タイムラインの邪魔をしない控えめな配置 */}
