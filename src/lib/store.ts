@@ -1,6 +1,8 @@
-// Persistence layer: sessionStorage (always) + Supabase (when authenticated).
-// Dual-write: writes go to sessionStorage immediately, then Supabase in background.
-// Reads always come from sessionStorage for zero-latency UI.
+// Persistence layer: localStorage (always) + Supabase (when authenticated).
+// Dual-write: writes go to localStorage immediately, then Supabase in background.
+// Reads always come from localStorage for zero-latency UI.
+// localStorage を使う理由: タブ閉じても受験生のテスト履歴・連続記録が消えないため。
+// sessionStorage 時代の残データは初回読み込み時に自動移行する (migrateFromSession).
 
 import type { Diagnosis, TestInput } from "./types";
 import type {
@@ -274,13 +276,30 @@ const EMPTY_STATE: StoreState = {
 };
 
 function isBrowser(): boolean {
-  return typeof window !== "undefined" && typeof sessionStorage !== "undefined";
+  return typeof window !== "undefined" && typeof localStorage !== "undefined";
+}
+
+// 旧 sessionStorage からのデータを localStorage に一度だけ移行
+function migrateFromSession(): void {
+  if (!isBrowser()) return;
+  try {
+    if (localStorage.getItem(STORAGE_KEY)) return; // 既に移行済み or 新規
+    if (typeof sessionStorage === "undefined") return;
+    const legacy = sessionStorage.getItem(STORAGE_KEY);
+    if (legacy) {
+      localStorage.setItem(STORAGE_KEY, legacy);
+      sessionStorage.removeItem(STORAGE_KEY);
+    }
+  } catch {
+    /* noop */
+  }
 }
 
 export function readStore(): StoreState {
   if (!isBrowser()) return EMPTY_STATE;
+  migrateFromSession();
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return EMPTY_STATE;
     const parsed = JSON.parse(raw) as StoreState;
     return {
@@ -311,7 +330,7 @@ export function readStore(): StoreState {
 
 export function writeStore(next: StoreState): StoreState {
   if (!isBrowser()) return next;
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   window.dispatchEvent(new Event("testall:store"));
   return next;
 }

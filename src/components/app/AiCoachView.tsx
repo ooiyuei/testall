@@ -12,9 +12,11 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Mic, MicOff, Send } from "lucide-react";
 import { useStore } from "@/lib/hooks/useStore";
-import { addChatMessage } from "@/lib/store";
+import { addChatMessage, logDailyMood } from "@/lib/store";
 import type { ChatMessage } from "@/lib/store";
 import { cn } from "@/lib/cn";
+import { toast } from "@/components/ui/Toast";
+import { useRouter } from "next/navigation";
 
 function newId(): string {
   return `m-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -26,17 +28,33 @@ const QUICK_ACTIONS = [
   { emoji: "😊", label: "今日はやめる", action: "today-off" as const },
 ];
 
-// Window.SpeechRecognition / webkitSpeechRecognition は AiChat.tsx で宣言済み
+// Web Speech API のミニマル型 (TS lib.dom が SpeechRecognition を持つ場合と
+// 持たない場合の両方に対応するため、AiChat.tsx ローカル宣言と被らない名前で持つ)
+type LocalSpeechRecognition = {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start(): void;
+  stop(): void;
+  onresult: ((event: LocalSpeechRecognitionEvent) => void) | null;
+  onerror: ((event: Event) => void) | null;
+  onend: (() => void) | null;
+};
+type LocalSpeechRecognitionEvent = {
+  results: { [index: number]: { [index: number]: { transcript: string } }; length: number };
+};
 
 export function AiCoachView() {
+  const router = useRouter();
   const { state, hydrated } = useStore();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [degraded, setDegraded] = useState(false);
   const messages: ChatMessage[] = state.chatMessages ?? [];
   const bottomRef = useRef<HTMLDivElement | null>(null);
-  const recogRef = useRef<any>(null);
+  const recogRef = useRef<LocalSpeechRecognition | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,23 +70,29 @@ export function AiCoachView() {
     try {
       const profile = state.profile;
       const latest = state.tests[0];
+      // /api/chat の契約に合わせて: history + userMessage + context
+      const history = messages.slice(-10).map((m) => ({ role: m.role, content: m.content }));
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: trimmed,
+          history,
+          userMessage: trimmed,
           context: {
             grade: profile?.grade,
             target: profile?.target,
-            latestTest: latest
+            latestTest: latest?.input
               ? { subject: latest.input.subject, score: latest.input.score, fullScore: latest.input.fullScore }
               : null,
           },
         }),
       });
-      const data = (await res.json()) as { reply?: string; error?: string };
-      if (!res.ok || !data.reply) throw new Error(data.error || "AI 応答が取得できませんでした");
-      addChatMessage({ id: newId(), role: "assistant", content: data.reply, timestamp: new Date().toISOString() });
+      const data = (await res.json()) as { ok?: boolean; text?: string; degraded?: boolean; error?: string };
+      if (!res.ok || !data.ok || !data.text) {
+        throw new Error(data.error || "AI 応答が取得できませんでした");
+      }
+      setDegraded(Boolean(data.degraded));
+      addChatMessage({ id: newId(), role: "assistant", content: data.text, timestamp: new Date().toISOString() });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "通信エラー";
       setError(msg);
@@ -78,7 +102,9 @@ export function AiCoachView() {
   }
 
   function toggleVoice() {
-    const Recog = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const Recog =
+      (window as unknown as { SpeechRecognition?: new () => LocalSpeechRecognition }).SpeechRecognition ||
+      (window as unknown as { webkitSpeechRecognition?: new () => LocalSpeechRecognition }).webkitSpeechRecognition;
     if (!Recog) {
       setError("お使いのブラウザは音声入力に未対応です");
       return;
@@ -92,7 +118,7 @@ export function AiCoachView() {
     r.lang = "ja-JP";
     r.continuous = false;
     r.interimResults = false;
-    r.onresult = (e: any) => {
+    r.onresult = (e: LocalSpeechRecognitionEvent) => {
       const transcript = e.results[0]?.[0]?.transcript ?? "";
       setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
     };
@@ -127,10 +153,17 @@ export function AiCoachView() {
         </Link>
         <div className="flex flex-1 items-center justify-center gap-2">
           <span className="text-[15px] font-bold text-ink-900">AI コーチ</span>
-          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-mint-600">
-            <span className="h-1.5 w-1.5 rounded-full bg-mint-500" />
-            オンライン
-          </span>
+          {degraded ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-sun-300/30 px-2 py-0.5 text-[10px] font-semibold text-sun-600">
+              <span className="h-1.5 w-1.5 rounded-full bg-sun-500" />
+              制限モード
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-mint-600">
+              <span className="h-1.5 w-1.5 rounded-full bg-mint-500" />
+              オンライン
+            </span>
+          )}
         </div>
         <div className="w-9" />
       </header>
@@ -211,7 +244,19 @@ export function AiCoachView() {
               <button
                 key={q.label}
                 type="button"
-                onClick={() => void sendMessage("今日は休みたい")}
+                onClick={() => {
+                  // 「今日はやめる」: 当日 mood を today-off に記録 + ホームに戻る
+                  logDailyMood({
+                    dateISO: new Date().toISOString().slice(0, 10),
+                    mood: "today-off",
+                    returnTime: state.profile?.returnTime ?? "18:30",
+                    finalBlocks: 0,
+                    reason: "AI コーチで今日はやめると選択",
+                    createdAt: new Date().toISOString(),
+                  });
+                  toast.success("今日はゆっくり休んでね 🌙");
+                  router.push("/app");
+                }}
                 className="inline-flex flex-none items-center gap-1.5 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-ink-800 shadow-[0_1px_3px_rgba(0,0,0,0.04)] active:scale-95"
               >
                 <span>{q.emoji}</span>

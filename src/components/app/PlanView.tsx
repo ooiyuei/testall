@@ -87,7 +87,7 @@ export function PlanView() {
     return d;
   });
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [editor, setEditor] = useState<{ open: boolean; event?: CalendarEvent }>({
+  const [editor, setEditor] = useState<{ open: boolean; event?: CalendarEvent; isNew?: boolean }>({
     open: false,
   });
 
@@ -96,6 +96,29 @@ export function PlanView() {
 
   const cells = useMemo(() => buildGrid(cursor), [cursor]);
   const events = state.events ?? [];
+
+  // 今週の進捗 (実データ): blockLogs から今週 (月〜日) 完了数 / 週次目標
+  const weeklyProgress = useMemo(() => {
+    const now = new Date();
+    const dayIdx = (now.getDay() + 6) % 7; // 月=0..日=6
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - dayIdx);
+    startOfWeek.setHours(0, 0, 0, 0);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+    let done = 0;
+    for (const log of state.blockLogs ?? []) {
+      const v = log?.completedAt;
+      const ts = typeof v === "string" ? new Date(v).getTime()
+        : typeof v === "number" ? v
+        : 0;
+      if (ts >= startOfWeek.getTime() && ts < endOfWeek.getTime()) done += 1;
+    }
+    // 週次目標 = profile の availableMinutesPerDay × 7 / 25
+    const dailyBlocks = Math.round((state.profile?.availableMinutesPerDay ?? 60) / 25);
+    const target = Math.max(dailyBlocks * 7, 1);
+    return { done, target, pct: Math.min(100, Math.round((done / target) * 100)) };
+  }, [state.blockLogs, state.profile?.availableMinutesPerDay]);
 
   function eventsForDate(date: string): CalendarEvent[] {
     return events.filter(
@@ -112,6 +135,7 @@ export function PlanView() {
   function openNewEvent() {
     setEditor({
       open: true,
+      isNew: true,
       event: {
         id: nanoid(8),
         kind: "regular-test",
@@ -157,10 +181,13 @@ export function PlanView() {
           </p>
           <div className="mt-2.5 flex items-center gap-2.5">
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/15">
-              <div className="h-full rounded-full bg-mint-500" style={{ width: "55%" }} />
+              <div
+                className="h-full rounded-full bg-mint-500 transition-[width]"
+                style={{ width: `${weeklyProgress.pct}%` }}
+              />
             </div>
             <span className="text-[11px] font-bold tabular-nums text-white">
-              11 / 20
+              {weeklyProgress.done} / {weeklyProgress.target}
             </span>
           </div>
         </section>
@@ -284,7 +311,7 @@ export function PlanView() {
           ) : (
             <ul className="mt-3 space-y-2">
               {selectedEvents.map((ev) => (
-                <EventRow key={ev.id} ev={ev} onEdit={() => setEditor({ open: true, event: ev })} />
+                <EventRow key={ev.id} ev={ev} onEdit={() => setEditor({ open: true, event: ev, isNew: false })} />
               ))}
             </ul>
           )}
@@ -312,19 +339,19 @@ export function PlanView() {
               <QuickEventChip
                 icon={Pencil}
                 label="定期テスト"
-                onClick={() => setEditor({ open: true, event: { id: nanoid(8), kind: "regular-test", title: "", date: ymd(today) } })}
+                onClick={() => setEditor({ open: true, event: { id: nanoid(8), kind: "regular-test", title: "", date: ymd(today) }, isNew: true })}
               />
               <QuickEventChip
                 icon={FlaskConical}
                 label="模試"
-                onClick={() => setEditor({ open: true, event: { id: nanoid(8), kind: "mock-exam", title: "", date: ymd(today) } })}
+                onClick={() => setEditor({ open: true, event: { id: nanoid(8), kind: "mock-exam", title: "", date: ymd(today) }, isNew: true })}
               />
             </div>
           </div>
         ) : (
           <ul className="mt-3 space-y-2">
             {upcoming.map((ev) => (
-              <EventRow key={ev.id} ev={ev} onEdit={() => setEditor({ open: true, event: ev })} />
+              <EventRow key={ev.id} ev={ev} onEdit={() => setEditor({ open: true, event: ev, isNew: false })} />
             ))}
           </ul>
         )}
@@ -385,6 +412,7 @@ export function PlanView() {
       {editor.open && editor.event ? (
         <EventEditor
           event={editor.event}
+          isNew={editor.isNew ?? false}
           onClose={() => setEditor({ open: false })}
           onSave={(ev) => { saveEvent(ev); setEditor({ open: false }); }}
           onDelete={(id) => { deleteEvent(id); setEditor({ open: false }); }}
@@ -481,17 +509,18 @@ function EventRow({ ev, onEdit }: { ev: CalendarEvent; onEdit: () => void }) {
 
 function EventEditor({
   event,
+  isNew,
   onClose,
   onSave,
   onDelete,
 }: {
   event: CalendarEvent;
+  isNew: boolean;
   onClose: () => void;
   onSave: (ev: CalendarEvent) => void;
   onDelete: (id: string) => void;
 }) {
   const [draft, setDraft] = useState<CalendarEvent>(event);
-  const isNew = !event.title;
 
   function handleSave() {
     if (!draft.title.trim()) {

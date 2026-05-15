@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { nanoid } from "nanoid";
 import { bucketMid, readStore, setProfile } from "@/lib/store";
 import type {
   DeviationBucket,
@@ -253,7 +254,7 @@ export function OnboardingFlow() {
         : existing?.target ?? "private-top",
       examDate: existing?.examDate ?? defaultExamDate(form.grade),
       textbooks: existing?.textbooks ?? [],
-      userId: existing?.userId ?? String(10000 + Math.floor(Math.random() * 90000)),
+      userId: existing?.userId ?? nanoid(12),
       onboardedAt: new Date().toISOString(),
     };
     setProfile(profile);
@@ -269,7 +270,7 @@ export function OnboardingFlow() {
       examDate: existing?.examDate ?? defaultExamDate(form.grade),
       textbooks: existing?.textbooks ?? [],
       onboardedAt: existing?.onboardedAt ?? new Date().toISOString(),
-      userId: existing?.userId ?? String(10000 + Math.floor(Math.random() * 90000)),
+      userId: existing?.userId ?? nanoid(12),
     } as StoredProfile);
     router.push("/app");
   }

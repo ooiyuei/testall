@@ -52,20 +52,21 @@ export function FocusRun() {
   const startedAtRef = useRef<number | null>(null);
   const totalElapsedRef = useRef<number>(0);
 
+  // タイマー駆動 (副作用は updater 内で行わない)
   useEffect(() => {
     if (phase !== "running") return;
     const interval = setInterval(() => {
-      setRemaining((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setPhase("finished");
-          return 0;
-        }
-        return prev - 1;
-      });
+      setRemaining((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
     return () => clearInterval(interval);
   }, [phase]);
+
+  // 残り 0 になったら finished に遷移 (副作用は別 useEffect に分離)
+  useEffect(() => {
+    if (phase === "running" && remaining === 0) {
+      setPhase("finished");
+    }
+  }, [phase, remaining]);
 
   function start() {
     startedAtRef.current = Date.now();
@@ -460,7 +461,7 @@ function Controls({
           type="button"
           onClick={onStart}
           className={mainBtn}
-          style={{ boxShadow: "0 8px_24px rgba(0,0,0,0.3)" }}
+          style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
           aria-label="集中タイマーを開始"
         >
           <Play className="h-7 w-7" fill="currentColor" aria-hidden="true" />
