@@ -9,8 +9,8 @@
 // mode prop で「サインイン」「サインアップ」を切り替え。
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { ArrowRight, ChevronLeft, Mail } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { signInWithApple, signInWithGoogle, signInWithMagicLink } from "@/lib/auth";
@@ -19,12 +19,33 @@ type Mode = "signin" | "signup";
 
 export function AuthScreen({ mode }: { mode: Mode }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [emailMode, setEmailMode] = useState(false);
   const [email, setEmail] = useState("");
   const [emailSent, setEmailSent] = useState(false);
   const isSignup = mode === "signup";
+
+  // OAuth callback で帰ってきたエラーを表示
+  useEffect(() => {
+    const err = searchParams.get("error");
+    const desc = searchParams.get("error_description");
+    if (!err) return;
+    if (err === "access_denied") {
+      setErrorMsg("ログインがキャンセルされました");
+    } else if (err === "redirect_uri_mismatch") {
+      setErrorMsg("リダイレクトURL の設定が一致しません。Google Cloud Console の認可済みリダイレクトURIをご確認ください。");
+    } else if (err === "auth_failed") {
+      setErrorMsg(desc ? `認証エラー: ${desc}` : "認証に失敗しました");
+    } else if (err === "missing_code") {
+      setErrorMsg("認証コードが返ってきませんでした。再度お試しください。");
+    } else if (err === "supabase_not_configured") {
+      setErrorMsg("Supabase が未設定です (環境変数)。");
+    } else {
+      setErrorMsg(desc ? `${err}: ${desc}` : `エラー: ${err}`);
+    }
+  }, [searchParams]);
 
   async function continueAs(method: string) {
     setErrorMsg(null);

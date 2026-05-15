@@ -7,6 +7,17 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/app";
 
+  // OAuth プロバイダー (Google など) からのエラーをそのまま signin に転送
+  const oauthError = searchParams.get("error");
+  const oauthErrorDesc = searchParams.get("error_description");
+  if (oauthError) {
+    const params = new URLSearchParams({
+      error: oauthError,
+      ...(oauthErrorDesc ? { error_description: oauthErrorDesc } : {}),
+    });
+    return NextResponse.redirect(`${origin}/signin?${params.toString()}`);
+  }
+
   if (!code) {
     return NextResponse.redirect(`${origin}/signin?error=missing_code`);
   }
@@ -19,7 +30,7 @@ export async function GET(request: Request) {
   }
 
   // Server-side client (no persistent session needed here — we exchange code for session via cookies)
-  const cookieStore = await cookies();
+  await cookies(); // hold for future use
   const supabase = createClient(url, key, {
     auth: {
       persistSession: false,
@@ -30,7 +41,11 @@ export async function GET(request: Request) {
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error || !data.session) {
-    return NextResponse.redirect(`${origin}/signin?error=auth_failed`);
+    const params = new URLSearchParams({
+      error: "auth_failed",
+      ...(error?.message ? { error_description: error.message } : {}),
+    });
+    return NextResponse.redirect(`${origin}/signin?${params.toString()}`);
   }
 
   // Determine destination: new users go to onboarding, existing users go to /app
