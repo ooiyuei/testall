@@ -48,11 +48,18 @@ function nowHHmm(): string {
   );
 }
 
-export function MoodCheckCard() {
+interface MoodCheckCardProps {
+  /** 変更モードで開く場合は true を渡す（decided を false で初期化） */
+  forceEdit?: boolean;
+  /** 確定後に呼ばれるコールバック */
+  onCommitted?: () => void;
+}
+
+export function MoodCheckCard({ forceEdit = false, onCommitted }: MoodCheckCardProps = {}) {
   const { state } = useStore();
   const planning = state.planning;
   const [mood, setMood] = useState<Mood>("normal");
-  const [decided, setDecided] = useState(false);
+  const [decided, setDecided] = useState(!forceEdit);
 
   const profile = useMemo(
     () =>
@@ -107,6 +114,7 @@ export function MoodCheckCard() {
       createdAt: new Date().toISOString(),
     });
     setDecided(true);
+    onCommitted?.();
   }
 
   if (tooLate && !decided) {
@@ -279,12 +287,7 @@ export function MoodCheckCard() {
               </span>
             </div>
           </div>
-          <div className="text-right text-[10px] leading-[1.6] text-ink-500">
-            基本 {baseBlocks} · 気分 {result.moodDelta >= 0 ? "+" : ""}
-            {result.moodDelta}
-            <br />
-            物理上限 {result.availableBlocks}
-          </div>
+          {/* 内部計算詳細 (基本/気分/物理上限) はユーザーには非公開 */}
         </div>
       )}
 

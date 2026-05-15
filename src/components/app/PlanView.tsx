@@ -18,8 +18,7 @@ import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
 import { deleteEvent, saveEvent } from "@/lib/store";
 import type { CalendarEvent, CalendarEventKind } from "@/lib/store";
-import { WeeklyGoalCard } from "./WeeklyGoalCard";
-import { WeeklyTaskBoard } from "./WeeklyTaskBoard";
+// WeeklyGoalCard / WeeklyTaskBoard は密度削減のため import 撤去
 import { CalendarSkeleton } from "@/components/ui/Skeleton";
 import { IconBadge } from "@/components/ui/IconBadge";
 import { SectionLabel } from "@/components/ui/SectionLabel";
@@ -404,9 +403,8 @@ export function PlanView() {
         </section>
       )}
 
-      {/* 補足セクション (PDF mock には無いが機能として残す) */}
-      <WeeklyGoalCard />
-      <WeeklyTaskBoard tasks={state.tasks ?? []} />
+      {/* WeeklyGoalCard / WeeklyTaskBoard は情報密度削減のため削除
+          (今週の目標は黒ヒーローカードに一元化、タスクボードは TodoView に集約) */}
 
       {/* イベントエディタ */}
       {editor.open && editor.event ? (

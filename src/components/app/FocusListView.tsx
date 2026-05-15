@@ -212,24 +212,7 @@ export function FocusListView() {
         </section>
       )}
 
-      {/* Weekly stats */}
-      <section className="mt-6">
-        <h2 className="text-[11px] font-medium text-ink-500">今週の集中</h2>
-        <div className="mt-2.5 grid grid-cols-3 gap-2">
-          <StatCard label="完了" value={String(weeklyDone)} sub="ブロック" />
-          <StatCard
-            label="時間"
-            value={weeklyHours.toFixed(1)}
-            sub="h"
-          />
-          <StatCard
-            label="平均"
-            value={moodAvg}
-            sub="/ 5.0"
-            tone="sun"
-          />
-        </div>
-      </section>
+      {/* 週間統計は計画タブの「今週の目標」進捗バーに一元化したため削除 */}
     </div>
   );
 }

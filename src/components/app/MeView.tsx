@@ -117,11 +117,7 @@ export function MeView() {
       {/* ── LV/経験値 ── */}
       <LevelSection />
 
-      {/* ── 偏差値の推移 ── */}
-      <DeviationTrendSection />
-
-      {/* ── 経験値の推移 ── */}
-      <ExpTrendSection />
+      {/* 偏差値・経験値の推移グラフはマイページから削除 (詳細は各教科ページへ) */}
 
       {/* ── 本棚 ── */}
       <BookshelfSection

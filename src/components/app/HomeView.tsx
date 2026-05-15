@@ -7,12 +7,13 @@
 // 下: 今週 / 今日の気分 2列、その下にプロダクトカード群
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   CheckCircle2,
   ChevronRight,
   Flame,
   Play,
+  Sparkles,
   Target,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -20,14 +21,9 @@ import { useStore } from "@/lib/hooks/useStore";
 import { currentDayISO } from "@/lib/store";
 import type { Block } from "@/lib/types";
 import { MoodCheckCard } from "./MoodCheckCard";
-import { TodaySuggestion } from "./TodaySuggestion";
 import { GuideTour } from "./GuideTour";
-import { WeeklyReviewCard } from "./WeeklyReviewCard";
-import { AiChat } from "./AiChat";
-import { StreakHeatmap } from "./StreakHeatmap";
 import { LoginBonus } from "./LoginBonus";
 import { InstallPrompt } from "./InstallPrompt";
-import { DailyTip } from "./DailyTip";
 import { HomeSkeleton } from "@/components/ui/Skeleton";
 
 const MOOD_LABELS: Record<string, string> = {
@@ -166,6 +162,8 @@ export function HomeView() {
   const needsOnboarding = hydrated && !state.profile?.onboardedAt;
   const moodLabel = todayMoodLog?.mood ? MOOD_LABELS[todayMoodLog.mood] : "未入力";
 
+  const [showMoodEditor, setShowMoodEditor] = useState(false);
+
   if (!hydrated) return <HomeSkeleton />;
 
   return (
@@ -280,7 +278,11 @@ export function HomeView() {
               })}
             </div>
           </Link>
-          <div className="rounded-2xl border border-ink-100/80 bg-white p-3.5">
+          <button
+            type="button"
+            onClick={() => setShowMoodEditor(true)}
+            className="rounded-2xl border border-ink-100/80 bg-white p-3.5 text-left w-full transition active:scale-[0.99]"
+          >
             <div className="text-[10px] font-semibold text-ink-400">今日の気分</div>
             <div className="mt-1 flex items-baseline gap-1">
               <span
@@ -291,30 +293,41 @@ export function HomeView() {
               </span>
             </div>
             <div className="mt-2 inline-flex items-center gap-0.5 text-[11px] font-semibold text-sky-500">
-              {todayMoodLog ? "変更" : "入力する"}
+              {todayMoodLog ? "変更する" : "入力する"}
               <ChevronRight className="h-3 w-3" />
             </div>
-          </div>
+          </button>
         </section>
       ) : null}
 
-      {/* 気分入力カード (まだの場合は前面に) */}
-      {hydrated && !todayMoodLog ? <MoodCheckCard /> : null}
-
-      {/* 今日のヒント・週次レビュー・AIおすすめ — PDFには無いがプロダクト価値で残す。タイムラインの邪魔をしないよう下に配置。 */}
-      <DailyTip />
-      {hydrated ? <WeeklyReviewCard /> : null}
-      {hydrated ? <TodaySuggestion state={state} /> : null}
-
-      {/* 学習ヒートマップ */}
-      {hydrated ? (
-        <section className="mt-7">
-          <StreakHeatmap />
-        </section>
+      {/* 気分入力カード (未入力 or 変更モード) */}
+      {hydrated && (!todayMoodLog || showMoodEditor) ? (
+        <MoodCheckCard
+          forceEdit={showMoodEditor}
+          onCommitted={() => setShowMoodEditor(false)}
+        />
       ) : null}
 
-      {/* AI チャット */}
-      {hydrated ? <AiChat state={state} /> : null}
+      {/* AI コーチへのリンク (フル画面チャットへ) — タイムラインの邪魔をしない控えめな配置 */}
+      {hydrated && totalCount > 0 ? (
+        <section className="mt-5">
+          <Link
+            href="/app/ai"
+            className="flex items-center justify-between rounded-2xl border border-ink-100/80 bg-white px-4 py-3.5 transition active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-mint-100">
+                <Sparkles className="h-4 w-4 text-mint-600" strokeWidth={2.2} />
+              </div>
+              <div>
+                <div className="text-[13px] font-bold text-ink-900">AI コーチ Sara に相談</div>
+                <div className="text-[10px] text-ink-500">次の一手・苦手対策を聞いてみる</div>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-ink-400" />
+          </Link>
+        </section>
+      ) : null}
     </div>
   );
 }

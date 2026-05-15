@@ -214,8 +214,8 @@ export function TodoView() {
         ) : null}
       </div>
 
-      {/* フィルタ + 追加 */}
-      <div className="flex items-center gap-2">
+      {/* フィルタ (タスク追加ボタンは右上の + 黒丸に一元化) */}
+      <div className="flex items-center">
         <button
           type="button"
           onClick={() => setFilterOpen((v) => !v)}
@@ -234,15 +234,6 @@ export function TodoView() {
             </span>
           ) : null}
         </button>
-        <div className="flex-1" />
-        <Button
-          variant="action"
-          size="sm"
-          onClick={() => setOpen(true)}
-          iconBefore={<Plus className="h-3.5 w-3.5" strokeWidth={2} />}
-        >
-          タスク追加
-        </Button>
       </div>
 
       {/* フィルタパネル */}
