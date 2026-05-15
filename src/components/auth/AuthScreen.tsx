@@ -194,12 +194,6 @@ export function AuthScreen({ mode }: { mode: Mode }) {
             {isSignup ? (
               <>
                 <SocialButton
-                  variant="apple"
-                  submitting={submitting === "apple"}
-                  onClick={() => continueAs("apple")}
-                  label="Appleで登録"
-                />
-                <SocialButton
                   variant="google"
                   submitting={submitting === "google"}
                   onClick={() => continueAs("google")}
@@ -220,12 +214,6 @@ export function AuthScreen({ mode }: { mode: Mode }) {
                   submitting={submitting === "google"}
                   onClick={() => continueAs("google")}
                   label="Google で続ける"
-                />
-                <SocialButton
-                  variant="apple"
-                  submitting={submitting === "apple"}
-                  onClick={() => continueAs("apple")}
-                  label="Appleで続ける"
                 />
 
                 <div className="mt-4 flex items-center gap-3">
