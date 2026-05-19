@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, ChevronLeft, Mail } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { signInWithApple, signInWithGoogle, signInWithMagicLink } from "@/lib/auth";
+import { haptic } from "@/lib/haptic";
 
 type Mode = "signin" | "signup";
 
@@ -48,6 +49,7 @@ export function AuthScreen({ mode }: { mode: Mode }) {
   }, [searchParams]);
 
   async function continueAs(method: string) {
+    haptic.medium();
     setErrorMsg(null);
     setSubmitting(method);
     try {
@@ -60,6 +62,7 @@ export function AuthScreen({ mode }: { mode: Mode }) {
       const msg = e instanceof Error ? e.message : String(e);
       // 開発・本番問わず詳細を画面に表示してデバッグ可能に
       console.error("[auth] signInWithOAuth failed:", e);
+      haptic.error();
       if (msg.includes("not configured")) {
         setErrorMsg("Supabase が未設定です。NEXT_PUBLIC_SUPABASE_URL を Vercel に設定してください。");
       } else if (msg.includes("provider") || msg.includes("not enabled") || msg.includes("validation_failed")) {
@@ -75,15 +78,19 @@ export function AuthScreen({ mode }: { mode: Mode }) {
 
   async function submitEmail() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      haptic.error();
       setErrorMsg("正しいメールアドレスを入力してください");
       return;
     }
+    haptic.medium();
     setErrorMsg(null);
     setSubmitting("email");
     try {
       await signInWithMagicLink(email);
+      haptic.success();
       setEmailSent(true);
     } catch (err) {
+      haptic.error();
       setErrorMsg(err instanceof Error ? err.message : "メール送信に失敗しました");
     } finally {
       setSubmitting(null);
@@ -91,6 +98,7 @@ export function AuthScreen({ mode }: { mode: Mode }) {
   }
 
   function continueAsGuest() {
+    haptic.light();
     router.push("/onboarding");
   }
 
