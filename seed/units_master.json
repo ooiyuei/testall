@@ -1,0 +1,2195 @@
+[
+  {
+    "id": "jp-mod::eval::logic",
+    "subject_id": "japanese-modern",
+    "mext_code": null,
+    "name": "評論 / 論理展開の把握",
+    "testall_tags": [
+      "論理構成力",
+      "読解力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jp-mod::eval::keyword",
+    "subject_id": "japanese-modern",
+    "mext_code": null,
+    "name": "評論 / キーワード抽出",
+    "testall_tags": [
+      "抽象化力",
+      "読解力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jp-mod::eval::summary",
+    "subject_id": "japanese-modern",
+    "mext_code": null,
+    "name": "評論 / 要約",
+    "testall_tags": [
+      "抽象化力",
+      "論理構成力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "jp-mod::nov::emotion",
+    "subject_id": "japanese-modern",
+    "mext_code": null,
+    "name": "小説 / 心情把握",
+    "testall_tags": [
+      "読解力",
+      "推論力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jp-mod::nov::scene",
+    "subject_id": "japanese-modern",
+    "mext_code": null,
+    "name": "小説 / 場面・描写",
+    "testall_tags": [
+      "読解力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "jp-mod::ess::intent",
+    "subject_id": "japanese-modern",
+    "mext_code": null,
+    "name": "随筆・実用文 / 筆者の意図",
+    "testall_tags": [
+      "読解力",
+      "推論力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "jp-mod::ess::practical",
+    "subject_id": "japanese-modern",
+    "mext_code": null,
+    "name": "随筆・実用文 / 実用文・図表",
+    "testall_tags": [
+      "データ分析力",
+      "読解力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jp-cla::gra::verb",
+    "subject_id": "japanese-classic",
+    "mext_code": null,
+    "name": "文法 / 動詞の活用",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jp-cla::gra::aux",
+    "subject_id": "japanese-classic",
+    "mext_code": null,
+    "name": "文法 / 助動詞",
+    "testall_tags": [
+      "暗記力",
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jp-cla::gra::particle",
+    "subject_id": "japanese-classic",
+    "mext_code": null,
+    "name": "文法 / 助詞",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "jp-cla::gra::keigo",
+    "subject_id": "japanese-classic",
+    "mext_code": null,
+    "name": "文法 / 敬語",
+    "testall_tags": [
+      "暗記力",
+      "推論力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jp-cla::voc::core",
+    "subject_id": "japanese-classic",
+    "mext_code": null,
+    "name": "古文単語 / 頻出単語",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jp-cla::read::narrative",
+    "subject_id": "japanese-classic",
+    "mext_code": null,
+    "name": "読解 / 物語",
+    "testall_tags": [
+      "読解力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jp-cla::read::diary",
+    "subject_id": "japanese-classic",
+    "mext_code": null,
+    "name": "読解 / 日記・随筆",
+    "testall_tags": [
+      "読解力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "jp-cla::waka::rhetoric",
+    "subject_id": "japanese-classic",
+    "mext_code": null,
+    "name": "和歌・韻文 / 修辞技法",
+    "testall_tags": [
+      "暗記力",
+      "推論力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "jp-kan::syn::negation",
+    "subject_id": "japanese-kanbun",
+    "mext_code": null,
+    "name": "句法 / 否定形",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jp-kan::syn::passive",
+    "subject_id": "japanese-kanbun",
+    "mext_code": null,
+    "name": "句法 / 受身・使役",
+    "testall_tags": [
+      "暗記力",
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jp-kan::syn::interrogative",
+    "subject_id": "japanese-kanbun",
+    "mext_code": null,
+    "name": "句法 / 疑問・反語",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jp-kan::voc::core",
+    "subject_id": "japanese-kanbun",
+    "mext_code": null,
+    "name": "漢字・語彙 / 重要語",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jp-kan::read::story",
+    "subject_id": "japanese-kanbun",
+    "mext_code": null,
+    "name": "読解 / 故事・説話",
+    "testall_tags": [
+      "読解力",
+      "推論力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jp-kan::read::poem",
+    "subject_id": "japanese-kanbun",
+    "mext_code": null,
+    "name": "読解 / 漢詩",
+    "testall_tags": [
+      "読解力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "m1::exp::calc",
+    "subject_id": "math-1",
+    "mext_code": null,
+    "name": "数と式 / 整式の計算",
+    "testall_tags": [
+      "計算力",
+      "式変形力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m1::exp::factor",
+    "subject_id": "math-1",
+    "mext_code": null,
+    "name": "数と式 / 因数分解",
+    "testall_tags": [
+      "式変形力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m1::exp::real",
+    "subject_id": "math-1",
+    "mext_code": null,
+    "name": "数と式 / 実数・絶対値",
+    "testall_tags": [
+      "条件整理力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "m1::qd::graph",
+    "subject_id": "math-1",
+    "mext_code": null,
+    "name": "二次関数 / グラフ",
+    "testall_tags": [
+      "図形把握力",
+      "式変形力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m1::qd::max",
+    "subject_id": "math-1",
+    "mext_code": null,
+    "name": "二次関数 / 最大・最小",
+    "testall_tags": [
+      "条件整理力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m1::qd::ineq",
+    "subject_id": "math-1",
+    "mext_code": null,
+    "name": "二次関数 / 二次不等式",
+    "testall_tags": [
+      "計算力",
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m1::tri::ratio",
+    "subject_id": "math-1",
+    "mext_code": null,
+    "name": "図形と計量 / 三角比",
+    "testall_tags": [
+      "図形把握力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m1::tri::sin-cos-law",
+    "subject_id": "math-1",
+    "mext_code": null,
+    "name": "図形と計量 / 正弦・余弦定理",
+    "testall_tags": [
+      "図形把握力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m1::data::mean-var",
+    "subject_id": "math-1",
+    "mext_code": null,
+    "name": "データの分析 / 平均・分散・標準偏差",
+    "testall_tags": [
+      "計算力",
+      "データ分析力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "m1::data::corr",
+    "subject_id": "math-1",
+    "mext_code": null,
+    "name": "データの分析 / 相関係数",
+    "testall_tags": [
+      "データ分析力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "m1::set::set",
+    "subject_id": "math-1",
+    "mext_code": null,
+    "name": "集合と命題 / 集合",
+    "testall_tags": [
+      "条件整理力",
+      "論理構成力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "m1::set::prop",
+    "subject_id": "math-1",
+    "mext_code": null,
+    "name": "集合と命題 / 命題と論理",
+    "testall_tags": [
+      "論理構成力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "mA::ct::perm",
+    "subject_id": "math-a",
+    "mext_code": null,
+    "name": "場合の数 / 順列",
+    "testall_tags": [
+      "条件整理力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "mA::ct::comb",
+    "subject_id": "math-a",
+    "mext_code": null,
+    "name": "場合の数 / 組合せ",
+    "testall_tags": [
+      "条件整理力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "mA::pr::basic",
+    "subject_id": "math-a",
+    "mext_code": null,
+    "name": "確率 / 確率の基本",
+    "testall_tags": [
+      "条件整理力",
+      "推論力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "mA::pr::cond",
+    "subject_id": "math-a",
+    "mext_code": null,
+    "name": "確率 / 条件付き確率",
+    "testall_tags": [
+      "条件整理力",
+      "推論力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "mA::geo::tri",
+    "subject_id": "math-a",
+    "mext_code": null,
+    "name": "図形の性質 / 三角形の性質",
+    "testall_tags": [
+      "図形把握力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "mA::geo::circ",
+    "subject_id": "math-a",
+    "mext_code": null,
+    "name": "図形の性質 / 円の性質",
+    "testall_tags": [
+      "図形把握力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "mA::int::euclid",
+    "subject_id": "math-a",
+    "mext_code": null,
+    "name": "整数の性質 / ユークリッド互除法",
+    "testall_tags": [
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "mA::int::ndim",
+    "subject_id": "math-a",
+    "mext_code": null,
+    "name": "整数の性質 / n進法",
+    "testall_tags": [
+      "条件整理力",
+      "計算力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "m2::exp::binom",
+    "subject_id": "math-2",
+    "mext_code": null,
+    "name": "式と証明 / 二項定理",
+    "testall_tags": [
+      "計算力",
+      "式変形力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "m2::exp::proof",
+    "subject_id": "math-2",
+    "mext_code": null,
+    "name": "式と証明 / 等式・不等式の証明",
+    "testall_tags": [
+      "論理構成力",
+      "式変形力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "m2::cpl::calc",
+    "subject_id": "math-2",
+    "mext_code": null,
+    "name": "複素数と方程式 / 複素数の計算",
+    "testall_tags": [
+      "計算力",
+      "式変形力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "m2::cpl::poly",
+    "subject_id": "math-2",
+    "mext_code": null,
+    "name": "複素数と方程式 / 高次方程式",
+    "testall_tags": [
+      "式変形力",
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m2::fg::line",
+    "subject_id": "math-2",
+    "mext_code": null,
+    "name": "図形と方程式 / 直線・円の方程式",
+    "testall_tags": [
+      "図形把握力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m2::fg::locus",
+    "subject_id": "math-2",
+    "mext_code": null,
+    "name": "図形と方程式 / 軌跡と領域",
+    "testall_tags": [
+      "図形把握力",
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m2::trig::sum",
+    "subject_id": "math-2",
+    "mext_code": null,
+    "name": "三角関数 / 加法定理",
+    "testall_tags": [
+      "式変形力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m2::trig::graph",
+    "subject_id": "math-2",
+    "mext_code": null,
+    "name": "三角関数 / 三角関数のグラフ",
+    "testall_tags": [
+      "図形把握力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "m2::el::exp",
+    "subject_id": "math-2",
+    "mext_code": null,
+    "name": "指数・対数関数 / 指数関数",
+    "testall_tags": [
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m2::el::log",
+    "subject_id": "math-2",
+    "mext_code": null,
+    "name": "指数・対数関数 / 対数関数",
+    "testall_tags": [
+      "式変形力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m2::di::diff",
+    "subject_id": "math-2",
+    "mext_code": null,
+    "name": "微分法・積分法 / 微分（多項式）",
+    "testall_tags": [
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m2::di::int",
+    "subject_id": "math-2",
+    "mext_code": null,
+    "name": "微分法・積分法 / 積分（多項式）",
+    "testall_tags": [
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "mB::seq::arith",
+    "subject_id": "math-b",
+    "mext_code": null,
+    "name": "数列 / 等差・等比数列",
+    "testall_tags": [
+      "計算力",
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "mB::seq::sum",
+    "subject_id": "math-b",
+    "mext_code": null,
+    "name": "数列 / Σの計算",
+    "testall_tags": [
+      "計算力",
+      "式変形力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "mB::seq::induction",
+    "subject_id": "math-b",
+    "mext_code": null,
+    "name": "数列 / 数学的帰納法",
+    "testall_tags": [
+      "論理構成力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "mB::st::sample",
+    "subject_id": "math-b",
+    "mext_code": null,
+    "name": "統計的な推測 / 標本調査・推定",
+    "testall_tags": [
+      "データ分析力",
+      "推論力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "mB::st::test",
+    "subject_id": "math-b",
+    "mext_code": null,
+    "name": "統計的な推測 / 仮説検定",
+    "testall_tags": [
+      "論理構成力",
+      "データ分析力"
+    ],
+    "exam_frequency": "low",
+    "source": "mext"
+  },
+  {
+    "id": "m3::lm::seq",
+    "subject_id": "math-3",
+    "mext_code": null,
+    "name": "極限 / 数列の極限",
+    "testall_tags": [
+      "推論力",
+      "式変形力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m3::lm::func",
+    "subject_id": "math-3",
+    "mext_code": null,
+    "name": "極限 / 関数の極限",
+    "testall_tags": [
+      "式変形力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m3::df::calc",
+    "subject_id": "math-3",
+    "mext_code": null,
+    "name": "微分法 / 導関数の計算",
+    "testall_tags": [
+      "計算力",
+      "式変形力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m3::df::app",
+    "subject_id": "math-3",
+    "mext_code": null,
+    "name": "微分法 / 微分の応用（最大最小・接線・グラフ）",
+    "testall_tags": [
+      "図形把握力",
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m3::in::calc",
+    "subject_id": "math-3",
+    "mext_code": null,
+    "name": "積分法 / 積分の計算",
+    "testall_tags": [
+      "計算力",
+      "式変形力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "m3::in::app",
+    "subject_id": "math-3",
+    "mext_code": null,
+    "name": "積分法 / 積分の応用（面積・体積・長さ）",
+    "testall_tags": [
+      "図形把握力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "mC::vec::plane",
+    "subject_id": "math-c",
+    "mext_code": null,
+    "name": "ベクトル / 平面ベクトル",
+    "testall_tags": [
+      "図形把握力",
+      "式変形力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "mC::vec::space",
+    "subject_id": "math-c",
+    "mext_code": null,
+    "name": "ベクトル / 空間ベクトル",
+    "testall_tags": [
+      "図形把握力",
+      "条件整理力",
+      "式変形力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "mC::cu::conic",
+    "subject_id": "math-c",
+    "mext_code": null,
+    "name": "平面上の曲線 / 二次曲線",
+    "testall_tags": [
+      "図形把握力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "mC::cu::polar",
+    "subject_id": "math-c",
+    "mext_code": null,
+    "name": "平面上の曲線 / 極座標・媒介変数",
+    "testall_tags": [
+      "図形把握力",
+      "式変形力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "mC::cp::basic",
+    "subject_id": "math-c",
+    "mext_code": null,
+    "name": "複素数平面 / 複素数平面の基本",
+    "testall_tags": [
+      "図形把握力",
+      "式変形力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "mC::cp::demoivre",
+    "subject_id": "math-c",
+    "mext_code": null,
+    "name": "複素数平面 / ド・モアブルの定理",
+    "testall_tags": [
+      "式変形力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "eR::sh::main-idea",
+    "subject_id": "english-reading",
+    "mext_code": null,
+    "name": "短文・段落理解 / 主旨把握",
+    "testall_tags": [
+      "読解力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eR::sh::detail",
+    "subject_id": "english-reading",
+    "mext_code": null,
+    "name": "短文・段落理解 / 詳細把握",
+    "testall_tags": [
+      "読解力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eR::lg::logical",
+    "subject_id": "english-reading",
+    "mext_code": null,
+    "name": "長文読解 / 論理的読解",
+    "testall_tags": [
+      "読解力",
+      "論理構成力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eR::lg::speed",
+    "subject_id": "english-reading",
+    "mext_code": null,
+    "name": "長文読解 / 速読",
+    "testall_tags": [
+      "速読力",
+      "読解力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eR::ds::cohesion",
+    "subject_id": "english-reading",
+    "mext_code": null,
+    "name": "談話・パラグラフ / 結束性・指示語",
+    "testall_tags": [
+      "読解力",
+      "推論力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "eR::ds::summary",
+    "subject_id": "english-reading",
+    "mext_code": null,
+    "name": "談話・パラグラフ / 要約",
+    "testall_tags": [
+      "抽象化力",
+      "読解力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "eL::dl::short",
+    "subject_id": "english-listening",
+    "mext_code": null,
+    "name": "対話 / 短い対話",
+    "testall_tags": [
+      "リスニング力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eL::dl::long",
+    "subject_id": "english-listening",
+    "mext_code": null,
+    "name": "対話 / 長い対話",
+    "testall_tags": [
+      "リスニング力",
+      "推論力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eL::mo::narr",
+    "subject_id": "english-listening",
+    "mext_code": null,
+    "name": "モノローグ / ナレーション",
+    "testall_tags": [
+      "リスニング力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eL::mo::lec",
+    "subject_id": "english-listening",
+    "mext_code": null,
+    "name": "モノローグ / 講義・図表",
+    "testall_tags": [
+      "リスニング力",
+      "データ分析力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eW::je::short",
+    "subject_id": "english-writing",
+    "mext_code": null,
+    "name": "和文英訳 / 短文英訳",
+    "testall_tags": [
+      "和文英訳力",
+      "暗記力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eW::je::long",
+    "subject_id": "english-writing",
+    "mext_code": null,
+    "name": "和文英訳 / 長文英訳",
+    "testall_tags": [
+      "和文英訳力",
+      "論理構成力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "eW::fr::opinion",
+    "subject_id": "english-writing",
+    "mext_code": null,
+    "name": "自由英作文 / 意見論述",
+    "testall_tags": [
+      "論理構成力",
+      "和文英訳力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eW::fr::summary",
+    "subject_id": "english-writing",
+    "mext_code": null,
+    "name": "自由英作文 / 要約英作文",
+    "testall_tags": [
+      "抽象化力",
+      "和文英訳力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "eG::tn::tense",
+    "subject_id": "english-grammar",
+    "mext_code": null,
+    "name": "時制・態 / 時制",
+    "testall_tags": [
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eG::tn::passive",
+    "subject_id": "english-grammar",
+    "mext_code": null,
+    "name": "時制・態 / 受動態",
+    "testall_tags": [
+      "条件整理力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "eG::cl::rel",
+    "subject_id": "english-grammar",
+    "mext_code": null,
+    "name": "節・関係詞 / 関係詞",
+    "testall_tags": [
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eG::cl::sub",
+    "subject_id": "english-grammar",
+    "mext_code": null,
+    "name": "節・関係詞 / 従位接続詞",
+    "testall_tags": [
+      "条件整理力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "eG::vb::inf",
+    "subject_id": "english-grammar",
+    "mext_code": null,
+    "name": "準動詞 / 不定詞",
+    "testall_tags": [
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eG::vb::gerund",
+    "subject_id": "english-grammar",
+    "mext_code": null,
+    "name": "準動詞 / 動名詞",
+    "testall_tags": [
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eG::vb::part",
+    "subject_id": "english-grammar",
+    "mext_code": null,
+    "name": "準動詞 / 分詞",
+    "testall_tags": [
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eG::md::cond",
+    "subject_id": "english-grammar",
+    "mext_code": null,
+    "name": "仮定法・比較 / 仮定法",
+    "testall_tags": [
+      "条件整理力",
+      "推論力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eG::md::comp",
+    "subject_id": "english-grammar",
+    "mext_code": null,
+    "name": "仮定法・比較 / 比較",
+    "testall_tags": [
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eG::us::idiom",
+    "subject_id": "english-grammar",
+    "mext_code": null,
+    "name": "語法・イディオム / イディオム",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eP::st::basic",
+    "subject_id": "english-parsing",
+    "mext_code": null,
+    "name": "SVOC把握 / 基本五文型",
+    "testall_tags": [
+      "英文構造把握力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eP::st::complex",
+    "subject_id": "english-parsing",
+    "mext_code": null,
+    "name": "SVOC把握 / 複雑な文の解析",
+    "testall_tags": [
+      "英文構造把握力",
+      "読解力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eP::rh::construct",
+    "subject_id": "english-parsing",
+    "mext_code": null,
+    "name": "構文・意訳 / 重要構文",
+    "testall_tags": [
+      "英文構造把握力",
+      "暗記力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "eP::rh::translate",
+    "subject_id": "english-parsing",
+    "mext_code": null,
+    "name": "構文・意訳 / 意訳・自然な日本語",
+    "testall_tags": [
+      "読解力",
+      "和文英訳力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "phB::mech::kine",
+    "subject_id": "physics-basic",
+    "mext_code": null,
+    "name": "運動とエネルギー / 運動の表し方",
+    "testall_tags": [
+      "計算力",
+      "式変形力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "phB::mech::energy",
+    "subject_id": "physics-basic",
+    "mext_code": null,
+    "name": "運動とエネルギー / 仕事とエネルギー",
+    "testall_tags": [
+      "条件整理力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "phB::th::heat",
+    "subject_id": "physics-basic",
+    "mext_code": null,
+    "name": "熱 / 熱と温度",
+    "testall_tags": [
+      "計算力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "phB::wv::sound",
+    "subject_id": "physics-basic",
+    "mext_code": null,
+    "name": "波 / 波の性質・音",
+    "testall_tags": [
+      "図形把握力",
+      "計算力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "phB::el::circuit",
+    "subject_id": "physics-basic",
+    "mext_code": null,
+    "name": "電気 / 電流・回路",
+    "testall_tags": [
+      "計算力",
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "chB::cp::atom",
+    "subject_id": "chemistry-basic",
+    "mext_code": null,
+    "name": "物質の構成 / 原子・電子配置",
+    "testall_tags": [
+      "暗記力",
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "chB::cp::bond",
+    "subject_id": "chemistry-basic",
+    "mext_code": null,
+    "name": "物質の構成 / 化学結合",
+    "testall_tags": [
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "chB::qt::mol",
+    "subject_id": "chemistry-basic",
+    "mext_code": null,
+    "name": "物質量と化学反応式 / molの計算",
+    "testall_tags": [
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "chB::qt::eq",
+    "subject_id": "chemistry-basic",
+    "mext_code": null,
+    "name": "物質量と化学反応式 / 化学反応式と量計算",
+    "testall_tags": [
+      "計算力",
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "chB::rx::acid",
+    "subject_id": "chemistry-basic",
+    "mext_code": null,
+    "name": "化学反応 / 酸と塩基",
+    "testall_tags": [
+      "条件整理力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "chB::rx::redox",
+    "subject_id": "chemistry-basic",
+    "mext_code": null,
+    "name": "化学反応 / 酸化還元",
+    "testall_tags": [
+      "条件整理力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "biB::cl::cell",
+    "subject_id": "biology-basic",
+    "mext_code": null,
+    "name": "生物の特徴 / 細胞・代謝",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "biB::gn::dna",
+    "subject_id": "biology-basic",
+    "mext_code": null,
+    "name": "遺伝子とその働き / DNAとタンパク質合成",
+    "testall_tags": [
+      "暗記力",
+      "推論力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "biB::bd::homeo",
+    "subject_id": "biology-basic",
+    "mext_code": null,
+    "name": "生体の調節 / ホメオスタシス・免疫",
+    "testall_tags": [
+      "暗記力",
+      "因果関係把握力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "biB::ec::biome",
+    "subject_id": "biology-basic",
+    "mext_code": null,
+    "name": "生態系 / バイオームと植生",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "esB::er::interior",
+    "subject_id": "earth-basic",
+    "mext_code": null,
+    "name": "地球 / 地球の内部",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "esB::er::plate",
+    "subject_id": "earth-basic",
+    "mext_code": null,
+    "name": "地球 / プレートテクトニクス",
+    "testall_tags": [
+      "因果関係把握力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "esB::wt::atmos",
+    "subject_id": "earth-basic",
+    "mext_code": null,
+    "name": "大気と海洋 / 大気の構造",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "esB::un::star",
+    "subject_id": "earth-basic",
+    "mext_code": null,
+    "name": "宇宙 / 恒星と銀河",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "ph::mc::newton",
+    "subject_id": "physics",
+    "mext_code": null,
+    "name": "力学 / 運動方程式",
+    "testall_tags": [
+      "計算力",
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ph::mc::energy",
+    "subject_id": "physics",
+    "mext_code": null,
+    "name": "力学 / エネルギー・運動量保存",
+    "testall_tags": [
+      "条件整理力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ph::mc::circular",
+    "subject_id": "physics",
+    "mext_code": null,
+    "name": "力学 / 円運動・単振動",
+    "testall_tags": [
+      "式変形力",
+      "図形把握力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ph::mc::gravity",
+    "subject_id": "physics",
+    "mext_code": null,
+    "name": "力学 / 万有引力",
+    "testall_tags": [
+      "式変形力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "ph::th::ideal",
+    "subject_id": "physics",
+    "mext_code": null,
+    "name": "熱力学 / 理想気体の状態方程式",
+    "testall_tags": [
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ph::th::cycle",
+    "subject_id": "physics",
+    "mext_code": null,
+    "name": "熱力学 / 熱サイクル・内部エネルギー",
+    "testall_tags": [
+      "条件整理力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ph::wv::interfere",
+    "subject_id": "physics",
+    "mext_code": null,
+    "name": "波動 / 干渉・回折",
+    "testall_tags": [
+      "図形把握力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ph::wv::doppler",
+    "subject_id": "physics",
+    "mext_code": null,
+    "name": "波動 / ドップラー効果",
+    "testall_tags": [
+      "式変形力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ph::em::field",
+    "subject_id": "physics",
+    "mext_code": null,
+    "name": "電磁気 / 電場・電位",
+    "testall_tags": [
+      "条件整理力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ph::em::circuit",
+    "subject_id": "physics",
+    "mext_code": null,
+    "name": "電磁気 / コンデンサ・直流回路",
+    "testall_tags": [
+      "計算力",
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ph::em::magnet",
+    "subject_id": "physics",
+    "mext_code": null,
+    "name": "電磁気 / 電磁誘導",
+    "testall_tags": [
+      "式変形力",
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ph::at::photon",
+    "subject_id": "physics",
+    "mext_code": null,
+    "name": "原子 / 光電効果・原子構造",
+    "testall_tags": [
+      "計算力",
+      "暗記力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "ch::th::thermo",
+    "subject_id": "chemistry",
+    "mext_code": null,
+    "name": "理論化学 / 化学反応とエネルギー",
+    "testall_tags": [
+      "計算力",
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ch::th::eq",
+    "subject_id": "chemistry",
+    "mext_code": null,
+    "name": "理論化学 / 化学平衡",
+    "testall_tags": [
+      "条件整理力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ch::th::electro",
+    "subject_id": "chemistry",
+    "mext_code": null,
+    "name": "理論化学 / 電気分解・電池",
+    "testall_tags": [
+      "条件整理力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ch::in::typical",
+    "subject_id": "chemistry",
+    "mext_code": null,
+    "name": "無機化学 / 典型元素",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ch::in::trans",
+    "subject_id": "chemistry",
+    "mext_code": null,
+    "name": "無機化学 / 遷移元素",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "ch::og::aliphatic",
+    "subject_id": "chemistry",
+    "mext_code": null,
+    "name": "有機化学 / 脂肪族化合物",
+    "testall_tags": [
+      "暗記力",
+      "推論力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ch::og::aromatic",
+    "subject_id": "chemistry",
+    "mext_code": null,
+    "name": "有機化学 / 芳香族化合物",
+    "testall_tags": [
+      "暗記力",
+      "推論力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ch::og::struct",
+    "subject_id": "chemistry",
+    "mext_code": null,
+    "name": "有機化学 / 構造決定",
+    "testall_tags": [
+      "推論力",
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ch::po::natural",
+    "subject_id": "chemistry",
+    "mext_code": null,
+    "name": "高分子化合物 / 天然高分子",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "ch::po::synth",
+    "subject_id": "chemistry",
+    "mext_code": null,
+    "name": "高分子化合物 / 合成高分子",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "bi::cl::metab",
+    "subject_id": "biology",
+    "mext_code": null,
+    "name": "細胞と分子 / 代謝とATP",
+    "testall_tags": [
+      "暗記力",
+      "因果関係把握力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "bi::gn::exp",
+    "subject_id": "biology",
+    "mext_code": null,
+    "name": "遺伝情報の発現 / 遺伝子発現の調節",
+    "testall_tags": [
+      "暗記力",
+      "因果関係把握力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "bi::gn::bio-tech",
+    "subject_id": "biology",
+    "mext_code": null,
+    "name": "遺伝情報の発現 / バイオテクノロジー",
+    "testall_tags": [
+      "暗記力",
+      "推論力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "bi::ev::evol",
+    "subject_id": "biology",
+    "mext_code": null,
+    "name": "進化と系統 / 進化のしくみ",
+    "testall_tags": [
+      "因果関係把握力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "bi::ec::pop",
+    "subject_id": "biology",
+    "mext_code": null,
+    "name": "生態 / 個体群・群集",
+    "testall_tags": [
+      "データ分析力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "es::er::seismo",
+    "subject_id": "earth",
+    "mext_code": null,
+    "name": "地球 / 地震波・地球内部",
+    "testall_tags": [
+      "計算力",
+      "因果関係把握力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "es::hs::strata",
+    "subject_id": "earth",
+    "mext_code": null,
+    "name": "地球の歴史 / 地層と化石",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "es::wt::circ",
+    "subject_id": "earth",
+    "mext_code": null,
+    "name": "大気と海洋 / 大気・海洋の大循環",
+    "testall_tags": [
+      "因果関係把握力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "es::un::galaxy",
+    "subject_id": "earth",
+    "mext_code": null,
+    "name": "宇宙 / 銀河系",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "jH::an::jomon",
+    "subject_id": "japanese-history",
+    "mext_code": null,
+    "name": "原始・古代 / 縄文〜大和",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "jH::an::heian",
+    "subject_id": "japanese-history",
+    "mext_code": null,
+    "name": "原始・古代 / 飛鳥〜平安",
+    "testall_tags": [
+      "暗記力",
+      "歴史的思考力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jH::md::kamakura",
+    "subject_id": "japanese-history",
+    "mext_code": null,
+    "name": "中世 / 鎌倉・室町",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jH::em::edo",
+    "subject_id": "japanese-history",
+    "mext_code": null,
+    "name": "近世 / 江戸時代",
+    "testall_tags": [
+      "暗記力",
+      "歴史的思考力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jH::mo::meiji",
+    "subject_id": "japanese-history",
+    "mext_code": null,
+    "name": "近代 / 明治・大正",
+    "testall_tags": [
+      "暗記力",
+      "因果関係把握力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jH::mo::showa",
+    "subject_id": "japanese-history",
+    "mext_code": null,
+    "name": "近代 / 昭和（戦前）",
+    "testall_tags": [
+      "暗記力",
+      "因果関係把握力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "jH::co::postwar",
+    "subject_id": "japanese-history",
+    "mext_code": null,
+    "name": "現代 / 戦後",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "wH::an::civil",
+    "subject_id": "world-history",
+    "mext_code": null,
+    "name": "古代 / 古代文明・ギリシャローマ",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "wH::md::europe",
+    "subject_id": "world-history",
+    "mext_code": null,
+    "name": "中世 / 中世ヨーロッパ・イスラム",
+    "testall_tags": [
+      "暗記力",
+      "因果関係把握力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "wH::em::reformation",
+    "subject_id": "world-history",
+    "mext_code": null,
+    "name": "近世 / ルネサンス・宗教改革",
+    "testall_tags": [
+      "暗記力",
+      "歴史的思考力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "wH::em::absolute",
+    "subject_id": "world-history",
+    "mext_code": null,
+    "name": "近世 / 絶対王政・市民革命",
+    "testall_tags": [
+      "因果関係把握力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "wH::mo::industrial",
+    "subject_id": "world-history",
+    "mext_code": null,
+    "name": "近代 / 産業革命・帝国主義",
+    "testall_tags": [
+      "因果関係把握力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "wH::mo::ww",
+    "subject_id": "world-history",
+    "mext_code": null,
+    "name": "近代 / 両大戦",
+    "testall_tags": [
+      "因果関係把握力",
+      "歴史的思考力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "wH::co::coldwar",
+    "subject_id": "world-history",
+    "mext_code": null,
+    "name": "現代 / 冷戦と現代",
+    "testall_tags": [
+      "因果関係把握力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "ge::sy::natural",
+    "subject_id": "geography",
+    "mext_code": null,
+    "name": "系統地理 / 自然環境",
+    "testall_tags": [
+      "地理的思考力",
+      "因果関係把握力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ge::sy::industry",
+    "subject_id": "geography",
+    "mext_code": null,
+    "name": "系統地理 / 産業・資源",
+    "testall_tags": [
+      "データ分析力",
+      "地理的思考力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ge::sy::population",
+    "subject_id": "geography",
+    "mext_code": null,
+    "name": "系統地理 / 人口・都市",
+    "testall_tags": [
+      "データ分析力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ge::rg::asia",
+    "subject_id": "geography",
+    "mext_code": null,
+    "name": "地誌 / アジア",
+    "testall_tags": [
+      "暗記力",
+      "地理的思考力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ge::rg::europe",
+    "subject_id": "geography",
+    "mext_code": null,
+    "name": "地誌 / ヨーロッパ",
+    "testall_tags": [
+      "暗記力",
+      "地理的思考力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "ge::rg::americas",
+    "subject_id": "geography",
+    "mext_code": null,
+    "name": "地誌 / 南北アメリカ",
+    "testall_tags": [
+      "暗記力",
+      "地理的思考力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "ge::mp::gis",
+    "subject_id": "geography",
+    "mext_code": null,
+    "name": "地図と地理情報 / 地図・GIS",
+    "testall_tags": [
+      "データ分析力",
+      "図形把握力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "cv::ps::mod",
+    "subject_id": "civics-public",
+    "mext_code": null,
+    "name": "現代社会の特質 / 現代社会の課題",
+    "testall_tags": [
+      "論理構成力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "cv::pd::const",
+    "subject_id": "civics-public",
+    "mext_code": null,
+    "name": "民主政治 / 日本国憲法",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "cv::pd::govern",
+    "subject_id": "civics-public",
+    "mext_code": null,
+    "name": "民主政治 / 三権分立・選挙",
+    "testall_tags": [
+      "暗記力",
+      "条件整理力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "cv::pe::market",
+    "subject_id": "civics-public",
+    "mext_code": null,
+    "name": "経済社会 / 市場経済",
+    "testall_tags": [
+      "論理構成力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "cv::pi::intl",
+    "subject_id": "civics-public",
+    "mext_code": null,
+    "name": "国際社会 / 国際機関・国際法",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "et::sr::greek",
+    "subject_id": "ethics",
+    "mext_code": null,
+    "name": "源流思想 / ギリシャ哲学",
+    "testall_tags": [
+      "暗記力",
+      "抽象化力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "et::sr::oriental",
+    "subject_id": "ethics",
+    "mext_code": null,
+    "name": "源流思想 / 東洋思想",
+    "testall_tags": [
+      "暗記力",
+      "抽象化力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "et::wt::modern",
+    "subject_id": "ethics",
+    "mext_code": null,
+    "name": "西洋思想 / 近代哲学",
+    "testall_tags": [
+      "抽象化力",
+      "暗記力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "et::wt::contemp",
+    "subject_id": "ethics",
+    "mext_code": null,
+    "name": "西洋思想 / 現代思想",
+    "testall_tags": [
+      "抽象化力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "et::jp::trad",
+    "subject_id": "ethics",
+    "mext_code": null,
+    "name": "日本思想 / 日本の伝統思想",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "pe::pl::const",
+    "subject_id": "politics-economics",
+    "mext_code": null,
+    "name": "政治分野 / 憲法と人権",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "pe::pl::govern",
+    "subject_id": "politics-economics",
+    "mext_code": null,
+    "name": "政治分野 / 政治制度",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "pe::ec::macro",
+    "subject_id": "politics-economics",
+    "mext_code": null,
+    "name": "経済分野 / マクロ経済",
+    "testall_tags": [
+      "論理構成力",
+      "データ分析力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "pe::ec::fiscal",
+    "subject_id": "politics-economics",
+    "mext_code": null,
+    "name": "経済分野 / 財政・金融",
+    "testall_tags": [
+      "条件整理力",
+      "データ分析力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "pe::in::trade",
+    "subject_id": "politics-economics",
+    "mext_code": null,
+    "name": "国際経済 / 貿易・為替",
+    "testall_tags": [
+      "論理構成力",
+      "データ分析力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "i1::so::ethic",
+    "subject_id": "info-1",
+    "mext_code": null,
+    "name": "情報社会の問題解決 / 情報モラル・法",
+    "testall_tags": [
+      "暗記力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "i1::de::encoding",
+    "subject_id": "info-1",
+    "mext_code": null,
+    "name": "コミュニケーションと情報デザイン / 情報の表現と圧縮",
+    "testall_tags": [
+      "条件整理力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "i1::pg::algo",
+    "subject_id": "info-1",
+    "mext_code": null,
+    "name": "コンピュータとプログラミング / アルゴリズムとプログラミング",
+    "testall_tags": [
+      "論理構成力",
+      "計算力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  },
+  {
+    "id": "i1::dt::net",
+    "subject_id": "info-1",
+    "mext_code": null,
+    "name": "情報通信ネットワークとデータの活用 / ネットワークの仕組み",
+    "testall_tags": [
+      "暗記力",
+      "条件整理力"
+    ],
+    "exam_frequency": "mid",
+    "source": "mext"
+  },
+  {
+    "id": "i1::dt::db",
+    "subject_id": "info-1",
+    "mext_code": null,
+    "name": "情報通信ネットワークとデータの活用 / データベース・統計",
+    "testall_tags": [
+      "データ分析力"
+    ],
+    "exam_frequency": "high",
+    "source": "mext"
+  }
+]

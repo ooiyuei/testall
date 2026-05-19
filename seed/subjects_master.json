@@ -1,0 +1,390 @@
+[
+  {
+    "id": "japanese-modern",
+    "mext_code": "JP-MOD",
+    "category": "japanese",
+    "name": "現代文",
+    "short_name": "現文",
+    "grades": [
+      "h1",
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "japanese-classic",
+    "mext_code": "JP-CLA",
+    "category": "japanese",
+    "name": "古文",
+    "short_name": "古",
+    "grades": [
+      "h1",
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "japanese-kanbun",
+    "mext_code": "JP-KAN",
+    "category": "japanese",
+    "name": "漢文",
+    "short_name": "漢",
+    "grades": [
+      "h1",
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "math-1",
+    "mext_code": "MA-I",
+    "category": "math",
+    "name": "数学Ⅰ",
+    "short_name": "数Ⅰ",
+    "grades": [
+      "h1",
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "math-a",
+    "mext_code": "MA-A",
+    "category": "math",
+    "name": "数学A",
+    "short_name": "数A",
+    "grades": [
+      "h1",
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "math-2",
+    "mext_code": "MA-II",
+    "category": "math",
+    "name": "数学Ⅱ",
+    "short_name": "数Ⅱ",
+    "grades": [
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "math-b",
+    "mext_code": "MA-B",
+    "category": "math",
+    "name": "数学B",
+    "short_name": "数B",
+    "grades": [
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "math-3",
+    "mext_code": "MA-III",
+    "category": "math",
+    "name": "数学Ⅲ",
+    "short_name": "数Ⅲ",
+    "grades": [
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "math-c",
+    "mext_code": "MA-C",
+    "category": "math",
+    "name": "数学C",
+    "short_name": "数C",
+    "grades": [
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "english-reading",
+    "mext_code": "EN-R",
+    "category": "english",
+    "name": "リーディング",
+    "short_name": "R",
+    "grades": [
+      "h1",
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "english-listening",
+    "mext_code": "EN-L",
+    "category": "english",
+    "name": "リスニング",
+    "short_name": "L",
+    "grades": [
+      "h1",
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "english-writing",
+    "mext_code": "EN-W",
+    "category": "english",
+    "name": "英作文",
+    "short_name": "W",
+    "grades": [
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "english-grammar",
+    "mext_code": "EN-G",
+    "category": "english",
+    "name": "文法・語法",
+    "short_name": "G",
+    "grades": [
+      "h1",
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "english-parsing",
+    "mext_code": "EN-P",
+    "category": "english",
+    "name": "英文解釈",
+    "short_name": "P",
+    "grades": [
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "physics-basic",
+    "mext_code": "SCI-PH-B",
+    "category": "science",
+    "name": "物理基礎",
+    "short_name": "物基",
+    "grades": [
+      "h1",
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "chemistry-basic",
+    "mext_code": "SCI-CH-B",
+    "category": "science",
+    "name": "化学基礎",
+    "short_name": "化基",
+    "grades": [
+      "h1",
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "biology-basic",
+    "mext_code": "SCI-BI-B",
+    "category": "science",
+    "name": "生物基礎",
+    "short_name": "生基",
+    "grades": [
+      "h1",
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "earth-basic",
+    "mext_code": "SCI-ES-B",
+    "category": "science",
+    "name": "地学基礎",
+    "short_name": "地基",
+    "grades": [
+      "h1",
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "physics",
+    "mext_code": "SCI-PH",
+    "category": "science",
+    "name": "物理",
+    "short_name": "物",
+    "grades": [
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "chemistry",
+    "mext_code": "SCI-CH",
+    "category": "science",
+    "name": "化学",
+    "short_name": "化",
+    "grades": [
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "biology",
+    "mext_code": "SCI-BI",
+    "category": "science",
+    "name": "生物",
+    "short_name": "生",
+    "grades": [
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "earth",
+    "mext_code": "SCI-ES",
+    "category": "science",
+    "name": "地学",
+    "short_name": "地",
+    "grades": [
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "japanese-history",
+    "mext_code": "HIS-JH",
+    "category": "history",
+    "name": "日本史",
+    "short_name": "日史",
+    "grades": [
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "world-history",
+    "mext_code": "HIS-WH",
+    "category": "history",
+    "name": "世界史",
+    "short_name": "世史",
+    "grades": [
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "geography",
+    "mext_code": "HIS-GE",
+    "category": "history",
+    "name": "地理",
+    "short_name": "地理",
+    "grades": [
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "civics-public",
+    "mext_code": "CIV-PB",
+    "category": "civics",
+    "name": "公共",
+    "short_name": "公共",
+    "grades": [
+      "h1",
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "ethics",
+    "mext_code": "CIV-ET",
+    "category": "civics",
+    "name": "倫理",
+    "short_name": "倫",
+    "grades": [
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "politics-economics",
+    "mext_code": "CIV-PE",
+    "category": "civics",
+    "name": "政治経済",
+    "short_name": "政経",
+    "grades": [
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  },
+  {
+    "id": "info-1",
+    "mext_code": "INFO-I",
+    "category": "info",
+    "name": "情報Ⅰ",
+    "short_name": "情Ⅰ",
+    "grades": [
+      "h1",
+      "h2",
+      "h3",
+      "ronin"
+    ],
+    "source": "mext"
+  }
+]

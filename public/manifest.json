@@ -1,0 +1,27 @@
+{
+  "name": "Testall — 今日の25分を、整える。",
+  "short_name": "Testall",
+  "description": "テストを入れるだけ。AIがあなたの苦手を分析して、今日やる25分を整えます。",
+  "start_url": "/app",
+  "display": "standalone",
+  "background_color": "#fbfaf7",
+  "theme_color": "#fbfaf7",
+  "orientation": "portrait",
+  "lang": "ja",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": []
+}

@@ -1,0 +1,4 @@
+# 巨大な投入用 SQL（生成物）は除外
+sql-batch-*.sql
+insert-mext.sql
+mext_raw.json
