@@ -18,6 +18,8 @@ import { logBlock } from "@/lib/store";
 import type { Block } from "@/lib/types";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { confirm } from "@/components/ui/ConfirmDialog";
+import { toast } from "@/components/ui/Toast";
+import { haptic } from "@/lib/haptic";
 
 const DEFAULT_DURATION_SEC = 25 * 60;
 
@@ -62,19 +64,46 @@ export function FocusRun() {
     return () => clearInterval(interval);
   }, [phase]);
 
-  // 残り 0 になったら finished に遷移 (副作用は別 useEffect に分離)
+  // 残り 0 になったら finished に遷移 + 完走 haptic
   useEffect(() => {
     if (phase === "running" && remaining === 0) {
+      haptic.success();
       setPhase("finished");
     }
   }, [phase, remaining]);
 
+  // Wake Lock — タイマー走ってる間は画面スリープを抑止
+  useEffect(() => {
+    if (phase !== "running") return;
+    if (typeof navigator === "undefined") return;
+    type WakeLockSentinel = { release: () => Promise<void> };
+    type WakeLockNavigator = Navigator & {
+      wakeLock?: { request: (kind: "screen") => Promise<WakeLockSentinel> };
+    };
+    const nav = navigator as WakeLockNavigator;
+    if (!nav.wakeLock) return;
+    let sentinel: WakeLockSentinel | null = null;
+    nav.wakeLock
+      .request("screen")
+      .then((s) => {
+        sentinel = s;
+      })
+      .catch(() => {
+        // 権限がない/サポート外 — 静かに失敗
+      });
+    return () => {
+      sentinel?.release().catch(() => {});
+    };
+  }, [phase]);
+
   function start() {
+    haptic.medium();
     startedAtRef.current = Date.now();
     setPhase("running");
   }
 
   function pause() {
+    haptic.light();
     if (startedAtRef.current !== null) {
       totalElapsedRef.current += Date.now() - startedAtRef.current;
       startedAtRef.current = null;
@@ -83,11 +112,13 @@ export function FocusRun() {
   }
 
   function resume() {
+    haptic.medium();
     startedAtRef.current = Date.now();
     setPhase("running");
   }
 
   function reset() {
+    haptic.light();
     startedAtRef.current = null;
     totalElapsedRef.current = 0;
     setRemaining(DEFAULT_DURATION_SEC);
@@ -95,6 +126,7 @@ export function FocusRun() {
   }
 
   function finishEarly() {
+    haptic.medium();
     if (startedAtRef.current !== null) {
       totalElapsedRef.current += Date.now() - startedAtRef.current;
       startedAtRef.current = null;
@@ -112,6 +144,7 @@ export function FocusRun() {
 
   function saveAndExit() {
     if (rating === 0) return;
+    haptic.heavy();
     const effectiveTestId = testId ?? "free-study";
     const effectiveBlockIdx =
       blockIdx !== null ? blockIdx : Math.floor(Date.now() / 1000);
@@ -123,6 +156,7 @@ export function FocusRun() {
       note: note.trim() || undefined,
       durationSec: elapsedSec(),
     });
+    toast.success("記録しました");
     router.push(testId ? `/app/test/${testId}` : "/app");
   }
 
@@ -621,7 +655,10 @@ function FinishView({
             <button
               key={n}
               type="button"
-              onClick={() => setRating(n)}
+              onClick={() => {
+                haptic.light();
+                setRating(n);
+              }}
               className={cn(
                 "flex h-12 w-12 items-center justify-center rounded-2xl transition hover:scale-110 active:scale-95",
                 rating >= n
