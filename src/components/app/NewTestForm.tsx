@@ -28,6 +28,8 @@ import {
 import { readStore, saveTest, setProfile } from "@/lib/store";
 import { preprocessImage } from "@/lib/image-preprocess";
 import { updateProfileFromTests } from "@/lib/auto-deviation";
+import { haptic } from "@/lib/haptic";
+import { toast } from "@/components/ui/Toast";
 import type {
   Diagnosis,
   MissCause,
@@ -112,7 +114,10 @@ function ModeSelect({
       {/* Photo mode — dark hero */}
       <button
         type="button"
-        onClick={onPickPhoto}
+        onClick={() => {
+          haptic.medium();
+          onPickPhoto();
+        }}
         className="mt-6 flex w-full items-center gap-3.5 rounded-[20px] bg-ink-900 p-5 text-left text-white shadow-[0_8px_28px_-10px_rgba(20,19,15,0.35)] transition active:scale-[0.99]"
       >
         <div className="flex h-14 w-14 flex-none items-center justify-center rounded-2xl bg-white/[0.08]">
@@ -137,7 +142,10 @@ function ModeSelect({
       {/* Manual mode */}
       <button
         type="button"
-        onClick={onPickManual}
+        onClick={() => {
+          haptic.light();
+          onPickManual();
+        }}
         className="mt-2.5 flex w-full items-center gap-3.5 rounded-[18px] border border-ink-100 bg-white p-4 text-left text-ink-900 transition active:scale-[0.99]"
       >
         <div className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-cream-100">
@@ -229,6 +237,7 @@ function PhotoMode({
       });
 
       if (res.status === 503) {
+        haptic.error();
         setPhotoState({ status: "error", message: "api_key_not_configured" });
         return;
       }
@@ -240,10 +249,12 @@ function PhotoMode({
         error?: string;
       };
       if (!data.ok || !data.result) {
+        haptic.error();
         setPhotoState({ status: "error", message: data.error ?? "vision_failed" });
         return;
       }
 
+      haptic.success();
       setPhotoState({
         status: "done",
         result: data.result,
@@ -251,6 +262,7 @@ function PhotoMode({
         previewUrl,
       });
     } catch {
+      haptic.error();
       setPhotoState({ status: "error", message: "network_error" });
     }
   }
@@ -854,15 +866,18 @@ function ManualForm({ prefill }: { prefill?: VisionResult | null }) {
   function goNext() {
     const err = validateStep(step);
     if (err) {
+      haptic.error();
       setError(err);
       return;
     }
+    haptic.light();
     setError(null);
     if (step < 2) setStep(((step + 1) as Step));
     else submit();
   }
 
   function goPrev() {
+    haptic.light();
     setError(null);
     if (step > 0) setStep((step - 1) as Step);
   }
@@ -959,8 +974,11 @@ function ManualForm({ prefill }: { prefill?: VisionResult | null }) {
       const updated = updateProfileFromTests(after.profile, after.tests);
       if (updated) setProfile(updated);
 
+      haptic.success();
+      toast.success("AI 診断が完了しました");
       router.push(`/app/test/${id}`);
     } catch {
+      haptic.error();
       setError("診断の生成に失敗しました。少し待ってから再度お試しください。");
       setSubmitting(false);
     }
@@ -1744,9 +1762,12 @@ function Chip({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={() => {
+        haptic.light();
+        onClick();
+      }}
       className={cn(
-        "h-9 rounded-xl px-3 text-xs font-bold transition",
+        "h-9 rounded-xl px-3 text-xs font-bold transition active:scale-[0.96]",
         active
           ? "bg-sky-500 text-white shadow-soft"
           : "bg-cream-100 text-ink-700 hover:bg-cream-200",
