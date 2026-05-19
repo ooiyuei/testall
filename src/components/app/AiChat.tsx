@@ -6,6 +6,9 @@ import { Send, Mic, MicOff, RotateCcw, Sparkles, ArrowUpRight } from "lucide-rea
 import { addChatMessage, clearChat } from "@/lib/store";
 import type { StoreState, ChatMessage } from "@/lib/store";
 import { cn } from "@/lib/cn";
+import { haptic } from "@/lib/haptic";
+import { confirm } from "@/components/ui/ConfirmDialog";
+import { toast } from "@/components/ui/Toast";
 
 // Web Speech API の型宣言
 declare global {
@@ -64,6 +67,7 @@ export function AiChat({ state }: { state: StoreState }) {
 
   async function sendMessage(text: string) {
     if (!text.trim() || loading) return;
+    haptic.light();
     setError(null);
 
     const userMsg: ChatMessage = {
@@ -116,6 +120,7 @@ export function AiChat({ state }: { state: StoreState }) {
       const data = (await res.json()) as { ok: boolean; text?: string; error?: string };
 
       if (!data.ok) {
+        haptic.error();
         if (data.error === "api_not_configured") {
           setError("AI チャットは現在準備中です。");
         } else {
@@ -131,7 +136,9 @@ export function AiChat({ state }: { state: StoreState }) {
         timestamp: new Date().toISOString(),
       };
       addChatMessage(aiMsg);
+      haptic.light();
     } catch {
+      haptic.error();
       setError("通信エラーが発生しました。もう一度お試しください。");
     } finally {
       setLoading(false);
@@ -181,7 +188,18 @@ export function AiChat({ state }: { state: StoreState }) {
         {messages.length > 0 && (
           <button
             type="button"
-            onClick={() => clearChat()}
+            onClick={async () => {
+              const ok = await confirm({
+                title: "会話を全て消しますか?",
+                body: "履歴は元に戻せません。",
+                confirmLabel: "消す",
+                danger: true,
+              });
+              if (ok) {
+                clearChat();
+                toast.success("会話を消しました");
+              }
+            }}
             className="flex items-center gap-1 text-[10px] font-medium text-ink-400"
           >
             <RotateCcw className="h-3 w-3" />
@@ -268,7 +286,7 @@ export function AiChat({ state }: { state: StoreState }) {
 
       {/* エラー */}
       {error && (
-        <div className="mb-3 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-[12px] text-red-700">
+        <div className="mb-3 rounded-xl bg-coral-300/15 border border-coral-300/40 px-4 py-3 text-[12px] text-coral-500">
           {error}
           <button
             type="button"
@@ -298,10 +316,14 @@ export function AiChat({ state }: { state: StoreState }) {
           />
           <button
             type="button"
-            onClick={toggleVoice}
+            onClick={() => {
+              haptic.light();
+              toggleVoice();
+            }}
+            aria-label={listening ? "音声入力を止める" : "音声入力を開始"}
             className={cn(
               "absolute right-3 top-1/2 -translate-y-1/2 transition",
-              listening ? "text-red-500" : "text-ink-300",
+              listening ? "text-coral-500" : "text-ink-300",
             )}
           >
             {listening ? (
