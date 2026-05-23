@@ -48,7 +48,9 @@ import { Button } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { toast } from "@/components/ui/Toast";
 import { haptic } from "@/lib/haptic";
-import { Vibrate } from "lucide-react";
+import { sound } from "@/lib/sound";
+import { notify } from "@/lib/notify";
+import { Vibrate, Volume2, BellRing } from "lucide-react";
 
 export function SettingsView() {
   const { state, hydrated } = useStore();
@@ -111,6 +113,8 @@ export function SettingsView() {
         <SectionLabel title="アクセシビリティ" className="mb-2" />
         <SettingsGroup>
           <HapticToggleRow />
+          <SoundToggleRow />
+          <NotifyToggleRow />
         </SettingsGroup>
       </section>
 
@@ -225,30 +229,152 @@ function HapticToggleRow() {
   }
 
   return (
+    <ToggleRow
+      icon={<Vibrate />}
+      tone="info"
+      title="ハプティック（振動）"
+      body="タップ・完了・エラーの瞬間に微振動でフィードバック"
+      checked={enabled}
+      onChange={toggle}
+    />
+  );
+}
+
+// ── サウンド ON/OFF スイッチ ───────────────────
+function SoundToggleRow() {
+  const [enabled, setEnabled] = useState<boolean>(true);
+
+  useEffect(() => {
+    setEnabled(sound.isOn());
+  }, []);
+
+  function toggle() {
+    const next = !enabled;
+    if (next) {
+      sound.enable();
+      sound.success();
+      toast.success("サウンドを有効にしました");
+    } else {
+      sound.disable();
+      toast.success("サウンドを無効にしました");
+    }
+    setEnabled(next);
+  }
+
+  return (
+    <ToggleRow
+      icon={<Volume2 />}
+      tone="success"
+      title="サウンド"
+      body="タイマー完走や成功時に上品な chime"
+      checked={enabled}
+      onChange={toggle}
+    />
+  );
+}
+
+// ── 通知許可 ─────────────────────────────────
+function NotifyToggleRow() {
+  const [state, setState] = useState<"unsupported" | "denied" | "default" | "supported">("default");
+
+  useEffect(() => {
+    setState(notify.support());
+  }, []);
+
+  async function request() {
+    if (state === "supported" || state === "denied" || state === "unsupported") return;
+    haptic.medium();
+    const ok = await notify.requestPermission();
+    if (ok) {
+      notify.send("通知 ON にしました", { body: "タイマー完走でお知らせします", tag: "notify-test" });
+      setState("supported");
+      toast.success("通知を有効にしました");
+    } else {
+      toast.error("通知が拒否されました");
+      setState("denied");
+    }
+  }
+
+  const enabled = state === "supported";
+  const disabled = state === "denied" || state === "unsupported";
+
+  return (
     <li className="flex min-h-[52px] items-center gap-3 px-4 py-3">
-      <IconBadge tone="info" size="sm">
-        <Vibrate />
+      <IconBadge tone="primary" size="sm">
+        <BellRing />
       </IconBadge>
       <div className="flex-1">
-        <div className="text-sm font-medium text-ink-900">ハプティック（振動）</div>
+        <div className="text-sm font-medium text-ink-900">通知</div>
         <div className="text-[10px] text-ink-400">
-          タップ・完了・エラーの瞬間に微振動でフィードバック
+          {state === "supported" && "許可済み — タイマー完走で通知"}
+          {state === "default" && "ブラウザに許可を求めます"}
+          {state === "denied" && "ブラウザで拒否されています（設定から変更）"}
+          {state === "unsupported" && "この環境ではサポートされていません"}
         </div>
       </div>
       <button
         type="button"
         role="switch"
         aria-checked={enabled}
-        onClick={toggle}
+        aria-disabled={disabled}
+        onClick={request}
+        disabled={disabled}
         className={cn(
           "relative h-7 w-12 flex-none rounded-full transition-colors",
           enabled ? "bg-mint-500" : "bg-ink-200",
+          disabled && "opacity-50 cursor-not-allowed",
         )}
       >
         <span
           className={cn(
             "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform",
             enabled ? "translate-x-5" : "translate-x-0.5",
+          )}
+        />
+      </button>
+    </li>
+  );
+}
+
+// ── 共通トグル行 ───────────────────────────────
+function ToggleRow({
+  icon,
+  tone,
+  title,
+  body,
+  checked,
+  onChange,
+}: {
+  icon: React.ReactNode;
+  tone: "primary" | "success" | "warning" | "danger" | "info" | "neutral";
+  title: string;
+  body: string;
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <li className="flex min-h-[52px] items-center gap-3 px-4 py-3">
+      <IconBadge tone={tone} size="sm">
+        {icon}
+      </IconBadge>
+      <div className="flex-1">
+        <div className="text-sm font-medium text-ink-900">{title}</div>
+        <div className="text-[10px] text-ink-400">{body}</div>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={onChange}
+        className={cn(
+          "relative h-7 w-12 flex-none rounded-full transition-colors",
+          checked ? "bg-mint-500" : "bg-ink-200",
+        )}
+      >
+        <span
+          className={cn(
+            "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform",
+            checked ? "translate-x-5" : "translate-x-0.5",
           )}
         />
       </button>

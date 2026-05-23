@@ -20,6 +20,8 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { confirm } from "@/components/ui/ConfirmDialog";
 import { toast } from "@/components/ui/Toast";
 import { haptic } from "@/lib/haptic";
+import { sound } from "@/lib/sound";
+import { notify } from "@/lib/notify";
 
 const DEFAULT_DURATION_SEC = 25 * 60;
 
@@ -64,10 +66,17 @@ export function FocusRun() {
     return () => clearInterval(interval);
   }, [phase]);
 
-  // 残り 0 になったら finished に遷移 + 完走 haptic
+  // 残り 0 になったら finished に遷移 + 完走 haptic + chime + 通知
   useEffect(() => {
     if (phase === "running" && remaining === 0) {
       haptic.success();
+      sound.chime();
+      // バックグラウンドでも見えるよう通知（許可済みなら）
+      notify.send("25分、完走！", {
+        body: "お疲れさま。次はどう振り返る？",
+        tag: "focus-finish",
+        url: "/app",
+      });
       setPhase("finished");
     }
   }, [phase, remaining]);

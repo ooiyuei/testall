@@ -7,11 +7,13 @@
 //
 // 没入モード(/app/focus/run)では両方非表示
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AppHeader } from "./AppHeader";
 import { BottomNav } from "./BottomNav";
 import { OfflineBanner } from "@/components/system/OfflineBanner";
 import { useScrollRestoration } from "@/lib/hooks/useScrollRestoration";
+import { useKeyboardShortcut } from "@/lib/hooks/useKeyboardShortcut";
+import { useCallback } from "react";
 
 function titleFromPath(path: string): { title?: string; back?: string; showAdd?: boolean } {
   if (path === "/app")               return { title: "", showAdd: true };
@@ -32,9 +34,26 @@ function titleFromPath(path: string): { title?: string; back?: string; showAdd?:
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const immersive = pathname.startsWith("/app/focus/run");
   const meta = titleFromPath(pathname);
   useScrollRestoration();
+
+  // PC ユーザー向けショートカット
+  useKeyboardShortcut({
+    key: "k",
+    meta: true,
+    handler: useCallback(() => router.push("/app/search"), [router]),
+  });
+  useKeyboardShortcut({
+    key: "n",
+    meta: true,
+    handler: useCallback(() => router.push("/app/todo?new=1"), [router]),
+  });
+  useKeyboardShortcut({
+    key: "/",
+    handler: useCallback(() => router.push("/app/search"), [router]),
+  });
 
   return (
     <div className="app-shell min-h-screen w-full">
