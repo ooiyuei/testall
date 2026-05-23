@@ -30,6 +30,7 @@ import { TodaySchedule } from "./TodaySchedule";
 import { useCountUp } from "@/lib/hooks/useCountUp";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { toast } from "@/components/ui/Toast";
+import { fmtMinutes } from "@/lib/format";
 
 const MOOD_LABELS: Record<string, string> = {
   "today-off": "休む",
@@ -93,15 +94,7 @@ export function HomeView() {
       : blockStatus.filter((s) => s === "done").length;
   const totalCount = Math.max(todayTarget, doneCount);
   const remainingBlocks = Math.max(0, totalCount - doneCount);
-  // 人間に読みやすい時間表記 (例: 125 → "2時間5分", 25 → "25分")
-  const remainingMin = remainingBlocks * 25;
-  const remainingTimeLabel = (() => {
-    if (remainingMin <= 0) return "0分";
-    if (remainingMin < 60) return `${remainingMin}分`;
-    const h = Math.floor(remainingMin / 60);
-    const m = remainingMin % 60;
-    return m === 0 ? `${h}時間` : `${h}時間${m}分`;
-  })();
+  const remainingTimeLabel = fmtMinutes(remainingBlocks * 25);
 
   // 週間ストリーク
   const streakDays = useMemo(() => {
