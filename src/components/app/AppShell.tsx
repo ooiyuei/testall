@@ -13,7 +13,8 @@ import { BottomNav } from "./BottomNav";
 import { OfflineBanner } from "@/components/system/OfflineBanner";
 import { useScrollRestoration } from "@/lib/hooks/useScrollRestoration";
 import { useKeyboardShortcut } from "@/lib/hooks/useKeyboardShortcut";
-import { useCallback } from "react";
+import { CommandPalette } from "@/components/ui/CommandPalette";
+import { useCallback, useState } from "react";
 
 function titleFromPath(path: string): { title?: string; back?: string; showAdd?: boolean } {
   if (path === "/app")               return { title: "", showAdd: true };
@@ -37,22 +38,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const immersive = pathname.startsWith("/app/focus/run");
   const meta = titleFromPath(pathname);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   useScrollRestoration();
 
   // PC ユーザー向けショートカット
+  // Cmd+K / "/" — グローバル検索パレット
   useKeyboardShortcut({
     key: "k",
     meta: true,
-    handler: useCallback(() => router.push("/app/search"), [router]),
+    handler: useCallback(() => setPaletteOpen(true), []),
   });
+  useKeyboardShortcut({
+    key: "/",
+    handler: useCallback(() => setPaletteOpen(true), []),
+  });
+  // Cmd+N — タスク新規
   useKeyboardShortcut({
     key: "n",
     meta: true,
     handler: useCallback(() => router.push("/app/todo?new=1"), [router]),
-  });
-  useKeyboardShortcut({
-    key: "/",
-    handler: useCallback(() => router.push("/app/search"), [router]),
   });
 
   return (
@@ -71,6 +75,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className={immersive ? "flex-1" : "flex-1 pb-24"}>{children}</div>
         <BottomNav />
       </div>
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   );
 }
