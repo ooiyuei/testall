@@ -94,6 +94,43 @@
 }
 
 /* ─────────────────────────────────────────────
+   Dark Theme — html.dark で発火。Tailwind v4 の @theme で出力された
+   CSS variable を上書きすることで、bg-cream-50 / text-ink-900 等の既存
+   class を全コンポーネント変更なしで dark 化する。
+   ───────────────────────────────────────────── */
+html.dark {
+  --color-cream-50:  #14130f;
+  --color-cream-100: #1c1a17;
+  --color-cream-200: #26241f;
+  --color-cream-300: #36342f;
+
+  /* Ink を反転 (淡色を濃色に、濃色を淡色に) */
+  --color-ink-50:  #14130f;
+  --color-ink-100: #26241f;
+  --color-ink-200: #36342f;
+  --color-ink-300: #6e6a60;
+  --color-ink-400: #a6a195;
+  --color-ink-500: #c5c1b6;
+  --color-ink-600: #ddd9cf;
+  --color-ink-700: #ece9e2;
+  --color-ink-800: #f5f3ec;
+  --color-ink-900: #fbfaf7;
+
+  /* primary / success / warm / sun / coral はそのまま (白文字とのコントラスト確保済) */
+
+  /* shadow を弱める (dark では深い影は不要) */
+  --shadow-card:
+    0 1px 1px rgba(0, 0, 0, 0.20),
+    0 4px 14px -6px rgba(0, 0, 0, 0.30);
+  --shadow-soft:
+    0 1px 1px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.20);
+  --shadow-pop:
+    0 1px 1px rgba(0, 0, 0, 0.20),
+    0 16px 32px -12px rgba(0, 0, 0, 0.50);
+}
+
+/* ─────────────────────────────────────────────
    Base
    ───────────────────────────────────────────── */
 html {

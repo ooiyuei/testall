@@ -5,6 +5,7 @@ import { ServiceWorkerRegister } from "@/components/system/ServiceWorkerRegister
 import { Toaster } from "@/components/ui/Toast";
 import { ConfirmHost } from "@/components/ui/ConfirmDialog";
 import { RouteProgress } from "@/components/system/RouteProgress";
+import { THEME_INIT_SCRIPT } from "@/lib/hooks/useTheme";
 
 const notoJP = Noto_Sans_JP({
   variable: "--font-noto-jp",
@@ -62,7 +63,12 @@ export default function RootLayout({
     <html
       lang="ja"
       className={`${notoJP.variable} ${inter.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        {/* FOUC 防止: React の hydrate より先に html.dark を付ける */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col bg-cream-50 text-ink-900">
         <ServiceWorkerRegister />
         <RouteProgress />

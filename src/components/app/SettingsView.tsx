@@ -50,7 +50,8 @@ import { toast } from "@/components/ui/Toast";
 import { haptic } from "@/lib/haptic";
 import { sound } from "@/lib/sound";
 import { notify } from "@/lib/notify";
-import { Vibrate, Volume2, BellRing } from "lucide-react";
+import { useTheme, type Theme } from "@/lib/hooks/useTheme";
+import { Vibrate, Volume2, BellRing, Sun, Monitor, Palette } from "lucide-react";
 
 export function SettingsView() {
   const { state, hydrated } = useStore();
@@ -105,6 +106,14 @@ export function SettingsView() {
           <SettingsRow icon={Bell} tone="primary" label="毎日のリマインド" value="近日対応" disabled />
           <SettingsRow icon={Clock} tone="neutral" label="ブロック開始通知" value="近日対応" disabled />
           <SettingsRow icon={FileText} tone="neutral" label="週次レポート" value="近日対応" disabled />
+        </SettingsGroup>
+      </section>
+
+      {/* 外観 */}
+      <section>
+        <SectionLabel title="外観" className="mb-2" />
+        <SettingsGroup>
+          <ThemeRow />
         </SettingsGroup>
       </section>
 
@@ -205,6 +214,56 @@ export function SettingsView() {
 // ── セクションタイトル (SectionLabel 委譲) ─────────
 function SectionTitle({ children }: { children: string }) {
   return <SectionLabel title={children} className="mb-2" />;
+}
+
+// ── 外観 (Light / Dark / System) ──────────────
+function ThemeRow() {
+  const { theme, setTheme } = useTheme();
+  const options: { id: Theme; label: string; Icon: typeof Sun }[] = [
+    { id: "light", label: "ライト", Icon: Sun },
+    { id: "dark", label: "ダーク", Icon: Moon },
+    { id: "system", label: "システム", Icon: Monitor },
+  ];
+  return (
+    <li className="flex min-h-[52px] flex-col gap-2 px-4 py-3">
+      <div className="flex items-center gap-3">
+        <IconBadge tone="warning" size="sm">
+          <Palette />
+        </IconBadge>
+        <div className="flex-1">
+          <div className="text-sm font-medium text-ink-900">テーマ</div>
+          <div className="text-[10px] text-ink-400">
+            ダークでは目に優しい配色に切替
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-1 rounded-xl bg-cream-100 p-1">
+        {options.map((o) => {
+          const active = theme === o.id;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => {
+                haptic.light();
+                setTheme(o.id);
+              }}
+              aria-pressed={active}
+              className={cn(
+                "flex h-9 flex-1 items-center justify-center gap-1 rounded-lg text-[11px] font-bold transition active:scale-[0.97]",
+                active
+                  ? "bg-white text-ink-900 shadow-soft"
+                  : "text-ink-500",
+              )}
+            >
+              <o.Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+    </li>
+  );
 }
 
 // ── ハプティック ON/OFF スイッチ ────────────────
