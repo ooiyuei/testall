@@ -309,3 +309,24 @@ textarea {
 .ptr-spin {
   animation: spin-soft 0.8s linear infinite;
 }
+
+/* Material 風 タッチリップル波紋 (useRipple フック用) */
+@keyframes ripple {
+  from { transform: scale(0); opacity: 0.35; }
+  to   { transform: scale(1); opacity: 0; }
+}
+
+/* ─────────────────────────────────────────────
+   prefers-reduced-motion — 全体セーフティネット
+   個別 CSS アニメ・トランジションの取りこぼしを防ぐ
+   ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

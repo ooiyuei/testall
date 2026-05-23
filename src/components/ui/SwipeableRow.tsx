@@ -32,23 +32,37 @@ export function SwipeableRow({
   deleteLabel = "削除",
 }: SwipeableRowProps) {
   const startX = useRef<number>(0);
+  const startY = useRef<number>(0);
   const startOffset = useRef<number>(0);
   const dragging = useRef<boolean>(false);
+  // 縦/横の方向を先頭数px で確定
+  const direction = useRef<"unknown" | "horizontal" | "vertical">("unknown");
   const passedThresholdRef = useRef<boolean>(false);
   const [offset, setOffset] = useState<number>(0); // 負の値 = 左にスワイプ
   const [animating, setAnimating] = useState<boolean>(false);
 
   function onTouchStart(e: React.TouchEvent) {
     startX.current = e.touches[0].clientX;
+    startY.current = e.touches[0].clientY;
     startOffset.current = offset;
     dragging.current = true;
+    direction.current = "unknown";
     setAnimating(false);
     passedThresholdRef.current = false;
   }
 
   function onTouchMove(e: React.TouchEvent) {
     if (!dragging.current) return;
+    if (direction.current === "vertical") return; // 縦スクロールなら譲る
     const dx = e.touches[0].clientX - startX.current;
+    const dy = e.touches[0].clientY - startY.current;
+
+    // 8px 移動で方向確定
+    if (direction.current === "unknown" && Math.hypot(dx, dy) > 8) {
+      direction.current = Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
+      if (direction.current === "vertical") return;
+    }
+
     const next = Math.min(0, startOffset.current + dx);
     setOffset(next);
     if (next <= -dismissThreshold && !passedThresholdRef.current) {

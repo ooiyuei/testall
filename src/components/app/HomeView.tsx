@@ -7,7 +7,7 @@
 // 下: 今週 / 今日の気分 2列、その下にプロダクトカード群
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
   ChevronRight,
@@ -56,7 +56,14 @@ export function HomeView() {
   const latest = state.tests[0];
   const blocks: Block[] = latest?.diagnosis.todayBlocks ?? [];
 
-  const now = new Date();
+  // 「今」は state で持ち、1 分ごとに更新する。
+  // こうすると深夜 0 時跨ぎの曜日変化やストリーク更新が画面を閉じなくても反映される。
+  // 全 useMemo の依存に正しく入れられる。
+  const [now, setNow] = useState<Date>(() => new Date());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const todayIdx = weekdayIndex(now);
 
@@ -68,7 +75,9 @@ export function HomeView() {
   });
   const nextIdx = blockStatus.findIndex((s, i) => {
     if (s !== "next") return false;
-    const end = parseHHmm(blocks[i].endTime);
+    const endStr = blocks[i]?.endTime;
+    if (!endStr || typeof endStr !== "string") return true; // endTime 欠落時は先頭の未完了を now に
+    const end = parseHHmm(endStr);
     return end < 0 || end >= nowMin;
   });
   if (nextIdx >= 0) blockStatus[nextIdx] = "now";
@@ -139,8 +148,7 @@ export function HomeView() {
       }
     }
     return counts;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.blockLogs, todayIdx]);
+  }, [state.blockLogs, todayIdx, now]);
 
   const weeklyTotal = weeklyCounts.reduce((a, b) => a + b, 0);
   const weeklyMax = Math.max(...weeklyCounts, 1);
@@ -152,8 +160,7 @@ export function HomeView() {
         day: "numeric",
         weekday: "narrow",
       }).format(now),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [now],
   );
 
   const greeting = (() => {

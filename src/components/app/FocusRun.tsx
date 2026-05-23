@@ -22,6 +22,7 @@ import { toast } from "@/components/ui/Toast";
 import { haptic } from "@/lib/haptic";
 import { sound } from "@/lib/sound";
 import { notify } from "@/lib/notify";
+import { focusSession } from "@/lib/focus-session";
 
 const DEFAULT_DURATION_SEC = 25 * 60;
 
@@ -105,10 +106,25 @@ export function FocusRun() {
     };
   }, [phase]);
 
+  // 表示用ラベルと戻り先 (FocusRun を離れてもミニバーで識別/復帰可能にする)
+  const sessionLabel = block ? `${block.subject} / ${block.topic}` : "自由学習";
+  const sessionReturnHref =
+    testId !== null && blockIdx !== null
+      ? `/app/focus/run?testId=${testId}&block=${blockIdx}`
+      : "/app/focus/run";
+
   function start() {
     haptic.medium();
     startedAtRef.current = Date.now();
     setPhase("running");
+    focusSession.write({
+      startedAt: startedAtRef.current,
+      totalSec: DEFAULT_DURATION_SEC,
+      phase: "running",
+      elapsedAtPause: 0,
+      label: sessionLabel,
+      returnHref: sessionReturnHref,
+    });
   }
 
   function pause() {
@@ -118,12 +134,28 @@ export function FocusRun() {
       startedAtRef.current = null;
     }
     setPhase("paused");
+    focusSession.write({
+      startedAt: Date.now(),
+      totalSec: DEFAULT_DURATION_SEC,
+      phase: "paused",
+      elapsedAtPause: Math.floor(totalElapsedRef.current / 1000),
+      label: sessionLabel,
+      returnHref: sessionReturnHref,
+    });
   }
 
   function resume() {
     haptic.medium();
     startedAtRef.current = Date.now();
     setPhase("running");
+    focusSession.write({
+      startedAt: startedAtRef.current,
+      totalSec: DEFAULT_DURATION_SEC,
+      phase: "running",
+      elapsedAtPause: Math.floor(totalElapsedRef.current / 1000),
+      label: sessionLabel,
+      returnHref: sessionReturnHref,
+    });
   }
 
   function reset() {
@@ -132,6 +164,7 @@ export function FocusRun() {
     totalElapsedRef.current = 0;
     setRemaining(DEFAULT_DURATION_SEC);
     setPhase("idle");
+    focusSession.clear();
   }
 
   function finishEarly() {
@@ -141,7 +174,13 @@ export function FocusRun() {
       startedAtRef.current = null;
     }
     setPhase("finished");
+    focusSession.clear();
   }
+
+  // 完了/離脱 でセッションを必ずクリーンアップ
+  useEffect(() => {
+    if (phase === "finished") focusSession.clear();
+  }, [phase]);
 
   function elapsedSec(): number {
     const live =

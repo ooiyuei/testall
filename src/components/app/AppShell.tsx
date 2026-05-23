@@ -14,6 +14,7 @@ import { OfflineBanner } from "@/components/system/OfflineBanner";
 import { useScrollRestoration } from "@/lib/hooks/useScrollRestoration";
 import { useKeyboardShortcut } from "@/lib/hooks/useKeyboardShortcut";
 import { CommandPalette } from "@/components/ui/CommandPalette";
+import { MiniFocusBar } from "@/components/system/MiniFocusBar";
 import { useCallback, useState } from "react";
 
 function titleFromPath(path: string): { title?: string; back?: string; showAdd?: boolean } {
@@ -73,6 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </>
         ) : null}
         <div className={immersive ? "flex-1" : "flex-1 pb-24"}>{children}</div>
+        <MiniFocusBar />
         <BottomNav />
       </div>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />

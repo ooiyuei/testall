@@ -3,7 +3,7 @@
 // ヘッダーの "+" ボタンから開く追加メニュー (ボトムシート)
 // Apple HIG: 角丸 16px / 影なし背景 / 高コントラスト不要のホワイト
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   BookOpen,
@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/cn";
 import { haptic } from "@/lib/haptic";
 import { BookshelfAddModal } from "@/components/me/BookshelfAddModal";
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 
 type Props = {
   open: boolean;
@@ -71,6 +72,23 @@ const ITEMS: FabItem[] = [
 export function AddFabSheet({ open, onClose }: Props) {
   const router = useRouter();
   const [bookshelfOpen, setBookshelfOpen] = useState(false);
+  const trapRef = useFocusTrap<HTMLDivElement>(open);
+
+  // Esc 閉じ + body scroll lock
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open, onClose]);
+
   if (!open && !bookshelfOpen) return null;
 
   function go(item: FabItem) {
@@ -97,7 +115,13 @@ export function AddFabSheet({ open, onClose }: Props) {
         aria-label="閉じる"
         onClick={onClose}
       />
-      <div className="sheet-in relative z-10 mx-auto w-full max-w-[480px] rounded-t-3xl bg-cream-50 px-5 pt-3 pb-[max(env(safe-area-inset-bottom),1.25rem)] shadow-[0_-12px_40px_-8px_rgba(20,19,15,0.20)]">
+      <div
+        ref={trapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="追加する"
+        className="sheet-in relative z-10 mx-auto w-full max-w-[480px] rounded-t-3xl bg-cream-50 px-5 pt-3 pb-[max(env(safe-area-inset-bottom),1.25rem)] shadow-[0_-12px_40px_-8px_rgba(20,19,15,0.20)]"
+      >
         <div className="mx-auto h-1 w-9 rounded-full bg-ink-200" />
         <div className="mt-3 flex items-center justify-between">
           <h2 className="text-[15px] font-bold text-ink-900">追加する</h2>

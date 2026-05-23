@@ -4,6 +4,7 @@
 // 完了タスクは7日経過で自動クリーン
 
 import { useEffect, useMemo, useState } from "react";
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 import { useSearchParams } from "next/navigation";
 import {
   Check,
@@ -489,6 +490,21 @@ function TaskModal({ onClose }: { onClose: () => void }) {
   const [subjectArea, setSubjectArea] = useState<string>("");
   const [due, setDue] = useState<DueBucket>("today");
   const [customDate, setCustomDate] = useState("");
+  const trapRef = useFocusTrap<HTMLFormElement>(true);
+
+  // Esc で閉じる + body スクロールロック
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
 
   function handle(e: React.FormEvent) {
     e.preventDefault();
@@ -517,7 +533,11 @@ function TaskModal({ onClose }: { onClose: () => void }) {
         onClick={onClose}
       />
       <form
+        ref={trapRef}
         onSubmit={handle}
+        role="dialog"
+        aria-modal="true"
+        aria-label="タスクを追加"
         className="sheet-in relative z-10 mx-auto w-full max-w-[480px] rounded-t-3xl bg-cream-50 px-5 pt-3 pb-[max(env(safe-area-inset-bottom),1.25rem)] shadow-pop"
       >
         <div className="mx-auto h-1 w-10 rounded-full bg-ink-200" />

@@ -295,12 +295,14 @@ function migrateFromSession(): void {
   }
 }
 
-export function readStore(): StoreState {
-  if (!isBrowser()) return EMPTY_STATE;
-  migrateFromSession();
+// メモリキャッシュ — 連続操作 (タスクチェックの連打、スワイプ削除) で
+// localStorage の JSON.parse を毎回走らせないため。
+// write 時に invalidate して次回 readStore で再読み込み。
+let memoryCache: StoreState | null = null;
+
+function parseRaw(raw: string | null): StoreState {
+  if (!raw) return EMPTY_STATE;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return EMPTY_STATE;
     const parsed = JSON.parse(raw) as StoreState;
     return {
       profile: parsed.profile,
@@ -328,11 +330,36 @@ export function readStore(): StoreState {
   }
 }
 
+export function readStore(): StoreState {
+  if (!isBrowser()) return EMPTY_STATE;
+  if (memoryCache) return memoryCache;
+  migrateFromSession();
+  try {
+    memoryCache = parseRaw(localStorage.getItem(STORAGE_KEY));
+    return memoryCache;
+  } catch {
+    return EMPTY_STATE;
+  }
+}
+
 export function writeStore(next: StoreState): StoreState {
   if (!isBrowser()) return next;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  memoryCache = next; // メモリを先に更新、次回 readStore は即返す
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // QuotaExceeded 等の場合はメモリだけ更新して fail-soft
+  }
   window.dispatchEvent(new Event("testall:store"));
   return next;
+}
+
+/**
+ * 別タブ や Supabase sync で localStorage が外部から書き換わった時に
+ * メモリキャッシュを破棄して再読み込みさせる。
+ */
+export function invalidateStoreCache(): void {
+  memoryCache = null;
 }
 
 export function setProfile(profile: StoredProfile): StoreState {

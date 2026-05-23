@@ -31,7 +31,11 @@ export function PullToRefresh({
   children,
 }: PullToRefreshProps) {
   const startY = useRef<number>(0);
+  const startX = useRef<number>(0);
   const offset = useRef<number>(0);
+  // 先頭数 px で「縦か横か」を確定し、横スワイプ中は PullToRefresh を完全に無視
+  // (SwipeableRow との競合を防ぐ)
+  const direction = useRef<"unknown" | "vertical" | "horizontal">("unknown");
   const [pull, setPull] = useState<number>(0);
   const [phase, setPhase] = useState<Phase>("idle");
   const passedThresholdRef = useRef<boolean>(false);
@@ -40,14 +44,25 @@ export function PullToRefresh({
     if (window.scrollY > 0) return;
     if (phase === "refreshing") return;
     startY.current = e.touches[0].clientY;
+    startX.current = e.touches[0].clientX;
     offset.current = 0;
+    direction.current = "unknown";
     passedThresholdRef.current = false;
   }
 
   function onTouchMove(e: React.TouchEvent) {
     if (phase === "refreshing") return;
     if (window.scrollY > 0) return;
+    if (direction.current === "horizontal") return;
     const dy = e.touches[0].clientY - startY.current;
+    const dx = e.touches[0].clientX - startX.current;
+
+    // 方向確定 (8px 移動した時点で判定)
+    if (direction.current === "unknown" && Math.hypot(dx, dy) > 8) {
+      direction.current = Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
+      if (direction.current === "horizontal") return; // 横ならスワイプ系コンポーネントに委譲
+    }
+
     if (dy <= 0) {
       if (pull > 0) setPull(0);
       if (phase !== "idle") setPhase("idle");
@@ -92,6 +107,7 @@ export function PullToRefresh({
 
   return (
     <div
+      className="relative"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
