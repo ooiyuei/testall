@@ -108,12 +108,12 @@ export function SwipeableRow({
 
   return (
     <div className="relative overflow-hidden rounded-2xl">
-      {/* 背後の削除ボタン */}
+      {/* 背後の削除ボタン (最小高さ 44px 確保 = HIG準拠) */}
       <button
         type="button"
         onClick={handleDeleteClick}
         aria-label={deleteLabel}
-        className="absolute inset-y-0 right-0 flex items-center justify-center bg-coral-500 px-5 text-[12px] font-bold text-white"
+        className="absolute inset-y-0 right-0 flex min-h-[44px] items-center justify-center bg-coral-500 px-5 text-[12px] font-bold text-white"
         style={{ width: actionWidth }}
       >
         <Trash2 className="mr-1 h-4 w-4" strokeWidth={2.2} />

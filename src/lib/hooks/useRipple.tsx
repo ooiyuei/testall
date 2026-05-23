@@ -29,23 +29,30 @@ export function useRipple(): {
 } {
   const [list, setList] = useState<Ripple[]>([]);
 
-  const onPointerDown = useCallback((e: React.PointerEvent<HTMLElement>) => {
-    if (typeof window !== "undefined") {
-      try {
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      } catch {}
-    }
-    const target = e.currentTarget;
-    const rect = target.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const size = Math.max(rect.width, rect.height) * 1.6;
-    const id = ++nextId;
-    setList((prev) => [...prev, { id, x, y, size }]);
-    window.setTimeout(() => {
-      setList((prev) => prev.filter((r) => r.id !== id));
-    }, 600);
-  }, []);
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLElement>): void => {
+      if (typeof window !== "undefined") {
+        try {
+          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            return;
+          }
+        } catch {
+          // matchMedia 非対応環境 — そのまま続行
+        }
+      }
+      const target = e.currentTarget;
+      const rect = target.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const size = Math.max(rect.width, rect.height) * 1.6;
+      const id = ++nextId;
+      setList((prev) => [...prev, { id, x, y, size }]);
+      window.setTimeout(() => {
+        setList((prev) => prev.filter((r) => r.id !== id));
+      }, 600);
+    },
+    [],
+  );
 
   const ripples = list.map((r) => (
     <span

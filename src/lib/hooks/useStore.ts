@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { readStore, setAuthUserId, writeStore, type StoreState } from "../store";
+import { useEffect, useRef, useState } from "react";
+import { invalidateStoreCache, readStore, setAuthUserId, writeStore, type StoreState } from "../store";
 import { loadAll } from "../store-remote";
 import { useAuth } from "./useAuth";
 
@@ -13,31 +13,39 @@ export function useStore(): { state: StoreState; hydrated: boolean } {
   const { user } = useAuth();
 
   // sessionStorage 即時反映 (zero-latency UI)
+  // 別タブからの storage event はキャッシュを破棄してから読む。
   useEffect(() => {
-    const sync = () => setState(readStore());
-    sync();
+    const syncLocal = () => setState(readStore());
+    const syncFromOtherTab = () => {
+      invalidateStoreCache();
+      setState(readStore());
+    };
+    syncLocal();
     setHydrated(true);
-    window.addEventListener("testall:store", sync);
-    window.addEventListener("storage", sync);
+    window.addEventListener("testall:store", syncLocal);
+    window.addEventListener("storage", syncFromOtherTab);
     return () => {
-      window.removeEventListener("testall:store", sync);
-      window.removeEventListener("storage", sync);
+      window.removeEventListener("testall:store", syncLocal);
+      window.removeEventListener("storage", syncFromOtherTab);
     };
   }, []);
 
-  // 認証ユーザーが取れたら Supabase から loadAll して sessionStorage を上書き
+  // 認証ユーザー切り替え時の race condition 防止:
+  //  - 最新の userId を ref で持ち、loadAll 完了時点で「呼び出し時の userId と一致するか」検証
+  //  - 不一致なら writeStore せず捨てる
+  const currentUserIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!user) {
-      setAuthUserId(null);
-      return;
-    }
-    setAuthUserId(user.id);
+    const userId = user?.id ?? null;
+    currentUserIdRef.current = userId;
+    setAuthUserId(userId);
+    if (!userId) return;
+
     let cancelled = false;
     (async () => {
       try {
-        const remote = await loadAll(user.id);
-        if (cancelled) return;
-        // リモートのデータがあれば優先、無いフィールドはローカルを維持
+        const remote = await loadAll(userId);
+        // race ガード: userId が変わってたら捨てる (ログアウト→他ユーザーログインの順序保証)
+        if (cancelled || currentUserIdRef.current !== userId) return;
         const current = readStore();
         writeStore({
           ...current,
@@ -55,9 +63,13 @@ export function useStore(): { state: StoreState; hydrated: boolean } {
             ? remote.weeklyExecutions : current.weeklyExecutions,
         });
       } catch (e) {
-        console.error("[useStore] remote loadAll error:", e);
+        if (!cancelled && process.env.NODE_ENV !== "production") {
+          // 開発時のみ表示。本番では Sentry が拾う。
+          console.error("[useStore] remote loadAll error:", e);
+        }
       }
     })();
+
     return () => {
       cancelled = true;
     };
