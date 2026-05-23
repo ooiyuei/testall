@@ -7,6 +7,8 @@ import { cn } from "@/lib/cn";
 import { nanoid } from "nanoid";
 import { bucketMid, readStore, setProfile, writeStore } from "@/lib/store";
 import { buildDemoSeed, isDemoSeeded, markDemoSeeded } from "@/lib/demo-seed";
+import { haptic } from "@/lib/haptic";
+import { toast } from "@/components/ui/Toast";
 import type {
   DeviationBucket,
   StoredProfile,
@@ -225,7 +227,11 @@ export function OnboardingFlow() {
   }
 
   function next() {
-    if (!canProceed()) return;
+    if (!canProceed()) {
+      haptic.error();
+      return;
+    }
+    haptic.light();
     if (stepIdx < STEPS.length - 1) {
       setStepIdx(stepIdx + 1);
     } else {
@@ -234,10 +240,15 @@ export function OnboardingFlow() {
   }
 
   function prev() {
-    if (stepIdx > 0) setStepIdx(stepIdx - 1);
+    if (stepIdx > 0) {
+      haptic.light();
+      setStepIdx(stepIdx - 1);
+    }
   }
 
   function finish() {
+    haptic.success();
+    toast.success("セットアップ完了！", "今日のプランを作ります");
     const existing = readStore().profile;
     const profile: StoredProfile = {
       ...existing,
@@ -297,6 +308,7 @@ export function OnboardingFlow() {
   }
 
   function handleSkip() {
+    haptic.light();
     const existing = readStore().profile;
     setProfile({
       ...(existing ?? {}),

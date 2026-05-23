@@ -16,11 +16,15 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
-import { deleteTest } from "@/lib/store";
+import { deleteTest, saveTest } from "@/lib/store";
 import type { MissCause, Weakness } from "@/lib/types";
 import { DetailSkeleton } from "@/components/ui/Skeleton";
 import { IconBadge } from "@/components/ui/IconBadge";
 import { toast } from "@/components/ui/Toast";
+import { confirm } from "@/components/ui/ConfirmDialog";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
+import { haptic } from "@/lib/haptic";
+import { formatRelativeShort } from "@/lib/date-safe";
 
 const CAUSE_LABEL: Record<MissCause, string> = {
   knowledge: "知識不足",
@@ -57,7 +61,6 @@ const SEVERITY_BADGE_TONE: Record<Weakness["severity"], string> = {
 export function TestDetail({ id }: { id: string }) {
   const router = useRouter();
   const { state, hydrated } = useStore();
-  const [deleteStep, setDeleteStep] = useState<0 | 1>(0);
 
   if (!hydrated) {
     return <DetailSkeleton />;
@@ -91,18 +94,31 @@ export function TestDetail({ id }: { id: string }) {
   const pct = Math.round((input.score / input.fullScore) * 100);
   const completed = state.blockLogs.filter((b) => b.testId === id).length;
 
-  function handleDelete() {
-    if (deleteStep === 0) {
-      setDeleteStep(1);
-      toast.info("もう一度タップで削除します", "この操作は取り消せません");
-      return;
-    }
+  async function handleDelete() {
+    const ok = await confirm({
+      title: "この診断を削除しますか?",
+      body: `「${test?.input.testName ?? "テスト"}」を完全に削除します。`,
+      confirmLabel: "削除",
+      danger: true,
+    });
+    if (!ok || !test) return;
+    const snapshot = test;
     deleteTest(id);
-    toast.error("診断を削除しました");
+    toast.success("削除しました", {
+      action: {
+        label: "取り消し",
+        onClick: () => saveTest(snapshot),
+      },
+    });
     router.push("/app/test");
   }
 
   return (
+    <PullToRefresh
+      onRefresh={() => {
+        toast.success("最新の状態に更新しました");
+      }}
+    >
     <div className="px-5 pb-10 pt-3 space-y-5">
       {/* Score header */}
       <ScoreHeader
@@ -196,17 +212,13 @@ export function TestDetail({ id }: { id: string }) {
       <button
         type="button"
         onClick={handleDelete}
-        className={cn(
-          "flex h-10 w-full items-center justify-center gap-1.5 rounded-2xl border text-xs font-bold transition-colors",
-          deleteStep === 1
-            ? "border-coral-300 bg-coral-50 text-coral-600"
-            : "border-cream-200 text-ink-400 hover:bg-cream-100",
-        )}
+        className="flex h-10 w-full items-center justify-center gap-1.5 rounded-2xl border border-cream-200 text-xs font-bold text-ink-400 transition-colors hover:bg-cream-100"
       >
         <Trash2 strokeWidth={1.75} className="h-3.5 w-3.5" />
-        {deleteStep === 1 ? "もう一度タップで削除" : "この診断を削除"}
+        この診断を削除
       </button>
     </div>
+    </PullToRefresh>
   );
 }
 
@@ -248,7 +260,8 @@ function ScoreHeader({
             month: "long",
             day: "numeric",
           })}{" "}
-          · {subject}
+          · <span className="text-ink-500">{formatRelativeShort(createdAt)}</span>
+          {" · "}{subject}
         </div>
         <h2
           className="mt-1 text-[24px] font-extrabold leading-[1.15] tracking-[-0.025em] text-ink-900"
