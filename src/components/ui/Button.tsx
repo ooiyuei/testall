@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { useRipple } from "@/lib/hooks/useRipple";
 
 // LP 用 (sky/mint/soft/ghost = pill 形) + アプリ用 (action/destructive = rounded-xl) を両立
 // LP: href 渡せば <Link>、それ以外は <button>
@@ -68,6 +69,8 @@ type Common = {
   iconBefore?: React.ReactNode;
   iconAfter?: React.ReactNode;
   fullWidth?: boolean;
+  /** Material 風タッチリップル波紋を有効化 (default: false) */
+  ripple?: boolean;
   children: React.ReactNode;
 };
 
@@ -85,17 +88,21 @@ export function Button({
   iconBefore,
   iconAfter,
   fullWidth,
+  ripple,
   children,
   ...rest
 }: Props) {
   const v = VARIANT_STYLE[variant];
   // action / destructive はタイトな size (rounded-xl 系)、それ以外は LP 風 (pill)
   const isAction = variant === "action" || variant === "destructive";
+  const { ripples, onPointerDown } = useRipple();
   const cls = cn(
     v.base,
     v.cls,
     isAction ? SIZES_TIGHT[size] : SIZES[size],
     fullWidth && "w-full",
+    // ripple を出すために overflow-hidden + relative を強制
+    ripple && "relative overflow-hidden",
     className,
   );
 
@@ -108,13 +115,19 @@ export function Button({
       ) : null}
       <span className="truncate">{children}</span>
       {!loading && iconAfter ? <span className="flex-none">{iconAfter}</span> : null}
+      {ripple ? ripples : null}
     </>
   );
 
   if ("href" in rest && rest.href) {
     const { href, ...anchorProps } = rest as { href: string } & React.AnchorHTMLAttributes<HTMLAnchorElement>;
     return (
-      <Link href={href} className={cls} {...anchorProps}>
+      <Link
+        href={href}
+        className={cls}
+        onPointerDown={ripple ? onPointerDown : undefined}
+        {...anchorProps}
+      >
         {inner}
       </Link>
     );
@@ -122,6 +135,7 @@ export function Button({
   return (
     <button
       className={cls}
+      onPointerDown={ripple ? onPointerDown : undefined}
       disabled={loading || (rest as React.ButtonHTMLAttributes<HTMLButtonElement>).disabled}
       {...(rest as React.ButtonHTMLAttributes<HTMLButtonElement>)}
     >
