@@ -98,6 +98,19 @@
    CSS variable を上書きすることで、bg-cream-50 / text-ink-900 等の既存
    class を全コンポーネント変更なしで dark 化する。
    ───────────────────────────────────────────── */
+
+/* bg-white / text-white / border-white を dark で上書き。Tailwind の white は
+   CSS variable じゃない固定値なので、ここで override しないと白カードが浮く。
+   FocusRun FinishView / CommandPalette / Modal / Sheet 系のサーフェス対策。 */
+html.dark .bg-white {
+  background-color: var(--color-cream-100) !important;
+}
+html.dark .border-white {
+  border-color: var(--color-cream-200) !important;
+}
+/* 純白の text-white は意図的に明色 (ボタン白文字、dark hero 上) を残す。
+   bg-ink-900 内側の text-white はそのまま動く。 */
+
 html.dark {
   --color-cream-50:  #14130f;
   --color-cream-100: #1c1a17;
