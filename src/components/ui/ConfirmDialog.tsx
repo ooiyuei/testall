@@ -142,6 +142,10 @@ function emit() {
 
 export function confirm(opts: ConfirmOptions): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
+    // 同時呼び出しで先の Promise が leak しないよう、先行は cancel 扱いで解決
+    if (current) {
+      current.resolve(false);
+    }
     current = { ...opts, resolve };
     emit();
   });

@@ -144,13 +144,13 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     }).slice(0, 40);
   }, [debouncedQuery, state.tests, state.tasks, state.profile]);
 
-  // グループ化
+  // グループ化 + 描画時に flat 内インデックスを事前計算 (O(n) なくす)
   const grouped = useMemo(() => {
-    const map = new Map<string, CommandItem[]>();
-    for (const it of items) {
+    const map = new Map<string, Array<CommandItem & { _idx: number }>>();
+    items.forEach((it, idx) => {
       if (!map.has(it.group)) map.set(it.group, []);
-      map.get(it.group)!.push(it);
-    }
+      map.get(it.group)!.push({ ...it, _idx: idx });
+    });
     return Array.from(map.entries());
   }, [items]);
 
@@ -230,7 +230,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                 </div>
                 <ul>
                   {list.map((it) => {
-                    const idxInFlat = flat.indexOf(it);
+                    const idxInFlat = it._idx;
                     const isActive = idxInFlat === activeIdx;
                     const Icon = it.icon;
                     return (

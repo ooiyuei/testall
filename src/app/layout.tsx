@@ -47,7 +47,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#fbfaf7",
+  // ダークモード時は黒、ライト時はクリームを meta[theme-color] に。
+  // THEME_INIT_SCRIPT は手動切替時のみ書き換え、初回 OS 追従はこちらで処理。
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbfaf7" },
+    { media: "(prefers-color-scheme: dark)", color: "#14130f" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,

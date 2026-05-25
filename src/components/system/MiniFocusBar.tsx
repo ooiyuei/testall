@@ -41,19 +41,23 @@ export function MiniFocusBar() {
     return () => window.clearInterval(id);
   }, [session?.phase, session?.startedAt]);
 
+  // 残り 0 まで到達したセッションは副作用としてクリア (レンダー外)
+  useEffect(() => {
+    if (!session) return;
+    if (session.phase !== "running") return;
+    if (remainingSec(session) > 0) return;
+    focusSession.clear();
+  }, [session, tick]);
+
   // FocusRun 自体では出さない
   if (pathname.startsWith("/app/focus/run")) return null;
   if (!session) return null;
 
   const remaining = remainingSec(session);
+  if (remaining <= 0 && session.phase === "running") return null;
+
   const ratio = 1 - remaining / session.totalSec;
   const isRunning = session.phase === "running";
-
-  // 残り 0 のまま放置されてたらクリア
-  if (remaining <= 0 && session.phase === "running") {
-    focusSession.clear();
-    return null;
-  }
 
   return (
     <Link
