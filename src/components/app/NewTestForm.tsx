@@ -976,7 +976,7 @@ function ManualForm({ prefill }: { prefill?: VisionResult | null }) {
         body: JSON.stringify(input),
       });
       if (!res.ok) throw new Error("diagnose_failed");
-      const data = (await res.json()) as { ok: boolean; diagnosis: Diagnosis };
+      const data = (await res.json()) as { ok: boolean; diagnosis: Diagnosis; degraded?: boolean };
       if (!data.ok) throw new Error("diagnose_failed");
 
       const id = nanoid(10);
@@ -993,7 +993,11 @@ function ManualForm({ prefill }: { prefill?: VisionResult | null }) {
       if (updated) setProfile(updated);
 
       haptic.success();
-      toast.success("AI 診断が完了しました");
+      if (data.degraded) {
+        toast.success("簡易診断で保存しました (AI 一時不調)");
+      } else {
+        toast.success("AI 診断が完了しました");
+      }
       router.push(`/app/test/${id}`);
     } catch {
       haptic.error();
