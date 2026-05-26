@@ -163,7 +163,11 @@ export function AuthScreen({ mode }: { mode: Mode }) {
 
         {/* Body */}
         {emailSent ? (
-          <div className="mt-8 rounded-2xl border border-mint-200 bg-mint-50 p-5 text-center">
+          <div
+            role="status"
+            aria-live="polite"
+            className="mt-8 rounded-2xl border border-mint-200 bg-mint-50 p-5 text-center"
+          >
             <Mail className="mx-auto h-8 w-8 text-mint-600" strokeWidth={2.2} />
             <h2 className="mt-3 text-[15px] font-bold text-ink-900">
               メールを送りました
@@ -313,7 +317,11 @@ export function AuthScreen({ mode }: { mode: Mode }) {
         )}
 
         {errorMsg ? (
-          <p className="mt-4 rounded-xl bg-coral-300/10 px-4 py-3 text-[12px] font-bold text-coral-500">
+          <p
+            role="alert"
+            aria-live="assertive"
+            className="mt-4 rounded-xl bg-coral-300/10 px-4 py-3 text-[12px] font-bold text-coral-500"
+          >
             {errorMsg}
           </p>
         ) : null}
