@@ -40,6 +40,7 @@ import {
 } from "@/lib/store";
 import type { DueBucket, StoredTask, TaskTag } from "@/lib/store";
 import { SUBJECT_AREAS } from "@/lib/master/subjects/hierarchy";
+import { TodaySuggestion } from "./TodaySuggestion";
 
 const TAG_LABEL: Record<TaskTag, string> = {
   homework: "課題",
@@ -277,6 +278,11 @@ export function TodoView() {
             ]}
           />
         </div>
+      ) : null}
+
+      {/* AI おすすめタスク — 今日タブかつフィルタ未使用時のみ */}
+      {tab === "today" && !query.trim() && priorityFilter === "all" && tagFilter === "all" ? (
+        <TodaySuggestion state={state} />
       ) : null}
 
       {/* タスクリスト — PDF mock 通り日付グルーピング */}
