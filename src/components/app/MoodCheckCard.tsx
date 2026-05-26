@@ -1,9 +1,6 @@
 "use client";
 
-// 今日の準備カード — クリーン版 (現在時刻起点)
-// 帰宅時間は設定で事前登録した値を使い、画面では「気分」のみ選ぶ。
-// 現在時刻〜就寝時間で物理上限を算出する。
-// 「この設定で進める」後は TodaySchedule を表示する。
+// 今日の準備カード — 気分チェック + 帰宅時間で今日のブロック数を決定
 
 import { useMemo, useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";

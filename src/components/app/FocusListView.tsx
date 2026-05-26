@@ -26,6 +26,23 @@ function weekdayIndex(d: Date): number {
   return (d.getDay() + 6) % 7;
 }
 
+function buildWeekStats(blockLogs: { completedAt: string }[], now: Date) {
+  const dayIdx = weekdayIndex(now); // 0=Mon
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - dayIdx);
+  weekStart.setHours(0, 0, 0, 0);
+
+  const weekBlocks = blockLogs.filter(
+    (l) => new Date(l.completedAt) >= weekStart,
+  );
+  const totalBlocks = weekBlocks.length;
+  const totalMin = totalBlocks * 25;
+  const studiedDays = new Set(
+    weekBlocks.map((l) => l.completedAt.slice(0, 10)),
+  ).size;
+  return { totalBlocks, totalMin, studiedDays };
+}
+
 export function FocusListView() {
   const { state, hydrated } = useStore();
 
@@ -51,6 +68,8 @@ export function FocusListView() {
 
   let nowIdx = status.findIndex((s) => s === "next");
   if (nowIdx < 0) nowIdx = -1;
+
+  const weekStats = buildWeekStats(state.blockLogs, now);
 
   return (
     <div className="px-5 pb-8 pt-2">
@@ -166,6 +185,39 @@ export function FocusListView() {
           </Link>
         </section>
       )}
+
+      {/* Weekly focus stats */}
+      <section className="mt-6">
+        <h2 className="text-[11px] font-medium text-ink-500">今週の集中</h2>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          <div className="rounded-2xl bg-white border border-ink-100/80 px-3 py-3 text-center">
+            <div className="text-[20px] font-extrabold tabular-nums text-ink-900 tracking-[-0.02em]">
+              {weekStats.totalBlocks}
+            </div>
+            <div className="mt-0.5 text-[10px] font-medium text-ink-400">
+              ブロック
+            </div>
+          </div>
+          <div className="rounded-2xl bg-white border border-ink-100/80 px-3 py-3 text-center">
+            <div className="text-[20px] font-extrabold tabular-nums text-ink-900 tracking-[-0.02em]">
+              {weekStats.totalMin >= 60
+                ? `${Math.floor(weekStats.totalMin / 60)}h${weekStats.totalMin % 60 > 0 ? `${weekStats.totalMin % 60}m` : ""}`
+                : `${weekStats.totalMin}m`}
+            </div>
+            <div className="mt-0.5 text-[10px] font-medium text-ink-400">
+              学習時間
+            </div>
+          </div>
+          <div className="rounded-2xl bg-white border border-ink-100/80 px-3 py-3 text-center">
+            <div className="text-[20px] font-extrabold tabular-nums text-ink-900 tracking-[-0.02em]">
+              {weekStats.studiedDays}
+            </div>
+            <div className="mt-0.5 text-[10px] font-medium text-ink-400">
+              学習日
+            </div>
+          </div>
+        </div>
+      </section>
 
     </div>
   );
