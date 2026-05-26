@@ -1,12 +1,9 @@
 "use client";
 
-// AI コーチ専用フルスクリーン画面 — PDF「AI コーチ」スタイル
+// AI コーチ — フルスクリーン LINE風チャット
 // 上: < AIコーチ ●オンライン
 // 中: メッセージスレッド (assistant=cream bubble / user=black bubble)
 // 下: クイックアクション 🍃ルートを見る ⏰25分はじめる 😊今日はやめる + 入力欄
-//
-// 既存 AiChat (HomeView 埋め込み版) と同じ /api/chat ロジックを使うが、
-// レイアウトはフルスクリーン専用。
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -28,8 +25,7 @@ const QUICK_ACTIONS = [
   { emoji: "😊", label: "今日はやめる", action: "today-off" as const },
 ];
 
-// Web Speech API のミニマル型 (TS lib.dom が SpeechRecognition を持つ場合と
-// 持たない場合の両方に対応するため、AiChat.tsx ローカル宣言と被らない名前で持つ)
+// Web Speech API のミニマル型 (TS lib.dom が SpeechRecognition を未定義の環境に対応)
 type LocalSpeechRecognition = {
   lang: string;
   continuous: boolean;
