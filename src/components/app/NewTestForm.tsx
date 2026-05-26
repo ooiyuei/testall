@@ -294,6 +294,8 @@ function PhotoMode({
     vision_failed: "解析に失敗しました。もう一度試してください。",
     network_error: "通信エラーが発生しました。接続を確認してください。",
     image_required: "画像が選択されていません。",
+    image_too_large: "画像サイズが大きすぎます (上限 4MB)。圧縮するか別の画像をお試しください。",
+    unsupported_image_type: "対応形式は JPEG/PNG/GIF/WebP のみです。",
   };
 
   return (

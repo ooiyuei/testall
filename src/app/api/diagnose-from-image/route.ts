@@ -276,6 +276,9 @@ export async function POST(req: Request) {
   let base64Data: string;
   let mediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp";
 
+  // Anthropic Vision の上限 ~5MB (base64 後)。生バイト換算は ~3.75MB。
+  const MAX_RAW_BYTES = 4 * 1024 * 1024;
+
   const contentType = req.headers.get("content-type") ?? "";
 
   if (contentType.includes("multipart/form-data")) {
@@ -285,6 +288,12 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { ok: false, error: "image_required" },
         { status: 400 },
+      );
+    }
+    if (file.size > MAX_RAW_BYTES) {
+      return NextResponse.json(
+        { ok: false, error: "image_too_large" },
+        { status: 413 },
       );
     }
     const mimeType = file.type as typeof mediaType;
@@ -299,14 +308,28 @@ export async function POST(req: Request) {
     base64Data = Buffer.from(buffer).toString("base64");
   } else {
     const body = (await req.json()) as { image?: string; mediaType?: string };
-    if (!body.image) {
+    if (!body.image || typeof body.image !== "string") {
       return NextResponse.json(
         { ok: false, error: "image_required" },
         { status: 400 },
       );
     }
+    // base64 サイズ * 0.75 ≒ 生バイト
+    if (body.image.length * 0.75 > MAX_RAW_BYTES) {
+      return NextResponse.json(
+        { ok: false, error: "image_too_large" },
+        { status: 413 },
+      );
+    }
     base64Data = body.image;
-    mediaType = (body.mediaType as typeof mediaType) ?? "image/jpeg";
+    const requestedMedia = body.mediaType ?? "image/jpeg";
+    if (!["image/jpeg", "image/png", "image/gif", "image/webp"].includes(requestedMedia)) {
+      return NextResponse.json(
+        { ok: false, error: "unsupported_image_type" },
+        { status: 400 },
+      );
+    }
+    mediaType = requestedMedia as typeof mediaType;
   }
 
   try {

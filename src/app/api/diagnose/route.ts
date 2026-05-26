@@ -15,7 +15,13 @@ export async function POST(req: Request) {
       !input ||
       typeof input !== "object" ||
       !Array.isArray(input.units) ||
-      typeof input.subject !== "string"
+      typeof input.subject !== "string" ||
+      input.subject.length === 0 ||
+      typeof input.score !== "number" ||
+      typeof input.fullScore !== "number" ||
+      input.fullScore <= 0 ||
+      input.score < 0 ||
+      input.score > input.fullScore
     ) {
       return NextResponse.json(
         { ok: false, error: "invalid_input" },
