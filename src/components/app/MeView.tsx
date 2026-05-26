@@ -630,29 +630,45 @@ function BookshelfSection({
             </span>
           ) : null}
         </div>
-        <button
-          type="button"
-          onClick={onAdd}
-          className="flex h-8 items-center gap-1 rounded-full px-2.5 text-[12px] font-bold text-sky-500 hover:bg-sky-50 active:scale-[0.97] transition"
-        >
-          <Plus className="h-3.5 w-3.5" strokeWidth={2.4} />
-          追加
-        </button>
-      </div>
-      {allBookshelf.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-ink-200 bg-cream-50/60 p-8 text-center">
-          <BookMarked className="mx-auto h-8 w-8 text-ink-300 mb-2" />
-          <p className="text-[12px] text-ink-500">
-            参考書・教科書がまだありません
-          </p>
+        <div className="flex items-center gap-1">
+          <Link
+            href="/app/search"
+            className="flex h-8 items-center gap-1 rounded-full px-2.5 text-[12px] font-bold text-ink-500 hover:bg-cream-100 active:scale-[0.97] transition"
+          >
+            探す
+          </Link>
           <button
             type="button"
             onClick={onAdd}
-            className="mt-3 flex h-9 items-center gap-1.5 rounded-full bg-sky-500 px-4 text-[12px] font-bold text-white mx-auto hover:bg-sky-600 transition"
+            className="flex h-8 items-center gap-1 rounded-full px-2.5 text-[12px] font-bold text-sky-500 hover:bg-sky-50 active:scale-[0.97] transition"
           >
-            <Plus className="h-3.5 w-3.5" />
-            最初の一冊を追加
+            <Plus className="h-3.5 w-3.5" strokeWidth={2.4} />
+            追加
           </button>
+        </div>
+      </div>
+      {allBookshelf.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-ink-200 bg-cream-50/60 p-5 text-center">
+          <BookMarked className="mx-auto h-7 w-7 text-ink-300 mb-2" />
+          <p className="text-[12px] text-ink-500">
+            参考書・教科書がまだありません
+          </p>
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <Link
+              href="/app/search"
+              className="flex h-9 items-center gap-1.5 rounded-full border border-ink-200 bg-white px-4 text-[12px] font-bold text-ink-700 transition active:scale-[0.97]"
+            >
+              参考書を探す
+            </Link>
+            <button
+              type="button"
+              onClick={onAdd}
+              className="flex h-9 items-center gap-1.5 rounded-full bg-sky-500 px-4 text-[12px] font-bold text-white hover:bg-sky-600 transition active:scale-[0.97]"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              追加
+            </button>
+          </div>
         </div>
       ) : (
         <ul className="-mx-5 flex gap-2.5 overflow-x-auto px-5 pb-2 no-scrollbar snap-x snap-mandatory">

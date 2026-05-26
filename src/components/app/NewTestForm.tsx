@@ -88,6 +88,22 @@ export function NewTestForm() {
   );
 }
 
+function StepProgress({ step, total }: { step: number; total: number }) {
+  return (
+    <div className="flex gap-1.5">
+      {Array.from({ length: total }, (_, i) => (
+        <div
+          key={i}
+          className={cn(
+            "h-1 flex-1 rounded-full transition-all",
+            i < step ? "bg-ink-900" : "bg-cream-200",
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
 function ModeSelect({
   onPickManual,
   onPickPhoto,
@@ -97,8 +113,8 @@ function ModeSelect({
 }) {
   return (
     <div className="px-5 pb-8 pt-2">
-      {/* Step label */}
-      <div className="text-[11px] font-medium text-ink-400">STEP 1 / 3</div>
+      {/* Progress bar */}
+      <StepProgress step={1} total={3} />
       <h1
         className="mt-1.5 text-[28px] font-extrabold leading-[1.15] tracking-[-0.025em] text-ink-900"
         style={{ fontFamily: "var(--font-display)" }}

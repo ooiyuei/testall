@@ -159,13 +159,7 @@ export function SearchView() {
         ? unifiedSearch({ query: debouncedQuery, kinds: ["university"], limit: 30 }).universities.map((h) => h.entity)
         : UNIVERSITIES);
       const filtered = applyUniFilter(all, uniArea, uniRegion, uniTier);
-      if (!debouncedQuery.trim()) {
-        const popular = POPULAR_UNI_IDS
-          .map((id) => filtered.find((u) => u.id === id))
-          .filter((u): u is University => !!u);
-        return [...popular, ...filtered.filter((u) => !POPULAR_UNI_IDS.includes(u.id))].slice(0, 30);
-      }
-      return filtered;
+      return filtered.slice(0, 40);
     }
     if (tab === "textbook") {
       const allBooks = getAllTextbooks();
@@ -181,20 +175,29 @@ export function SearchView() {
           })
         : allBooks);
       const filtered = applyBookFilter(all, bookArea, bookLevel, bookPublisher);
-      const sorted = [...filtered].sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999));
-      if (!debouncedQuery.trim()) {
-        const popular = POPULAR_BOOK_IDS
-          .map((id) => sorted.find((b) => b.id === id))
-          .filter((b): b is Textbook => !!b);
-        return [...popular, ...sorted.filter((b) => !POPULAR_BOOK_IDS.includes(b.id))].slice(0, 50);
-      }
-      return sorted.slice(0, 50);
+      return [...filtered].sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999)).slice(0, 50);
     }
     const all = remoteRes?.mockExams ?? (debouncedQuery.trim()
       ? unifiedSearch({ query: debouncedQuery, kinds: ["mock-exam"], limit: 30 }).mockExams.map((h) => h.entity)
       : MOCK_EXAMS);
     return applyExamFilter(all, examProvider, examGrade).slice(0, 30);
   }, [tab, debouncedQuery, remoteRes, uniArea, uniRegion, uniTier, bookArea, bookLevel, bookPublisher, examProvider, examGrade]);
+
+  // 人気ピック（横スクロール用、クエリなし時のみ）
+  const popularForTab = useMemo(() => {
+    if (tab === "university") {
+      return POPULAR_UNI_IDS
+        .map((id) => UNIVERSITIES.find((u) => u.id === id))
+        .filter((u): u is University => !!u);
+    }
+    if (tab === "textbook") {
+      const allBooks = getAllTextbooks();
+      return POPULAR_BOOK_IDS
+        .map((id) => allBooks.find((b) => b.id === id))
+        .filter((b): b is Textbook => !!b);
+    }
+    return [];
+  }, [tab]);
 
   const filterCount =
     tab === "university"
@@ -347,11 +350,27 @@ export function SearchView() {
         </div>
       ) : null}
 
-      {/* 人気見出し */}
-      {!debouncedQuery.trim() ? (
-        <SectionLabel
-          title={`人気の${tabLabel}`}
-        />
+      {/* 人気ピック横スクロール — クエリなし時のみ */}
+      {!debouncedQuery.trim() && popularForTab.length > 0 ? (
+        <section className="space-y-2">
+          <SectionLabel title="人気ピック" />
+          <ul className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 no-scrollbar snap-x">
+            {popularForTab.map((item) =>
+              tab === "university" ? (
+                <li key={(item as University).id} className="flex-none snap-start">
+                  <PopularUniCard u={item as University} />
+                </li>
+              ) : tab === "textbook" ? (
+                <li key={(item as Textbook).id} className="flex-none snap-start">
+                  <PopularBookCard b={item as Textbook} />
+                </li>
+              ) : null
+            )}
+          </ul>
+          <SectionLabel title={`すべての${tabLabel}`} />
+        </section>
+      ) : !debouncedQuery.trim() ? (
+        <SectionLabel title={`すべての${tabLabel}`} />
       ) : null}
 
       {/* 結果リスト */}
@@ -771,5 +790,64 @@ function MockExamCard({ m }: { m: MockExam }) {
         <ChevronRight className="h-4 w-4 flex-none text-ink-300" strokeWidth={1.75} />
       </button>
     </li>
+  );
+}
+
+// ───── 人気ピック・コンパクトカード（横スクロール用） ─────
+const TIER_STRIPE: Record<string, string> = {
+  S: "bg-coral-500",
+  A: "bg-coral-400",
+  B: "bg-sky-500",
+  C: "bg-mint-500",
+  D: "bg-cream-300",
+};
+
+const SUBJECT_STRIPE: Record<string, string> = {
+  japanese: "bg-coral-400",
+  math: "bg-sky-500",
+  english: "bg-mint-500",
+  science: "bg-sun-400",
+  social: "bg-ink-400",
+};
+
+function PopularUniCard({ u }: { u: University }) {
+  const devs = u.faculties
+    .map((f) => f.deviation)
+    .filter((d): d is number => typeof d === "number");
+  const maxDev = devs.length ? Math.max(...devs) : null;
+
+  return (
+    <button
+      type="button"
+      className="flex h-[116px] w-[104px] flex-col rounded-[18px] border border-cream-200 bg-white p-3 text-left shadow-soft transition active:scale-[0.97]"
+    >
+      <div className={cn("h-[3px] w-full rounded-full", TIER_STRIPE[u.tier ?? "D"] ?? "bg-cream-300")} />
+      <div className="mt-2 flex-1 text-[12px] font-extrabold leading-snug tracking-[-0.02em] text-ink-900 line-clamp-3">
+        {u.name}
+      </div>
+      <div className="mt-1 text-[10px] text-ink-400 truncate">{u.region}</div>
+      {maxDev !== null ? (
+        <div className="mt-0.5 text-[11px] font-bold tabular-nums text-ink-500">
+          {maxDev}
+        </div>
+      ) : null}
+    </button>
+  );
+}
+
+function PopularBookCard({ b }: { b: Textbook }) {
+  return (
+    <button
+      type="button"
+      className="flex h-[116px] w-[104px] flex-col rounded-[18px] border border-cream-200 bg-white p-3 text-left shadow-soft transition active:scale-[0.97]"
+    >
+      <div className={cn("h-[3px] w-full rounded-full", SUBJECT_STRIPE[b.subject] ?? "bg-cream-300")} />
+      <div className="mt-2 flex-1 text-[11px] font-extrabold leading-snug tracking-[-0.02em] text-ink-900 line-clamp-4">
+        {b.name}
+      </div>
+      <span className={cn("mt-1 self-start rounded-full px-1.5 py-0.5 text-[9px] font-bold", LEVEL_TONE[b.level])}>
+        {LEVEL_LABEL[b.level]}
+      </span>
+    </button>
   );
 }
