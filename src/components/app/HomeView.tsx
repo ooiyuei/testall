@@ -401,7 +401,7 @@ function TimelineRow({
           </div>
         ) : (
           <div className="rounded-2xl border-[1.5px] border-sky-500 bg-white p-4 shadow-[0_0_0_4px_rgba(0,113,227,0.08),0_8px_24px_-10px_rgba(0,113,227,0.18)]">
-            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-sky-600">
+            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold text-sky-600">
               <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
               NEXT UP
             </div>

@@ -72,7 +72,7 @@ export function WeeklyGoalCard() {
   if (!plan) {
     return (
       <section className="rounded-2xl border border-ink-100/80 bg-white p-5">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+        <div className="text-[10px] font-semibold text-ink-400">
           今週の目標
         </div>
         <p className="mt-2 text-[12px] leading-[1.7] text-ink-500">
@@ -93,7 +93,7 @@ export function WeeklyGoalCard() {
   return (
     <section className="rounded-2xl border border-ink-100/80 bg-white p-5">
       <div className="flex items-baseline justify-between">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+        <div className="text-[10px] font-semibold text-ink-400">
           今週の目標
         </div>
         <span className="text-[10px] font-medium text-ink-500">

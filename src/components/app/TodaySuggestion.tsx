@@ -118,7 +118,7 @@ export function TodaySuggestion({ state }: { state: StoreState }) {
     <section className="mt-4 mb-1">
       <div className="flex items-center gap-1.5 mb-2">
         <Lightbulb className="h-3.5 w-3.5 text-amber-500" strokeWidth={2.5} />
-        <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-ink-400">
+        <h2 className="text-[11px] font-bold text-ink-400">
           今日のおすすめ
         </h2>
       </div>

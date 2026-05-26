@@ -375,7 +375,7 @@ function GoalCard({ block }: { block: Block | null }) {
       {block ? (
         <>
           <div
-            className="text-[10px] font-bold uppercase tracking-widest"
+            className="text-[10px] font-bold"
             style={{ color: "rgba(255,255,255,0.45)" }}
           >
             {block.subject} / {block.topic}
@@ -394,7 +394,7 @@ function GoalCard({ block }: { block: Block | null }) {
             />
             <div>
               <div
-                className="text-[10px] font-bold uppercase tracking-widest"
+                className="text-[10px] font-bold"
                 style={{ color: "#7bb8ff" }}
               >
                 完了条件
@@ -411,7 +411,7 @@ function GoalCard({ block }: { block: Block | null }) {
             自由学習モード
           </div>
           <span
-            className="rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+            className="rounded-full px-2.5 py-0.5 text-[10px] font-bold"
             style={{
               background: "rgba(255,255,255,0.12)",
               color: "rgba(255,255,255,0.6)",
@@ -449,7 +449,7 @@ function TimerLabel({
 
   return (
     <div
-      className="mt-2 text-[11px] font-bold uppercase tracking-widest"
+      className="mt-2 text-[11px] font-bold"
       style={{ color: "rgba(255,255,255,0.35)" }}
     >
       {labelText}
@@ -727,7 +727,7 @@ function FinishView({
         </h2>
         {block ? (
           <div className="mt-4 rounded-xl bg-sky-50 p-3">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-sky-600">
+            <div className="text-[10px] font-bold text-sky-600">
               振り返り：完了条件
             </div>
             <p className="mt-1 text-sm font-bold text-ink-900 leading-relaxed">
@@ -774,7 +774,7 @@ function FinishView({
 
       {/* メモ */}
       <section className="rounded-2xl bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.10)]">
-        <div className="text-[10px] font-bold uppercase tracking-widest text-ink-400">
+        <div className="text-[10px] font-bold text-ink-400">
           Memo（任意）
         </div>
         <textarea

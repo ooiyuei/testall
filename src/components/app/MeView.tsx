@@ -1052,7 +1052,7 @@ function SectionTitle({
       <h2
         className={
           isAscii
-            ? "text-[10px] font-bold uppercase tracking-widest text-ink-500"
+            ? "text-[10px] font-bold text-ink-500"
             : "text-[11px] font-medium text-ink-500"
         }
       >

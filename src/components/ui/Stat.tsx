@@ -38,7 +38,7 @@ export function Stat({
     <div className={cn("", className)}>
       <div
         className={cn(
-          "font-medium uppercase tracking-[0.14em] text-ink-400",
+          "font-medium tracking-[0.14em] text-ink-400",
           sz.label,
         )}
       >

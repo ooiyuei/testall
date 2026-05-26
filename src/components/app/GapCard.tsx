@@ -61,7 +61,7 @@ export function GapCard() {
   return (
     <section className="rounded-2xl border border-ink-100/80 bg-white p-5">
       <div className="flex items-baseline justify-between">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+        <div className="text-[10px] font-semibold text-ink-400">
           志望校ギャップ
         </div>
         <span className="text-[10px] font-medium text-ink-500">

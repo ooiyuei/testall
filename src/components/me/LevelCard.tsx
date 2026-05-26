@@ -137,7 +137,7 @@ export function LevelCard({
       {showGoal ? (
         <div className="border-t border-white/8 bg-white/5 px-5 py-4">
           <div className="flex items-baseline justify-between gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-[0.04em] text-white/55">
+            <span className="text-[10px] font-bold tracking-[0.04em] text-white/55">
               ゴール · {HORIZON_LABEL[horizon]}
             </span>
             {availableHorizons.length > 1 ? (

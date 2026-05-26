@@ -41,7 +41,7 @@ export function LevelMountain({
     <div className="overflow-hidden rounded-2xl border border-ink-100/80 bg-gradient-to-b from-sky-50/60 to-cream-50 p-4">
       <div className="flex items-baseline justify-between">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+          <div className="text-[10px] font-semibold text-ink-400">
             LV
           </div>
           <div className="mt-0.5 flex items-baseline gap-1">

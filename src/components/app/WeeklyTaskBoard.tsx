@@ -282,7 +282,7 @@ export function WeeklyTaskBoard({ tasks }: Props) {
   return (
     <>
       <section>
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400 mb-2">
+        <div className="text-[10px] font-semibold text-ink-400 mb-2">
           今週のタスクボード
         </div>
 

@@ -68,7 +68,7 @@ export function TaskDetailModal({ task, onClose }: Props) {
         <div className="mt-4 space-y-4">
           {/* タイトル */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+            <label className="text-[10px] font-semibold text-ink-400">
               タイトル
             </label>
             <input
@@ -80,7 +80,7 @@ export function TaskDetailModal({ task, onClose }: Props) {
 
           {/* 教科 */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+            <label className="text-[10px] font-semibold text-ink-400">
               教科
             </label>
             <ul className="mt-1.5 flex flex-wrap gap-1">
@@ -119,7 +119,7 @@ export function TaskDetailModal({ task, onClose }: Props) {
 
           {/* タグ */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+            <label className="text-[10px] font-semibold text-ink-400">
               タグ
             </label>
             <ul className="mt-1.5 flex flex-wrap gap-1">
@@ -144,7 +144,7 @@ export function TaskDetailModal({ task, onClose }: Props) {
 
           {/* ブロック数 */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+            <label className="text-[10px] font-semibold text-ink-400">
               ブロック数（1ブロック = 25分）
             </label>
             <div className="mt-1.5 flex items-center rounded-xl border border-ink-100/80 bg-white px-1">
@@ -173,7 +173,7 @@ export function TaskDetailModal({ task, onClose }: Props) {
 
           {/* 期日 */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+            <label className="text-[10px] font-semibold text-ink-400">
               期日（任意）
             </label>
             <input

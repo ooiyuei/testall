@@ -407,7 +407,7 @@ function PhotoMode({
           />
           <div className="rounded-2xl border border-cream-200 bg-white p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-ink-500">解析結果</span>
+              <span className="text-[10px] font-bold text-ink-500">解析結果</span>
               {photoState.detail?.confidence ? (
                 <ConfidenceBadge level={photoState.detail.confidence.overall} />
               ) : (
@@ -1522,7 +1522,7 @@ function UnitStep({
                   {/* 出題形式 (科目別、複数選択ではなく1つだけ) */}
                   {formats.length > 0 ? (
                     <div className="mt-2">
-                      <div className="text-[9px] font-bold uppercase tracking-widest text-ink-500">
+                      <div className="text-[9px] font-bold text-ink-500">
                         出題形式
                       </div>
                       <div className="mt-1 flex flex-wrap gap-1">
@@ -1744,7 +1744,7 @@ function Card({ children }: { children: React.ReactNode }) {
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-[10px] font-bold uppercase tracking-widest text-ink-500">
+    <div className="text-[10px] font-bold text-ink-500">
       {children}
     </div>
   );

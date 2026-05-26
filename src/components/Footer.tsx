@@ -53,7 +53,7 @@ export function Footer() {
           {/* Link columns */}
           {COLUMNS.map((c) => (
             <div key={c.h}>
-              <div className="text-[11px] font-bold uppercase tracking-[0.04em] text-white/45">
+              <div className="text-[11px] font-bold tracking-[0.04em] text-white/45">
                 {c.h}
               </div>
               <ul className="mt-3.5 flex flex-col gap-2.5">

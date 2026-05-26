@@ -346,7 +346,7 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
         {/* リスト */}
         <div className="mt-3 flex-1 overflow-y-auto px-5 pb-4">
           {noQuery ? (
-            <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+            <div className="mb-2 text-[10px] font-semibold text-ink-400">
               人気の{KIND_LABEL[kind]}
             </div>
           ) : (
@@ -680,7 +680,7 @@ function Chips({
 }) {
   return (
     <div>
-      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+      <div className="text-[10px] font-semibold text-ink-400">
         {label}
       </div>
       <div className="mt-1.5 flex flex-wrap gap-1">
@@ -734,7 +734,7 @@ function ManualInput({
 
   return (
     <form onSubmit={handle} className="mt-3 rounded-xl border border-ink-100/80 bg-white p-3">
-      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+      <div className="text-[10px] font-semibold text-ink-400">
         手入力
       </div>
       <input

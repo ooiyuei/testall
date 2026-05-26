@@ -478,7 +478,7 @@ export function TodaySchedule({
       {/* ヘッダー */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-ink-100/60">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-400">
+          <div className="text-[10px] font-semibold text-ink-400">
             タイムライン
           </div>
           <div className="mt-0.5 flex items-center gap-3">

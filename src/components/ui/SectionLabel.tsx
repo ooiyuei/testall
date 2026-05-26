@@ -1,5 +1,5 @@
 // 共通セクションラベル — Apple HIG 風
-// 日本語タイトルは uppercase / wide tracking を外す (英字専用効果のため)
+// 日本語タイトルは / wide tracking を外す (英字専用効果のため)
 // 英字専用ラベル (例: "Today") は asUppercase=true で従来通り
 
 import { cn } from "@/lib/cn";
@@ -8,7 +8,7 @@ type SectionLabelProps = {
   title: string;
   right?: React.ReactNode;
   size?: "sm" | "md";
-  /** 強制的に英字 uppercase / wide tracking スタイルにする (英字 "Today" などのみ true) */
+  /** 強制的に英字 / wide tracking スタイルにする (英字 "Today" などのみ true) */
   asUppercase?: boolean;
   className?: string;
 };
@@ -25,7 +25,7 @@ export function SectionLabel({
   asUppercase,
   className,
 }: SectionLabelProps) {
-  // 明示的指定が無ければ、英字のみのタイトルだけ uppercase スタイル
+  // 明示的指定が無ければ、英字のみのタイトルだけ スタイル
   const upper = asUppercase ?? isAsciiOnly(title);
   const baseSize = size === "sm" ? "text-[10px]" : "text-[11px]";
 
@@ -35,7 +35,7 @@ export function SectionLabel({
         className={cn(
           baseSize,
           upper
-            ? "font-bold uppercase tracking-[0.18em] text-ink-400"
+            ? "font-bold text-ink-400"
             : "font-medium text-ink-500",
         )}
       >

@@ -181,7 +181,7 @@ export function PlanView() {
     <div className="px-5 pb-8 pt-2 space-y-5">
       {/* 大タイトル — PDF mock _ _ _ _ _ _.png */}
       <header>
-        <div className="text-[11px] font-medium tracking-wider text-ink-400">計画</div>
+        <div className="text-[11px] font-medium text-ink-400">計画</div>
         <h1
           className="mt-1 text-[28px] font-extrabold leading-[1.1] tracking-[-0.025em] text-ink-900"
           style={{ fontFamily: "var(--font-display)" }}
@@ -195,7 +195,7 @@ export function PlanView() {
         <section className="rounded-[18px] bg-ink-900 p-4 text-white shadow-[0_8px_28px_-10px_rgba(20,19,15,0.35)]">
           <div className="flex items-center gap-1.5">
             <Target className="h-3 w-3 text-sky-500" strokeWidth={2.2} />
-            <span className="text-[10px] font-bold uppercase tracking-[0.04em] text-white/60">
+            <span className="text-[10px] font-bold tracking-[0.04em] text-white/60">
               今週の目標
             </span>
           </div>

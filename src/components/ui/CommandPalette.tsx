@@ -225,7 +225,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           ) : (
             grouped.map(([group, list]) => (
               <div key={group} className="mb-1.5">
-                <div className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-ink-400">
+                <div className="px-3 pb-1 pt-2 text-[10px] font-bold text-ink-400">
                   {group}
                 </div>
                 <ul>
