@@ -41,6 +41,7 @@ import {
 import type { DueBucket, StoredTask, TaskTag } from "@/lib/store";
 import { SUBJECT_AREAS } from "@/lib/master/subjects/hierarchy";
 import { TodaySuggestion } from "./TodaySuggestion";
+import { TaskDetailModal } from "./TaskDetailModal";
 
 const TAG_LABEL: Record<TaskTag, string> = {
   homework: "課題",
@@ -430,62 +431,73 @@ function TaskRow({ task, todayISO }: { task: StoredTask; todayISO: string }) {
   const done = task.status === "done";
   const area = SUBJECT_AREAS.find((a) => a.id === task.subjectArea);
   const overdue = !done && task.dueDate ? task.dueDate < todayISO : false;
+  const [editOpen, setEditOpen] = useState(false);
   return (
-    <article className="flex items-start gap-3 rounded-2xl border border-ink-100/80 bg-white px-4 py-3 transition active:bg-cream-50">
-      <button
-        type="button"
-        onClick={() => {
-          toggleTaskStatus(task.id);
-          if (!done) {
-            haptic.success();
-            toast.success("完了！", {
-              action: {
-                label: "取り消し",
-                onClick: () => toggleTaskStatus(task.id),
-              },
-            });
-          } else {
-            haptic.light();
-          }
-        }}
-        aria-label={done ? "未完了に戻す" : "完了にする"}
-        className={cn(
-          "mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full transition",
-          done
-            ? "bg-mint-500 text-white"
-            : "border-2 border-ink-200 bg-white hover:border-sky-400",
-        )}
+    <>
+      <article
+        className="flex items-start gap-3 rounded-2xl border border-ink-100/80 bg-white px-4 py-3 transition active:bg-cream-50"
+        onClick={() => setEditOpen(true)}
       >
-        {done ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
-      </button>
-      <div className="min-w-0 flex-1">
-        <div
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleTaskStatus(task.id);
+            if (!done) {
+              haptic.success();
+              toast.success("完了！", {
+                action: {
+                  label: "取り消し",
+                  onClick: () => toggleTaskStatus(task.id),
+                },
+              });
+            } else {
+              haptic.light();
+            }
+          }}
+          aria-label={done ? "未完了に戻す" : "完了にする"}
           className={cn(
-            "text-[14px] font-bold leading-snug",
-            done ? "text-ink-400 line-through" : "text-ink-900",
+            "mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full transition",
+            done
+              ? "bg-mint-500 text-white"
+              : "border-2 border-ink-200 bg-white hover:border-sky-400",
           )}
         >
-          {task.title}
+          {done ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
+        </button>
+        <div className="min-w-0 flex-1">
+          <div
+            className={cn(
+              "text-[14px] font-bold leading-snug",
+              done ? "text-ink-400 line-through" : "text-ink-900",
+            )}
+          >
+            {task.title}
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-ink-500">
+            {area ? (
+              <span className="inline-flex items-center gap-1">
+                <span className={cn("h-1.5 w-1.5 rounded-full", area.tone || "bg-ink-300")} />
+                {area.shortName}
+              </span>
+            ) : null}
+            <span className="text-ink-300">·</span>
+            <span className="tabular-nums">{task.blocks * 25}分</span>
+            <span className="text-ink-300">·</span>
+            <span>{TAG_LABEL[task.tag]}</span>
+            {overdue ? (
+              <span className="ml-1 rounded-full bg-coral-500/10 px-1.5 py-0.5 text-[10px] font-bold text-coral-500">
+                遅延
+              </span>
+            ) : null}
+          </div>
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-ink-500">
-          {area ? (
-            <span className="inline-flex items-center gap-1">
-              <span className={cn("h-1.5 w-1.5 rounded-full", area.tone || "bg-ink-300")} />
-              {area.shortName}
-            </span>
-          ) : null}
-          <span className="text-ink-300">·</span>
-          <span className="tabular-nums">{task.blocks * 25}分</span>
-          <span className="text-ink-300">·</span>
-          <span>{TAG_LABEL[task.tag]}</span>
-          {overdue ? (
-            <span className="ml-1 rounded-full bg-coral-500/10 px-1.5 py-0.5 text-[10px] font-bold text-coral-500">
-              遅延
-            </span>
-          ) : null}
-        </div>
-      </div>
-    </article>
+        <ChevronRight className="mt-1 h-4 w-4 flex-none text-ink-300" />
+      </article>
+      {editOpen ? (
+        <TaskDetailModal task={task} onClose={() => setEditOpen(false)} />
+      ) : null}
+    </>
   );
 }
 
