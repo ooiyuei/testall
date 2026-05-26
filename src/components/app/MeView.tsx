@@ -900,6 +900,12 @@ function DeviationTrendSection() {
         <p className="mt-3 text-[11px] leading-[1.6] text-ink-500">
           テスト結果を登録すると、ここに偏差値の推移が表示されます。
         </p>
+        <Link
+          href="/app/test/new"
+          className="mt-3 inline-flex h-9 items-center gap-1 rounded-full bg-ink-900 px-4 text-[11px] font-bold text-white transition active:scale-[0.97]"
+        >
+          テストを追加する
+        </Link>
       </Card>
     );
   }
@@ -939,9 +945,13 @@ function DeviationTrendSection() {
     <Card as="section" padding="lg">
       <div className="flex items-baseline justify-between">
         <SectionLabel title="偏差値の推移" />
-        <span className="text-[10px] font-medium text-ink-500 tabular-nums">
-          {tests.length} 回
-        </span>
+        <Link
+          href="/app/test"
+          className="flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold text-sky-500 transition hover:bg-sky-50 active:scale-[0.97]"
+        >
+          {tests.length}件
+          <ChevronRight className="h-3 w-3" strokeWidth={2.2} />
+        </Link>
       </div>
       <div className="mt-4">
         <DeviationTrend series={series} />

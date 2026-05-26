@@ -221,8 +221,16 @@ export function HomeView() {
       {/* Headline — "今日のプラン" + 残ブロック・残時間 */}
       {totalCount > 0 ? (
         <section className="mt-6">
-          <div className="text-[11px] font-medium tracking-wide text-ink-400">
-            今日のプラン
+          <div className="flex items-center justify-between">
+            <div className="text-[11px] font-medium tracking-wide text-ink-400">
+              今日のプラン
+            </div>
+            <Link
+              href="/app/test"
+              className="text-[11px] font-bold text-sky-500 transition active:opacity-70"
+            >
+              テスト一覧
+            </Link>
           </div>
           <h1
             className="mt-1 text-[28px] font-extrabold leading-[1.2] tracking-[-0.025em] text-ink-900"

@@ -42,7 +42,7 @@ const rows = [
 
 export function Compare() {
   return (
-    <section className="relative border-b border-ink-100 bg-white py-24 sm:py-28">
+    <section id="compare" className="relative border-b border-ink-100 bg-white py-24 sm:py-28">
       <div className="mx-auto max-w-[1000px] px-6">
         {/* Heading */}
         <div className="inline-flex items-center gap-2 text-[12px] font-semibold tracking-[0.04em] text-ink-500">

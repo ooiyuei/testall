@@ -161,7 +161,7 @@ export function SettingsView() {
           <SettingsLink href="/app/help" icon={HelpCircle} tone="primary" label="ヘルプ・使い方" />
           <SettingsLink href="/terms" icon={FileText} tone="neutral" label="利用規約" />
           <SettingsLink href="/privacy" icon={Shield} tone="neutral" label="プライバシーポリシー" />
-          <SettingsRow icon={Lock} tone="neutral" label="バージョン" value="0.4.0" disabled />
+          <SettingsRow icon={Lock} tone="neutral" label="バージョン" value="0.5.0" disabled />
         </SettingsGroup>
       </section>
 
