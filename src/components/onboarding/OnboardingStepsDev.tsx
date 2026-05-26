@@ -102,7 +102,7 @@ export function TargetDevStep({
         title="目指す偏差値は？"
         subtitle="志望校の合格ラインに必要な偏差値を選んでください。"
       />
-      <BucketPicker label="目標偏差値" value={value} onChange={onChange} tone="peach" />
+      <BucketPicker label="目標偏差値" value={value} onChange={onChange} tone="coral" />
       <p className="mt-4 text-[12px] text-ink-400">
         偏差値は模試ごとに意味が変わるため、内部では帯の中央値で扱います。
       </p>

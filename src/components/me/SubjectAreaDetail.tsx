@@ -28,7 +28,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 const PROFICIENCY_LEVELS = [
   { id: "good", label: "得意",         tone: "bg-mint-100 text-mint-600" },
   { id: "fair", label: "ちょい得意",   tone: "bg-sky-100 text-sky-700" },
-  { id: "weak", label: "苦手",         tone: "bg-peach-100 text-peach-500" },
+  { id: "weak", label: "苦手",         tone: "bg-coral-100 text-coral-500" },
   { id: "bad",  label: "マジで苦手",   tone: "bg-coral-300 text-white" },
 ] as const;
 type Proficiency = (typeof PROFICIENCY_LEVELS)[number]["id"];
@@ -252,7 +252,7 @@ export function SubjectAreaDetail({ area }: { area: SubjectAreaId }) {
             {abilityCounts.map(([name, count]) => (
               <li
                 key={name}
-                className="flex items-center gap-1 rounded-full bg-peach-50 px-2 py-1 text-[10px] font-bold text-peach-500"
+                className="flex items-center gap-1 rounded-full bg-coral-50 px-2 py-1 text-[10px] font-bold text-coral-500"
               >
                 {name}
                 <span className="text-ink-400 tabular-nums">×{count}</span>

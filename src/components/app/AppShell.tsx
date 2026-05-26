@@ -73,7 +73,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <OfflineBanner />
           </>
         ) : null}
-        <div className={immersive ? "flex-1" : "flex-1 pb-24"}>{children}</div>
+        <div className={immersive ? "flex-1" : "flex-1 pb-28"}>{children}</div>
         <MiniFocusBar />
         <BottomNav />
       </div>

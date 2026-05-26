@@ -118,7 +118,7 @@ export function BucketPicker({
   label?: string;
   value: DeviationBucket;
   onChange: (v: DeviationBucket) => void;
-  tone?: "sky" | "peach";
+  tone?: "sky" | "coral";
 }) {
   const current = DEVIATION_BUCKETS.find((b) => b.id === value) ?? DEVIATION_BUCKETS[3];
   return (

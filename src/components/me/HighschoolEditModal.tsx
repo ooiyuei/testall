@@ -32,7 +32,7 @@ const TYPE_LABEL: Record<Highschool["type"], string> = {
 };
 
 const TYPE_TONE: Record<Highschool["type"], string> = {
-  national: "bg-peach-50 text-peach-500",
+  national: "bg-coral-50 text-coral-500",
   public: "bg-sky-50 text-sky-600",
   private: "bg-mint-50 text-mint-600",
 };

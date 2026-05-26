@@ -652,7 +652,7 @@ const LEVEL_LABEL: Record<TextbookLevel, string> = {
 const LEVEL_TONE: Record<TextbookLevel, string> = {
   basic: "bg-mint-50 text-mint-600",
   standard: "bg-sky-50 text-sky-600",
-  advanced: "bg-peach-50 text-peach-500",
+  advanced: "bg-coral-50 text-coral-500",
   top: "bg-coral-300 text-white",
 };
 
