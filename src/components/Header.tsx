@@ -11,7 +11,7 @@ export function Header() {
           <a href="#how" className="hover:text-sky-600 transition">
             使い方
           </a>
-          <a href="#features" className="hover:text-sky-600 transition">
+          <a href="#how" className="hover:text-sky-600 transition">
             機能
           </a>
           <a href="#price" className="hover:text-sky-600 transition">

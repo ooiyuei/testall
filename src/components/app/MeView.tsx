@@ -66,6 +66,7 @@ import { toDateString } from "@/lib/date-safe";
 import { toast } from "@/components/ui/Toast";
 import { confirm } from "@/components/ui/ConfirmDialog";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
+import { GapCard } from "@/components/app/GapCard";
 
 export function MeView() {
   const { state, hydrated } = useStore();
@@ -121,6 +122,9 @@ export function MeView() {
           onEditToggle={() => setEditing((v) => !v)}
         />
       ) : null}
+
+      {/* ── 志望校ギャップ ── */}
+      <GapCard />
 
       {/* ── LV/経験値 ── */}
       <LevelSection />
