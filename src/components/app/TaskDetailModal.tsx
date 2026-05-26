@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Minus, Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { deleteTask, saveTask } from "@/lib/store";
 import type { StoredTask, TaskTag } from "@/lib/store";
 import { SUBJECT_AREAS } from "@/lib/master/subjects/hierarchy";
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 
 const TAG_LABEL: Record<TaskTag, string> = {
   homework: "課題",
@@ -30,6 +31,21 @@ type Props = {
 
 export function TaskDetailModal({ task, onClose }: Props) {
   const [draft, setDraft] = useState<StoredTask>(task);
+  const trapRef = useFocusTrap<HTMLDivElement>(true);
+
+  // Esc 閉じ + body scroll lock
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
 
   function handleSave() {
     if (!draft.title.trim()) return;
@@ -46,8 +62,12 @@ export function TaskDetailModal({ task, onClose }: Props) {
     <div
       className="fixed inset-0 z-50 flex items-end bg-ink-900/40 backdrop-blur-[2px]"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="タスク詳細"
     >
       <div
+        ref={trapRef}
         className="relative z-10 mx-auto w-full max-w-[480px] rounded-t-3xl bg-cream-50 px-5 pt-3 pb-[max(env(safe-area-inset-bottom),1.5rem)] shadow-pop"
         onClick={(e) => e.stopPropagation()}
       >

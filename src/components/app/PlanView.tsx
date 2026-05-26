@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 import { nanoid } from "nanoid";
 import {
   CalendarDays,
@@ -558,6 +559,21 @@ function EventEditor({
   onDelete: (id: string) => void;
 }) {
   const [draft, setDraft] = useState<CalendarEvent>(event);
+  const trapRef = useFocusTrap<HTMLDivElement>(true);
+
+  // Esc 閉じ + body scroll lock
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
 
   function handleSave() {
     if (!draft.title.trim()) {
@@ -576,8 +592,12 @@ function EventEditor({
     <div
       className="fixed inset-0 z-40 flex items-end justify-center bg-ink-900/40 backdrop-blur-sm sm:items-center"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={isNew ? "予定を追加" : "予定を編集"}
     >
       <div
+        ref={trapRef}
         className="w-full max-w-[480px] rounded-t-3xl bg-cream-50 p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] shadow-[0_-12px_30px_-12px_rgba(0,0,0,0.25)] sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
