@@ -16,7 +16,6 @@ import {
   Plus,
   ScrollText,
   Search,
-  Sparkles,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/cn";

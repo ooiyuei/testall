@@ -6,7 +6,6 @@
 // 下: 今日のブロック一覧 + 今週の集中 3列スタッツ
 
 import Link from "next/link";
-import { useMemo } from "react";
 import {
   CheckCircle2,
   Play,
@@ -14,7 +13,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
-import { currentDayISO } from "@/lib/store";
 import type { Block } from "@/lib/types";
 import { LoadingState } from "@/components/ui/LoadingState";
 
@@ -31,47 +29,7 @@ function weekdayIndex(d: Date): number {
 export function FocusListView() {
   const { state, hydrated } = useStore();
 
-  // 今週の集中スタッツを Hooks 順序が変わらないよう先に計算
   const now = new Date();
-  const todayIdx = weekdayIndex(now);
-  const todayISO = currentDayISO(now);
-
-  const weeklyDone = useMemo(() => {
-    let count = 0;
-    const startOfWeekDate = new Date(now);
-    startOfWeekDate.setDate(now.getDate() - todayIdx);
-    startOfWeekDate.setHours(0, 0, 0, 0);
-    const endOfWeekDate = new Date(startOfWeekDate);
-    endOfWeekDate.setDate(startOfWeekDate.getDate() + 7);
-    for (const b of state.blockLogs) {
-      const d = new Date(b.completedAt);
-      if (d >= startOfWeekDate && d < endOfWeekDate) count += 1;
-    }
-    return count;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.blockLogs, todayIdx]);
-
-  const weeklyHours = (weeklyDone * 25) / 60;
-
-  // 今週の平均 mood (1-5 スケールに直して算出)
-  const moodScale: Record<string, number> = {
-    "today-off": 0, less: 2, normal: 3, more: 4, max: 5,
-  };
-  const weeklyMoods = useMemo(() => {
-    if (!state.dailyMoodLogs) return [] as number[];
-    const startOfWeekDate = new Date(now);
-    startOfWeekDate.setDate(now.getDate() - todayIdx);
-    startOfWeekDate.setHours(0, 0, 0, 0);
-    const startISO = currentDayISO(startOfWeekDate);
-    return state.dailyMoodLogs
-      .filter((l) => l.dateISO >= startISO && l.dateISO <= todayISO)
-      .map((l) => moodScale[l.mood] ?? 3);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.dailyMoodLogs, todayISO, todayIdx]);
-  const moodAvg =
-    weeklyMoods.length > 0
-      ? (weeklyMoods.reduce((a, b) => a + b, 0) / weeklyMoods.length).toFixed(1)
-      : "—";
 
   if (!hydrated) {
     return <LoadingState />;
@@ -209,37 +167,6 @@ export function FocusListView() {
         </section>
       )}
 
-      {/* 週間統計は計画タブの「今週の目標」進捗バーに一元化したため削除 */}
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  sub,
-  tone,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-  tone?: "sun";
-}) {
-  return (
-    <div className="rounded-2xl border border-ink-100/80 bg-white p-3.5">
-      <div className="text-[10px] font-semibold text-ink-400">{label}</div>
-      <div className="mt-1 flex items-baseline gap-0.5">
-        <span
-          className={cn(
-            "text-[24px] font-extrabold tabular-nums tracking-[-0.02em]",
-            tone === "sun" ? "text-sun-400" : "text-ink-900",
-          )}
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          {value}
-        </span>
-        <span className="text-[10px] text-ink-400">{sub}</span>
-      </div>
     </div>
   );
 }

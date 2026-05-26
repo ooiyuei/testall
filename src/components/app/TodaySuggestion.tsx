@@ -117,7 +117,7 @@ export function TodaySuggestion({ state }: { state: StoreState }) {
   return (
     <section className="mt-4 mb-1">
       <div className="flex items-center gap-1.5 mb-2">
-        <Lightbulb className="h-3.5 w-3.5 text-amber-500" strokeWidth={2.5} />
+        <Lightbulb className="h-3.5 w-3.5 text-sun-400" strokeWidth={2.5} />
         <h2 className="text-[11px] font-bold text-ink-400">
           今日のおすすめ
         </h2>
@@ -128,14 +128,14 @@ export function TodaySuggestion({ state }: { state: StoreState }) {
           return (
             <li
               key={sug.id}
-              className="flex items-start gap-3 rounded-2xl border border-amber-100/80 bg-amber-50/40 p-4"
+              className="flex items-start gap-3 rounded-2xl border border-sun-200/60 bg-sun-100/30 p-4"
             >
               <div className="min-w-0 flex-1">
                 <div className="text-[13px] font-bold text-ink-900">
                   {sug.title}
                 </div>
                 <div className="mt-0.5 flex items-center gap-1.5">
-                  <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                  <span className="rounded-md bg-sun-200 px-1.5 py-0.5 text-[10px] font-semibold text-ink-700">
                     {SUBJECT_LABEL[sug.subjectArea] ?? sug.subjectArea}
                   </span>
                   <span className="text-[10px] text-ink-400">
@@ -150,7 +150,7 @@ export function TodaySuggestion({ state }: { state: StoreState }) {
                 type="button"
                 disabled={added}
                 onClick={() => addToTodo(sug)}
-                className="mt-0.5 flex flex-none items-center gap-1 rounded-full border border-amber-300/70 bg-white px-3 py-1.5 text-[11px] font-bold text-amber-600 transition disabled:opacity-40"
+                className="mt-0.5 flex flex-none items-center gap-1 rounded-full border border-sun-300/70 bg-white px-3 py-1.5 text-[11px] font-bold text-sun-500 transition disabled:opacity-40"
               >
                 <Plus className="h-3 w-3" strokeWidth={2.5} />
                 {added ? "追加済み" : "TODO"}
