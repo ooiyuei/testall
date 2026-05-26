@@ -463,7 +463,7 @@ export function clearAll(): StoreState {
 export function setPlanning(planning: PlanningProfile): StoreState {
   const current = readStore();
   const next = writeStore({ ...current, planning });
-  if (_authUserId) bg(savePlanningRemote(_authUserId, planning));
+  if (_authUserId) bg(savePlanningRemote(_authUserId, planning, current.fixedSlots ?? []));
   return next;
 }
 
@@ -756,18 +756,16 @@ export function saveFixedSlot(slot: FixedSlot): StoreState {
   const current = readStore();
   const existing = current.fixedSlots ?? [];
   const filtered = existing.filter((s) => s.id !== slot.id);
-  return writeStore({
-    ...current,
-    fixedSlots: [...filtered, slot].sort((a, b) =>
-      a.startTime.localeCompare(b.startTime),
-    ),
-  });
+  const newSlots = [...filtered, slot].sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const next = writeStore({ ...current, fixedSlots: newSlots });
+  if (_authUserId && current.planning) bg(savePlanningRemote(_authUserId, current.planning, newSlots));
+  return next;
 }
 
 export function deleteFixedSlot(id: string): StoreState {
   const current = readStore();
-  return writeStore({
-    ...current,
-    fixedSlots: (current.fixedSlots ?? []).filter((s) => s.id !== id),
-  });
+  const newSlots = (current.fixedSlots ?? []).filter((s) => s.id !== id);
+  const next = writeStore({ ...current, fixedSlots: newSlots });
+  if (_authUserId && current.planning) bg(savePlanningRemote(_authUserId, current.planning, newSlots));
+  return next;
 }

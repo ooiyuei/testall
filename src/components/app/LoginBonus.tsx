@@ -92,9 +92,9 @@ export function LoginBonus() {
       className={cn(
         "fixed inset-x-0 top-2 z-50 mx-auto flex w-full max-w-[460px] items-start gap-3 rounded-2xl border bg-white p-4 shadow-[0_10px_30px_-12px_rgba(50,46,41,0.25)] animate-slideDown overflow-hidden",
         bigMilestone
-          ? "border-amber-300 bg-gradient-to-br from-amber-50 to-sun-100"
+          ? "border-sun-300 bg-gradient-to-br from-cream-50 to-sun-100"
           : isMilestone
-            ? "border-amber-200 bg-amber-50/70"
+            ? "border-sun-200 bg-sun-100/40"
             : "border-sky-200 bg-sky-50/40",
       )}
       role="status"
@@ -104,11 +104,11 @@ export function LoginBonus() {
       {bigMilestone ? (
         <>
           <span
-            className="pointer-events-none absolute -right-2 -top-2 h-12 w-12 rounded-full bg-amber-300/30 blur-xl"
+            className="pointer-events-none absolute -right-2 -top-2 h-12 w-12 rounded-full bg-sun-300/30 blur-xl"
             aria-hidden
           />
           <span
-            className="pointer-events-none absolute right-6 top-3 h-1.5 w-1.5 rounded-full bg-amber-400 pulse-soft"
+            className="pointer-events-none absolute right-6 top-3 h-1.5 w-1.5 rounded-full bg-sun-400 pulse-soft"
             aria-hidden
           />
           <span
@@ -117,7 +117,7 @@ export function LoginBonus() {
             aria-hidden
           />
           <span
-            className="pointer-events-none absolute right-10 bottom-4 h-1 w-1 rounded-full bg-amber-500 pulse-soft"
+            className="pointer-events-none absolute right-10 bottom-4 h-1 w-1 rounded-full bg-sun-500 pulse-soft"
             style={{ animationDelay: "1s" }}
             aria-hidden
           />
@@ -128,9 +128,9 @@ export function LoginBonus() {
         className={cn(
           "relative flex h-10 w-10 flex-none items-center justify-center rounded-xl",
           bigMilestone
-            ? "bg-amber-200 text-amber-700"
+            ? "bg-sun-200 text-sun-500"
             : isMilestone
-              ? "bg-amber-100 text-amber-600"
+              ? "bg-sun-100 text-sun-500"
               : "bg-sky-100 text-sky-600",
         )}
       >

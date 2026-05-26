@@ -18,7 +18,6 @@ import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
 import { deleteEvent, saveEvent } from "@/lib/store";
 import type { CalendarEvent, CalendarEventKind } from "@/lib/store";
-// WeeklyGoalCard / WeeklyTaskBoard は密度削減のため import 撤去
 import { CalendarSkeleton } from "@/components/ui/Skeleton";
 import { IconBadge } from "@/components/ui/IconBadge";
 import { SectionLabel } from "@/components/ui/SectionLabel";
@@ -444,9 +443,6 @@ export function PlanView() {
           </div>
         </section>
       ) : null}
-
-      {/* WeeklyGoalCard / WeeklyTaskBoard は情報密度削減のため削除
-          (今週の目標は黒ヒーローカードに一元化、タスクボードは TodoView に集約) */}
 
       {/* イベントエディタ */}
       {editor.open && editor.event ? (

@@ -10,6 +10,7 @@ import type {
   StoredTask,
   CalendarEvent,
   DailyMoodLog,
+  FixedSlot,
 } from "./store";
 import type { PlanningProfile, WeeklyGoal, WeeklyExecutionLog } from "./planning/types";
 
@@ -47,9 +48,13 @@ export async function loadAll(userId: string): Promise<Partial<StoreState>> {
     client.from("user_weekly_executions").select("data").eq("user_id", userId),
   ]);
 
+  const rawPlanning = planningRes.data?.data as (PlanningProfile & { fixedSlots?: FixedSlot[] }) | undefined;
+  const { fixedSlots: remoteFixedSlots, ...planningData } = rawPlanning ?? {};
+
   return {
     profile: (profileRes.data?.data as StoredProfile) ?? undefined,
-    planning: (planningRes.data?.data as PlanningProfile) ?? undefined,
+    planning: Object.keys(planningData).length > 0 ? (planningData as PlanningProfile) : undefined,
+    fixedSlots: remoteFixedSlots ?? [],
     tests: (testsRes.data ?? []).map((r) => r.data as StoredTest),
     blockLogs: (blockLogsRes.data ?? []).map((r) => r.data as BlockLog),
     tasks: (tasksRes.data ?? []).map((r) => r.data as StoredTask),
@@ -69,12 +74,13 @@ export async function saveProfileRemote(userId: string, profile: StoredProfile):
   if (error) logErr("saveProfile", error);
 }
 
-export async function savePlanningRemote(userId: string, planning: PlanningProfile): Promise<void> {
+export async function savePlanningRemote(userId: string, planning: PlanningProfile, fixedSlots?: FixedSlot[]): Promise<void> {
   const client = sb();
   if (!client) return;
+  const data = fixedSlots !== undefined ? { ...planning, fixedSlots } : planning;
   const { error } = await client
     .from("user_planning")
-    .upsert({ user_id: userId, data: planning, updated_at: new Date().toISOString() });
+    .upsert({ user_id: userId, data, updated_at: new Date().toISOString() });
   if (error) logErr("savePlanning", error);
 }
 
