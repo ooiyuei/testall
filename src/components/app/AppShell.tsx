@@ -23,14 +23,16 @@ function titleFromPath(path: string): { title?: string; back?: string; showAdd?:
   if (path === "/app/focus")         return { title: "", showAdd: true };
   if (path.startsWith("/app/focus/run")) return { title: "" };
   if (path === "/app/plan")          return { title: "", showAdd: true };
-  if (path === "/app/me")            return { title: "マイページ", showAdd: true };
-  if (path === "/app/me/settings")   return { title: "設定", back: "/app/me", showAdd: false };
+  // PDF原則「余白で語る」: bodyの h1 と AppHeader の title が二重になるので title は空文字に。
+  // 必要なら back 矢印だけ表示する。
+  if (path === "/app/me")            return { title: "", showAdd: true };
+  if (path === "/app/me/settings")   return { title: "", back: "/app/me", showAdd: false };
   if (path.startsWith("/app/me/subjects/")) return { title: "", back: "/app/me", showAdd: false };
-  if (path === "/app/test")          return { title: "テスト", back: "/app", showAdd: true };
-  if (path === "/app/test/new")      return { title: "テスト追加", back: "/app/test", showAdd: false };
-  if (path.startsWith("/app/test/")) return { title: "テスト詳細", back: "/app/test", showAdd: false };
-  if (path === "/app/search")        return { title: "探す", back: "/app", showAdd: true };
-  if (path === "/app/help")          return { title: "ヘルプ", back: "/app/me/settings", showAdd: false };
+  if (path === "/app/test")          return { title: "", back: "/app", showAdd: true };
+  if (path === "/app/test/new")      return { title: "", back: "/app/test", showAdd: false };
+  if (path.startsWith("/app/test/")) return { title: "", back: "/app/test", showAdd: false };
+  if (path === "/app/search")        return { title: "", back: "/app", showAdd: true };
+  if (path === "/app/help")          return { title: "", back: "/app/me/settings", showAdd: false };
   return { title: "Testall", showAdd: true };
 }
 
