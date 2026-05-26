@@ -323,10 +323,17 @@ export function OnboardingFlow() {
     router.push("/app");
   }
 
-  // キーボード: Enter で次へ
+  // キーボード: Enter で次へ / ArrowLeft で戻る
+  // 入力欄フォーカス中はキャレット移動と被るためスキップ
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter" && canProceed()) next();
-    if (e.key === "ArrowLeft" && stepIdx > 0) prev();
+    const target = e.target as HTMLElement;
+    const isInputField =
+      target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.tagName === "SELECT" ||
+      target.isContentEditable;
+    if (e.key === "Enter" && !isInputField && canProceed()) next();
+    if (e.key === "ArrowLeft" && !isInputField && stepIdx > 0) prev();
   }
 
   return (
