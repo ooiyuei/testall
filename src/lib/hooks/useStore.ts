@@ -61,6 +61,8 @@ export function useStore(): { state: StoreState; hydrated: boolean } {
             ? remote.weeklyGoals : current.weeklyGoals,
           weeklyExecutions: remote.weeklyExecutions && remote.weeklyExecutions.length > 0
             ? remote.weeklyExecutions : current.weeklyExecutions,
+          fixedSlots: remote.fixedSlots && remote.fixedSlots.length > 0
+            ? remote.fixedSlots : current.fixedSlots,
         });
       } catch (e) {
         if (!cancelled && process.env.NODE_ENV !== "production") {
