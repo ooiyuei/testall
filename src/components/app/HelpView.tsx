@@ -112,7 +112,7 @@ const SECTIONS: Section[] = [
 ];
 
 const CONTACT_ITEMS = [
-  { label: "チャットで質問する", href: "/app" },
+  { label: "AI コーチに聞く", href: "/app/ai" },
   { label: "メールで送る", href: "mailto:support@testall.app" },
   { label: "コミュニティを見る", href: "#" },
 ];

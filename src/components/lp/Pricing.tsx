@@ -12,7 +12,7 @@ const plans = [
       "今日のタスク表示",
     ],
     cta: "無料で始める",
-    href: "/app",
+    href: "/signup",
     highlight: false,
   },
   {
@@ -26,7 +26,7 @@ const plans = [
       "テスト記録 無制限",
     ],
     cta: "Lightで始める",
-    href: "/app",
+    href: "/signup",
     highlight: false,
   },
   {
@@ -41,7 +41,7 @@ const plans = [
       "保護者レポート（β）",
     ],
     cta: "Standardで始める",
-    href: "/app",
+    href: "/signup",
     highlight: true,
   },
 ];

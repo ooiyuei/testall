@@ -11,6 +11,7 @@ import {
   Clock3,
   FileText,
   ScrollText,
+  Sparkles,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -66,6 +67,13 @@ const ITEMS: FabItem[] = [
     title: "模試を追加",
     sub: "河合・駿台・東進・代ゼミ・進研",
     action: { kind: "route", href: "/app/test/new?kind=mock" },
+  },
+  {
+    icon: Sparkles,
+    tone: "bg-sky-100 text-sky-500",
+    title: "AI コーチに相談",
+    sub: "弱点・計画・参考書について",
+    action: { kind: "route", href: "/app/ai" },
   },
 ];
 

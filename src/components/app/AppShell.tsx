@@ -32,6 +32,7 @@ function titleFromPath(path: string): { title?: string; back?: string; showAdd?:
   if (path === "/app/test/new")      return { title: "", back: "/app/test", showAdd: false };
   if (path.startsWith("/app/test/")) return { title: "", back: "/app/test", showAdd: false };
   if (path === "/app/search")        return { title: "", back: "/app", showAdd: true };
+  if (path === "/app/ai")            return { title: "", back: "/app", showAdd: false };
   if (path === "/app/help")          return { title: "", back: "/app/me/settings", showAdd: false };
   return { title: "Testall", showAdd: true };
 }
