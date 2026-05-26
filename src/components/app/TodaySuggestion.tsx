@@ -153,7 +153,7 @@ export function TodaySuggestion({ state }: { state: StoreState }) {
                 className="mt-0.5 flex flex-none items-center gap-1 rounded-full border border-sun-300/70 bg-white px-3 py-1.5 text-[11px] font-bold text-sun-500 transition disabled:opacity-40"
               >
                 <Plus className="h-3 w-3" strokeWidth={2.5} />
-                {added ? "追加済み" : "TODO"}
+                {added ? "追加済み" : "追加"}
               </button>
             </li>
           );

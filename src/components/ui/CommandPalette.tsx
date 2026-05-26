@@ -41,7 +41,7 @@ interface CommandItem {
 
 const NAV_ITEMS: CommandItem[] = [
   { id: "nav-home", label: "ホーム", sub: "今日のプラン", href: "/app", icon: Home, group: "ナビゲーション" },
-  { id: "nav-todo", label: "TODO", sub: "タスク一覧", href: "/app/todo", icon: CheckSquare, group: "ナビゲーション" },
+  { id: "nav-todo", label: "やること", sub: "タスク一覧", href: "/app/todo", icon: CheckSquare, group: "ナビゲーション" },
   { id: "nav-focus", label: "集中", sub: "25分タイマー", href: "/app/focus", icon: Timer, group: "ナビゲーション" },
   { id: "nav-plan", label: "計画", sub: "月カレンダー", href: "/app/plan", icon: CalendarRange, group: "ナビゲーション" },
   { id: "nav-me", label: "マイページ", sub: "実力パラメーター", href: "/app/me", icon: User, group: "ナビゲーション" },

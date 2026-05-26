@@ -234,7 +234,7 @@ export type ChatMessage = {
 export type UnitProficiency = "good" | "fair" | "weak" | "bad";
 export type UnitProficiencyMap = Record<string, UnitProficiency>;
 
-// 固定スロット (食事・お風呂など) - TodaySchedule で除外される
+// 固定スロット (食事・お風呂など) — 計画スケジューラが除外する時間帯
 export type FixedSlot = {
   id: string;
   label: string;          // "夕食", "お風呂" など
