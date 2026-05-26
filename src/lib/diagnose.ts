@@ -350,19 +350,34 @@ function fallbackDiagnosis(input: TestInput): Diagnosis {
   const top3Weak = weakest.slice(0, 3);
   const strengths = weakest
     .slice(-2)
-    .map((u) => `${u.unit}（${Math.round((u.correct / Math.max(1, u.total)) * 100)}%）`);
+    .map((u) => {
+      const pct =
+        typeof u.correct === "number" && typeof u.total === "number" && u.total > 0
+          ? Math.round((u.correct / u.total) * 100)
+          : null;
+      return pct === null ? u.unit : `${u.unit}（${pct}%）`;
+    });
   const causes: MissCause[] = ["understanding", "knowledge", "time"];
   return {
     summary: `${input.subject}は${Math.round((input.score / input.fullScore) * 100)}%。志望校到達には主要単元の穴埋めが優先。`,
     level: "基礎の取りこぼしが点数の主因。応用の前に土台を直す段階。",
     gap: "本番までに苦手3単元を週1テーマで回せば、現実的に届く。",
-    weaknesses: top3Weak.map((u, i) => ({
-      unit: u.unit,
-      cause: u.cause ?? causes[i % causes.length],
-      severity: i === 0 ? "high" : i === 1 ? "mid" : "low",
-      reason: `正答率 ${Math.round((u.correct / Math.max(1, u.total)) * 100)}%。失点の中心はこの単元。`,
-      recovery: "基本例題を3周。1周目は理解、2周目は解法定着、3周目は時間内自力。",
-    })),
+    weaknesses: top3Weak.map((u, i) => {
+      const pct =
+        typeof u.correct === "number" && typeof u.total === "number" && u.total > 0
+          ? Math.round((u.correct / u.total) * 100)
+          : null;
+      return {
+        unit: u.unit,
+        cause: u.cause ?? causes[i % causes.length],
+        severity: (i === 0 ? "high" : i === 1 ? "mid" : "low") as "high" | "mid" | "low",
+        reason:
+          pct === null
+            ? "失点の中心はこの単元。"
+            : `正答率 ${pct}%。失点の中心はこの単元。`,
+        recovery: "基本例題を3周。1周目は理解、2周目は解法定着、3周目は時間内自力。",
+      };
+    }),
     strengths: strengths.length ? strengths : ["継続できる勉強リズムは確保できている"],
     textbookPlan:
       input.textbooks.length > 0

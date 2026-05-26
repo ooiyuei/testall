@@ -49,18 +49,21 @@ function buildSystemPrompt(ctx?: ChatContext): string {
   return lines.join("\n");
 }
 
-function fallbackReply(userMessage: string): string {
-  const m = userMessage.toLowerCase();
-  if (/次の25分|今日|何やる|なにやる|今やる/.test(userMessage)) {
+function fallbackReply(userMessage: string | undefined): string {
+  const safe = (userMessage ?? "").toString();
+  if (!safe.trim()) {
+    return "AI のリアルタイム応答は現在停止中です。具体的な質問を入力してください（例：『次の25分は何をやればいい？』）。";
+  }
+  if (/次の25分|今日|何やる|なにやる|今やる/.test(safe)) {
     return "直近のテストで一番点数が低かった単元から取り組むのがおすすめです。25分タイマーを開始して、完了条件を 1 つに絞ってみてください。";
   }
-  if (/苦手|わからない/.test(userMessage)) {
+  if (/苦手|わからない/.test(safe)) {
     return "苦手単元は『マイ』→各教科で確認できます。「知識不足」か「理解不足」かを切り分けると次の一手が決まります。";
   }
-  if (/作戦|計画|スケジュール/.test(userMessage)) {
+  if (/作戦|計画|スケジュール/.test(safe)) {
     return "今週は『計画』タブで目標ブロック数を確定 → 毎朝『気分』を入れて自動調整、の流れが続きやすいです。";
   }
-  if (/志望校|ギャップ/.test(userMessage)) {
+  if (/志望校|ギャップ/.test(safe)) {
     return "現在の偏差値と志望校ボーダーの差から、必要週ブロック数が試算されます。『マイ』のレベルカードで確認できます。";
   }
   return "AI のリアルタイム応答は現在停止中です。テスト追加・25分タイマー・週次計画は問題なく使えます。具体的な質問があれば短く書いてみてください。";
@@ -82,6 +85,15 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ ok: false, error: "invalid_body" }, { status: 400 });
   }
+
+  // 入力検証: userMessage が無いと throw する
+  if (!body || typeof body.userMessage !== "string") {
+    return NextResponse.json(
+      { ok: false, error: "missing_user_message" },
+      { status: 400 },
+    );
+  }
+  if (!Array.isArray(body.history)) body.history = [];
 
   // API キー無し → フォールバックを返す
   if (!apiKey) {
@@ -110,7 +122,7 @@ export async function POST(req: Request) {
     ];
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-5",
+      model: "claude-sonnet-4-6",
       max_tokens: 512,
       system: buildSystemPrompt(body.context),
       messages,
