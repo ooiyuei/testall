@@ -338,7 +338,13 @@ export async function POST(req: Request) {
       model: "claude-sonnet-4-6",
       max_tokens: 4096, // 長い答案でも切れないよう拡張
       temperature: 0.1, // ハルシネーション抑制
-      system: SYSTEM_PROMPT,
+      system: [
+        {
+          type: "text",
+          text: SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       messages: [
         {
           role: "user",

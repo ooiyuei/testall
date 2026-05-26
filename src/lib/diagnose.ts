@@ -307,7 +307,13 @@ export async function diagnose(input: TestInput): Promise<Diagnosis> {
   const res = await client.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 4096,
-    system: SYSTEM_PROMPT + "\n\n出力JSONスキーマ:\n" + JSON_SCHEMA_HINT,
+    system: [
+      {
+        type: "text",
+        text: SYSTEM_PROMPT + "\n\n出力JSONスキーマ:\n" + JSON_SCHEMA_HINT,
+        cache_control: { type: "ephemeral" },
+      },
+    ],
     messages: [{ role: "user", content: buildUserPrompt(input) }],
   });
 
