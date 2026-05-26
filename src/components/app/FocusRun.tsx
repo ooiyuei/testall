@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
+  MoreHorizontal,
   Pause,
   Play,
   RotateCcw,
@@ -544,86 +545,131 @@ function Controls({
   const mainBtn =
     "flex h-16 w-16 items-center justify-center rounded-full bg-white text-ink-900 transition hover:shadow-[0_12px_32px_rgba(0,0,0,0.35)] active:scale-95";
 
-  const finishBtn =
-    "flex h-12 items-center justify-center rounded-full bg-white/8 px-5 text-xs font-bold text-white/50 opacity-70 transition hover:bg-white/12 active:scale-[0.96]";
+  // PDF原則 05: 危険操作は端へ
+  // 終了は ⋯ ボタン (右端) に隔離し、長押し (700ms) で実行。誤タップで25分が消えない。
+  const [pressingFinish, setPressingFinish] = useState(false);
+  const pressTimerRef = useRef<number | null>(null);
+
+  function startFinishPress() {
+    haptic.medium();
+    setPressingFinish(true);
+    pressTimerRef.current = window.setTimeout(() => {
+      haptic.success();
+      setPressingFinish(false);
+      pressTimerRef.current = null;
+      onFinish();
+    }, 700);
+  }
+  function cancelFinishPress() {
+    if (pressTimerRef.current !== null) {
+      window.clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+    setPressingFinish(false);
+  }
+  useEffect(
+    () => () => {
+      if (pressTimerRef.current !== null) window.clearTimeout(pressTimerRef.current);
+    },
+    [],
+  );
 
   return (
-    <section
-      className="mt-10 flex items-center justify-center gap-5"
-      aria-label="タイマーコントロール"
-    >
-      {phase === "idle" && (
-        <button
-          type="button"
-          onClick={onStart}
-          className={mainBtn}
-          style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
-          aria-label="集中タイマーを開始"
-        >
-          <Play className="h-7 w-7" fill="currentColor" aria-hidden="true" />
-        </button>
-      )}
-
-      {phase === "running" && (
-        <>
+    <>
+      <section
+        className="mt-10 flex items-center justify-center gap-5"
+        aria-label="タイマーコントロール"
+      >
+        {phase === "idle" && (
           <button
             type="button"
-            onClick={onReset}
-            className={secondaryBtn}
-            aria-label="タイマーをリセット"
-          >
-            <RotateCcw className="h-5 w-5" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={onPause}
+            onClick={onStart}
             className={mainBtn}
             style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
-            aria-label="一時停止"
-          >
-            <Pause className="h-7 w-7" fill="currentColor" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={onFinish}
-            className={finishBtn}
-            aria-label="タイマーを終了して記録へ進む"
-          >
-            終了
-          </button>
-        </>
-      )}
-
-      {phase === "paused" && (
-        <>
-          <button
-            type="button"
-            onClick={onReset}
-            className={secondaryBtn}
-            aria-label="タイマーをリセット"
-          >
-            <RotateCcw className="h-5 w-5" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={onResume}
-            className={mainBtn}
-            style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
-            aria-label="タイマーを再開"
+            aria-label="集中タイマーを開始"
           >
             <Play className="h-7 w-7" fill="currentColor" aria-hidden="true" />
           </button>
-          <button
-            type="button"
-            onClick={onFinish}
-            className={finishBtn}
-            aria-label="タイマーを終了して記録へ進む"
-          >
-            終了
-          </button>
-        </>
+        )}
+
+        {phase === "running" && (
+          <>
+            <button
+              type="button"
+              onClick={onReset}
+              className={secondaryBtn}
+              aria-label="タイマーをリセット"
+            >
+              <RotateCcw className="h-5 w-5" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={onPause}
+              className={mainBtn}
+              style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
+              aria-label="一時停止"
+            >
+              <Pause className="h-7 w-7" fill="currentColor" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onPointerDown={startFinishPress}
+              onPointerUp={cancelFinishPress}
+              onPointerCancel={cancelFinishPress}
+              onPointerLeave={cancelFinishPress}
+              className={cn(
+                secondaryBtn,
+                pressingFinish && "bg-coral-500/30 ring-2 ring-coral-400",
+              )}
+              aria-label="長押しでタイマーを終了"
+            >
+              <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </>
+        )}
+
+        {phase === "paused" && (
+          <>
+            <button
+              type="button"
+              onClick={onReset}
+              className={secondaryBtn}
+              aria-label="タイマーをリセット"
+            >
+              <RotateCcw className="h-5 w-5" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={onResume}
+              className={mainBtn}
+              style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
+              aria-label="タイマーを再開"
+            >
+              <Play className="h-7 w-7" fill="currentColor" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onPointerDown={startFinishPress}
+              onPointerUp={cancelFinishPress}
+              onPointerCancel={cancelFinishPress}
+              onPointerLeave={cancelFinishPress}
+              className={cn(
+                secondaryBtn,
+                pressingFinish && "bg-coral-500/30 ring-2 ring-coral-400",
+              )}
+              aria-label="長押しでタイマーを終了"
+            >
+              <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </>
+        )}
+      </section>
+      {(phase === "running" || phase === "paused") && (
+        <p className="mt-4 text-center text-[11px] text-white/40">
+          長押しで終了
+        </p>
       )}
-    </section>
+    </>
   );
 }
 
