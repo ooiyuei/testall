@@ -14,6 +14,7 @@ import { cn } from "@/lib/cn";
 import { searchHighschools } from "@/lib/master/highschools";
 import { remoteSearchHighschools, remoteListHighschoolsByPrefecture } from "@/lib/master/remote";
 import type { Highschool } from "@/lib/master/types";
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 
 const PREFECTURES = [
   "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
@@ -50,6 +51,21 @@ export function HighschoolEditModal({ currentName, onSelect, onClose }: Props) {
   const [remoteResults, setRemoteResults] = useState<Highschool[]>([]);
   const [loading, setLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const trapRef = useFocusTrap<HTMLDivElement>(true);
+
+  // Esc 閉じ + body scroll lock
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
 
   // リモート検索（debounce 300ms）
   useEffect(() => {
@@ -100,14 +116,22 @@ export function HighschoolEditModal({ currentName, onSelect, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-ink-900/40 backdrop-blur-[2px]">
+    <div
+      className="fixed inset-0 z-50 flex items-end bg-ink-900/40 backdrop-blur-[2px]"
+      role="dialog"
+      aria-modal="true"
+      aria-label="高校を選択"
+    >
       <button
         type="button"
         className="absolute inset-0 cursor-default"
         aria-label="閉じる"
         onClick={onClose}
       />
-      <div className="sheet-in relative z-10 mx-auto flex max-h-[92vh] w-full max-w-[480px] flex-col overflow-hidden rounded-t-3xl bg-cream-50 shadow-pop">
+      <div
+        ref={trapRef}
+        className="sheet-in relative z-10 mx-auto flex max-h-[92vh] w-full max-w-[480px] flex-col overflow-hidden rounded-t-3xl bg-cream-50 shadow-pop"
+      >
         {/* ヘッダ */}
         <div className="px-5 pt-3">
           <div className="mx-auto h-1 w-9 rounded-full bg-ink-200" />

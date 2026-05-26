@@ -5,7 +5,7 @@
 // 入力データは userAdditions（sessionStorage）に保存される
 // TODO: Supabase 接続後は user_master_additions テーブルへ
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
@@ -22,6 +22,7 @@ import type {
   TextbookLevel,
   University,
 } from "@/lib/master";
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 
 export type AddEntityKind = "university" | "highschool" | "textbook" | "mock-exam";
 
@@ -33,15 +34,38 @@ type Props = {
 };
 
 export function AddEntityModal({ kind, initialName, onClose, onAdded }: Props) {
+  const trapRef = useFocusTrap<HTMLDivElement>(true);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-black/40">
+    <div
+      className="fixed inset-0 z-50 flex items-end bg-ink-900/40 backdrop-blur-[2px]"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${KIND_LABELS[kind]}を追加`}
+    >
       <button
         type="button"
         className="absolute inset-0 cursor-default"
         aria-label="閉じる"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-[480px] mx-auto rounded-t-3xl bg-white shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div
+        ref={trapRef}
+        className="relative z-10 w-full max-w-[480px] mx-auto rounded-t-3xl bg-white shadow-2xl max-h-[90vh] overflow-y-auto"
+      >
         <div className="sticky top-0 flex items-center justify-between border-b border-cream-200 bg-white px-4 py-3">
           <h2 className="text-base font-black text-ink-900">
             {KIND_LABELS[kind]}を追加
