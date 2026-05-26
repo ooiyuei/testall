@@ -32,7 +32,19 @@
 | **③** | ホーム | greeting card + TodaySchedule/AIコーチ削除 | 1b9671b |
 | **②** | 集中タイマー | 終了を長押し700ms に隔離 + 「長押しで終了」ヒント | ba42fd1 |
 | **⑥** | マイページ | 並び順を PDF 通りに（Level → Pentagon → 本棚） | ce46a9c |
+| **⑥** | マイページ | 本棚を横スクロールカード化（PDF p.13） | 1d637ba |
 | **A** | LP-HERO | 根拠なし数字 PROOF strip 削除 | 6d6aa09 |
+| - | システム | タイポ uppercase / wide tracking 削除（PDF原則02） | 55e5fef |
+| - | システム | AppHeader title 削除（body h1 と重複していた） | 431b6c8 |
+| - | 既存 | 状態系（Empty/Error/Offline/404）共通化 (States.tsx) | 既存 |
+| - | 既存 | LP 7セクション完備（Hero/Problem/Solution/Compare/Pricing/Mission/CTA） | 既存 |
+| - | 既存 | AI チャット LINE風（AiCoachView.tsx） | 既存 |
+| - | 既存 | TestDetail dark hero + 単元別正答率 | 既存 |
+| - | 既存 | テスト新規 写真モード NEWバッジ + 手入力選択 | 既存 |
+| - | 既存 | オンボーディング 10ステップ 1問1答 | 既存 |
+| - | 既存 | 集中モード一覧（FocusListView） | 既存 |
+| - | 既存 | 計画・月カレンダー + 今週の目標 dark hero | 既存 |
+| - | 既存 | テスト一覧 履歴 dark hero + sparkline | 既存 |
 
 ### 🔴 高優先（目に見える差分）
 
