@@ -125,16 +125,15 @@ export function MeView() {
       {/* ── LV/経験値 ── */}
       <LevelSection />
 
-      {/* 偏差値・経験値の推移グラフはマイページから削除 (詳細は各教科ページへ) */}
+      {/* ── ステータス（五角形 + 9教科リンク + 偏差値/スコア） ── */}
+      {/* PDF順: Level → Pentagon → 本棚 */}
+      <StatusCard profile={profile} statusPoints={statusPoints} />
 
       {/* ── 本棚 ── */}
       <BookshelfSection
         allBookshelf={allBookshelf}
         onAdd={() => setBookshelfModal(true)}
       />
-
-      {/* ── ステータス（五角形 + 9教科リンク + 偏差値/スコア） ── */}
-      <StatusCard profile={profile} statusPoints={statusPoints} />
 
       {/* ── メニュー ── */}
       <ul className="divide-y divide-ink-100/70 overflow-hidden rounded-2xl border border-ink-100/80 bg-white">
