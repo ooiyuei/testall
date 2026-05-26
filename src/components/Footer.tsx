@@ -5,7 +5,7 @@ const COLUMNS = [
     h: "プロダクト",
     items: [
       { l: "使い方", href: "#how" },
-      { l: "機能", href: "#how" },
+      { l: "機能", href: "#compare" },
       { l: "料金", href: "#price" },
       { l: "アプリを開く", href: "/app" },
     ],
