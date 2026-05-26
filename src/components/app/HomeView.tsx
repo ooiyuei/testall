@@ -23,6 +23,7 @@ import { MoodCheckCard } from "./MoodCheckCard";
 import { GuideTour } from "./GuideTour";
 import { LoginBonus } from "./LoginBonus";
 import { InstallPrompt } from "./InstallPrompt";
+import { DailyTip } from "./DailyTip";
 import { HomeSkeleton } from "@/components/ui/Skeleton";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { useCountUp } from "@/lib/hooks/useCountUp";
@@ -332,6 +333,9 @@ export function HomeView() {
           />
         </BottomSheet>
       ) : null}
+
+      {/* 今日のヒント */}
+      <DailyTip />
 
     </div>
     </PullToRefresh>

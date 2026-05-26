@@ -30,7 +30,7 @@ export function Hero() {
             無料ではじめる
             <ArrowRight className="h-5 w-5" />
           </Button>
-          <Button href="/signin" size="lg" variant="ghost">
+          <Button href="/app" size="lg" variant="ghost">
             デモを見る
           </Button>
         </div>
