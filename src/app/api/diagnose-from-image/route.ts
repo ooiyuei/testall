@@ -312,7 +312,7 @@ export async function POST(req: Request) {
   try {
     const client = new Anthropic({ apiKey });
     const msg = await client.messages.create({
-      model: "claude-sonnet-4-5",
+      model: "claude-sonnet-4-6",
       max_tokens: 4096, // 長い答案でも切れないよう拡張
       temperature: 0.1, // ハルシネーション抑制
       system: SYSTEM_PROMPT,

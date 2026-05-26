@@ -305,7 +305,7 @@ export async function diagnose(input: TestInput): Promise<Diagnosis> {
 
   const client = new Anthropic({ apiKey });
   const res = await client.messages.create({
-    model: "claude-sonnet-4-5",
+    model: "claude-sonnet-4-6",
     max_tokens: 4096,
     system: SYSTEM_PROMPT + "\n\n出力JSONスキーマ:\n" + JSON_SCHEMA_HINT,
     messages: [{ role: "user", content: buildUserPrompt(input) }],
