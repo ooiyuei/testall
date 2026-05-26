@@ -13,7 +13,6 @@ import {
   ChevronRight,
   Flame,
   Play,
-  Sparkles,
   Target,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -26,7 +25,6 @@ import { LoginBonus } from "./LoginBonus";
 import { InstallPrompt } from "./InstallPrompt";
 import { HomeSkeleton } from "@/components/ui/Skeleton";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import { TodaySchedule } from "./TodaySchedule";
 import { useCountUp } from "@/lib/hooks/useCountUp";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { toast } from "@/components/ui/Toast";
@@ -193,11 +191,24 @@ export function HomeView() {
       {state.profile?.onboardedAt ? <LoginBonus /> : null}
       {state.profile?.onboardedAt ? <InstallPrompt /> : null}
 
-      {/* 簡潔ヘッダー: 日付のみ (アバター/挨拶/streak は除去) */}
+      {/* Greeting header — PDF style: avatar + 挨拶 + streak chip */}
       <section className="mt-1.5 flex items-center justify-between">
-        <div className="text-[11px] font-medium text-ink-400">{dateLabel}</div>
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-ink-900 text-white text-[15px] font-extrabold">
+            {userInitial}
+          </div>
+          <div>
+            <div className="text-[10px] font-medium text-ink-400">{dateLabel}</div>
+            <div
+              className="text-[18px] font-extrabold leading-tight tracking-[-0.02em] text-ink-900"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {greeting}
+            </div>
+          </div>
+        </div>
         {streakDays > 0 ? (
-          <div className="inline-flex items-center gap-1 text-[11px] font-bold text-coral-500">
+          <div className="inline-flex items-center gap-1 rounded-full border border-coral-300/40 bg-coral-50 px-2.5 py-1 text-[11px] font-bold text-coral-500">
             <Flame className="h-3 w-3" strokeWidth={2.4} />
             <span className="tabular-nums">{animatedStreak}日</span>
           </div>
@@ -322,40 +333,6 @@ export function HomeView() {
         </BottomSheet>
       ) : null}
 
-      {/* 寝るまでのスケジュール — mood 決定後にパッと見える位置に */}
-      {hydrated && todayMoodLog && todayMoodLog.mood !== "today-off" && state.planning ? (
-        <section className="mt-5">
-          <TodaySchedule
-            finalBlocks={todayMoodLog.finalBlocks}
-            bedtime={state.planning.defaultBedtime}
-            wakeupTime={state.profile?.wakeupTime ?? "07:00"}
-            returnTime={state.planning.defaultReturnTime}
-            tasks={state.tasks}
-            fixedSlots={state.fixedSlots}
-          />
-        </section>
-      ) : null}
-
-      {/* AI コーチへのリンク (フル画面チャットへ) — タイムラインの邪魔をしない控えめな配置 */}
-      {hydrated && totalCount > 0 ? (
-        <section className="mt-5">
-          <Link
-            href="/app/ai"
-            className="flex items-center justify-between rounded-2xl border border-ink-100/80 bg-white px-4 py-3.5 transition active:scale-[0.99]"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-mint-100">
-                <Sparkles className="h-4 w-4 text-mint-600" strokeWidth={2.2} />
-              </div>
-              <div>
-                <div className="text-[13px] font-bold text-ink-900">AI コーチ Sara に相談</div>
-                <div className="text-[10px] text-ink-500">次の一手・苦手対策を聞いてみる</div>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-ink-400" />
-          </Link>
-        </section>
-      ) : null}
     </div>
     </PullToRefresh>
   );

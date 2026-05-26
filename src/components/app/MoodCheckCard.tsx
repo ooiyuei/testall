@@ -12,11 +12,9 @@ import { currentDayISO, logDailyMood, setPlanning } from "@/lib/store";
 import { useStore } from "@/lib/hooks/useStore";
 import {
   adjustTodayBlocks,
-  isWeekend,
   todayBaseBlocks,
 } from "@/lib/planning";
 import type { Mood } from "@/lib/planning";
-import { TodaySchedule } from "./TodaySchedule";
 import { toast } from "@/components/ui/Toast";
 
 const MOODS: { id: Mood; label: string; delta: string }[] = [
@@ -164,47 +162,36 @@ export function MoodCheckCard({ forceEdit = false, onCommitted }: MoodCheckCardP
 
   if (decided) {
     return (
-      <>
-        <section className="rounded-2xl border border-sky-200/70 bg-gradient-to-br from-sky-50/80 to-mint-50/40 p-5">
-          <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-white text-sky-500">
-              <Sparkles className="h-[18px] w-[18px]" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[10px] font-bold tracking-wide text-sky-600">
-                今日の目標
-              </div>
-              <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-[40px] font-bold leading-none tabular-nums text-ink-900">
-                  {result.finalBlocks}
-                </span>
-                <span className="text-xs font-medium text-ink-500">
-                  ブロック (25分×{result.finalBlocks})
-                </span>
-              </div>
-              <p className="mt-2 text-[12px] leading-[1.6] text-ink-600">
-                {result.reason}
-              </p>
-              <button
-                type="button"
-                onClick={() => setDecided(false)}
-                className="mt-2 text-[11px] font-medium text-sky-500 underline-offset-2 hover:underline"
-              >
-                気分を変更
-              </button>
-            </div>
+      <section className="rounded-2xl border border-sky-200/70 bg-gradient-to-br from-sky-50/80 to-mint-50/40 p-5">
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-white text-sky-500">
+            <Sparkles className="h-[18px] w-[18px]" />
           </div>
-        </section>
-        <TodaySchedule
-          finalBlocks={result.finalBlocks}
-          bedtime={profile.defaultBedtime}
-          wakeupTime={state.profile?.wakeupTime ?? "07:00"}
-          returnTime={profile.defaultReturnTime}
-          tasks={state.tasks}
-          fixedSlots={state.fixedSlots}
-          onReset={() => setDecided(false)}
-        />
-      </>
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-bold tracking-wide text-sky-600">
+              今日の目標
+            </div>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-[40px] font-bold leading-none tabular-nums text-ink-900">
+                {result.finalBlocks}
+              </span>
+              <span className="text-xs font-medium text-ink-500">
+                ブロック (25分×{result.finalBlocks})
+              </span>
+            </div>
+            <p className="mt-2 text-[12px] leading-[1.6] text-ink-600">
+              {result.reason}
+            </p>
+            <button
+              type="button"
+              onClick={() => setDecided(false)}
+              className="mt-2 text-[11px] font-medium text-sky-500 underline-offset-2 hover:underline"
+            >
+              気分を変更
+            </button>
+          </div>
+        </div>
+      </section>
     );
   }
 
