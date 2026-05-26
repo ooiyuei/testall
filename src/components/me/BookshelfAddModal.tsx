@@ -6,8 +6,9 @@
 // - ヒットなし → 手入力にフォールバック
 // - バーコードスキャン → ISBN → /api/isbn-lookup で書籍情報を解決
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 import {
   BookOpen,
   Check,
@@ -78,6 +79,20 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
   const [kind, setKind] = useState<BookshelfItem["kind"]>("textbook");
   const [query, setQuery] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const trapRef = useFocusTrap<HTMLDivElement>(true);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
 
   // フィルタ
   const [filterArea, setFilterArea] = useState<"all" | SubjectAreaId>("all");
@@ -210,14 +225,22 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-ink-900/40 backdrop-blur-[2px]">
+    <div
+      className="fixed inset-0 z-50 flex items-end bg-ink-900/40 backdrop-blur-[2px]"
+      role="dialog"
+      aria-modal="true"
+      aria-label="本棚に追加"
+    >
       <button
         type="button"
         className="absolute inset-0 cursor-default"
         aria-label="閉じる"
         onClick={onClose}
       />
-      <div className="sheet-in relative z-10 mx-auto flex max-h-[92vh] w-full max-w-[480px] flex-col overflow-hidden rounded-t-3xl bg-cream-50 shadow-pop">
+      <div
+        ref={trapRef}
+        className="sheet-in relative z-10 mx-auto flex max-h-[92vh] w-full max-w-[480px] flex-col overflow-hidden rounded-t-3xl bg-cream-50 shadow-pop"
+      >
         <div className="px-5 pt-3">
           <div className="mx-auto h-1 w-9 rounded-full bg-ink-200" />
           <div className="mt-3 flex items-center justify-between">
