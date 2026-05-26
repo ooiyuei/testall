@@ -5,7 +5,6 @@ import { ServiceWorkerRegister } from "@/components/system/ServiceWorkerRegister
 import { Toaster } from "@/components/ui/Toast";
 import { ConfirmHost } from "@/components/ui/ConfirmDialog";
 import { RouteProgress } from "@/components/system/RouteProgress";
-import { THEME_INIT_SCRIPT } from "@/lib/hooks/useTheme";
 
 const notoJP = Noto_Sans_JP({
   variable: "--font-noto-jp",
@@ -47,12 +46,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  // ダークモード時は黒、ライト時はクリームを meta[theme-color] に。
-  // THEME_INIT_SCRIPT は手動切替時のみ書き換え、初回 OS 追従はこちらで処理。
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fbfaf7" },
-    { media: "(prefers-color-scheme: dark)", color: "#14130f" },
-  ],
+  themeColor: "#fbfaf7",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -70,10 +64,6 @@ export default function RootLayout({
       className={`${notoJP.variable} ${inter.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <head>
-        {/* FOUC 防止: React の hydrate より先に html.dark を付ける */}
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
-      </head>
       <body className="min-h-full flex flex-col bg-cream-50 text-ink-900">
         <ServiceWorkerRegister />
         <RouteProgress />

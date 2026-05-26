@@ -38,8 +38,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="メインナビゲーション"
-      className="pb-safe fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-[480px] border-t border-ink-100/60 bg-cream-50/95 backdrop-blur-2xl backdrop-saturate-150 md:absolute md:bottom-0 md:rounded-b-[32px]"
-      style={{ WebkitBackdropFilter: "blur(24px) saturate(180%)" }}
+      className="pb-safe fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-[480px] border-t border-ink-200 bg-cream-50 shadow-[0_-4px_20px_-8px_rgba(20,19,15,0.10)]"
     >
       <ul className="flex items-stretch justify-around gap-1 px-3 py-1.5">
         {TABS.map((t) => {
