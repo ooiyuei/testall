@@ -611,7 +611,7 @@ const KIND_LABEL: Record<BookshelfItem["kind"], string> = {
   other: "その他",
 };
 
-// ─── 本棚セクション ─────────────────────────
+// ─── 本棚セクション (PDF: 横スクロール) ─────────────────
 function BookshelfSection({
   allBookshelf,
   onAdd,
@@ -622,13 +622,20 @@ function BookshelfSection({
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
-        <SectionTitle icon={BookMarked} title="本棚" />
+        <div className="flex items-baseline gap-2">
+          <SectionTitle icon={BookMarked} title="本棚" />
+          {allBookshelf.length > 0 ? (
+            <span className="text-[11px] font-medium text-ink-400">
+              · {allBookshelf.length}冊
+            </span>
+          ) : null}
+        </div>
         <button
           type="button"
           onClick={onAdd}
-          className="flex h-8 items-center gap-1.5 rounded-full bg-sky-500 px-3 text-[11px] font-bold text-white hover:bg-sky-600 active:scale-[0.97] transition"
+          className="flex h-8 items-center gap-1 rounded-full px-2.5 text-[12px] font-bold text-sky-500 hover:bg-sky-50 active:scale-[0.97] transition"
         >
-          <Plus className="h-3.5 w-3.5" />
+          <Plus className="h-3.5 w-3.5" strokeWidth={2.4} />
           追加
         </button>
       </div>
@@ -648,7 +655,7 @@ function BookshelfSection({
           </button>
         </div>
       ) : (
-        <ul className="grid grid-cols-2 gap-2">
+        <ul className="-mx-5 flex gap-2.5 overflow-x-auto px-5 pb-2 no-scrollbar snap-x snap-mandatory">
           {allBookshelf.map((b) => (
             <BookshelfCard key={b.id} item={b} />
           ))}
@@ -660,27 +667,27 @@ function BookshelfSection({
 
 function BookshelfCard({ item }: { item: BookshelfItem }) {
   return (
-    <li className="relative rounded-2xl border border-ink-100/80 bg-white p-4 shadow-soft hover:shadow-card active:scale-[0.98] transition">
-      <div className="text-[10px] font-medium text-ink-500">
-        {KIND_LABEL[item.kind]}
+    <li className="relative w-[120px] flex-none snap-start overflow-hidden rounded-2xl border border-ink-100/80 bg-white shadow-soft transition hover:shadow-card active:scale-[0.98]">
+      {/* 色付き上部 — 本のスピンドル風 */}
+      <div className="flex h-[72px] items-center justify-center bg-sky-50 text-sky-500">
+        <BookMarked className="h-7 w-7" strokeWidth={1.6} />
       </div>
-      <div className="mt-1 text-xs font-black text-ink-900 line-clamp-2 leading-[1.5]">
-        {item.name}
-      </div>
-      {item.progressPct !== undefined ? (
-        <div className="mt-3 space-y-1">
-          <div className="flex justify-between text-[10px] text-ink-400">
-            <span>進捗</span>
-            <span className="tabular-nums">{item.progressPct}%</span>
-          </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-cream-100">
+      <div className="p-2.5">
+        <div className="text-[9px] font-medium text-ink-400">
+          {KIND_LABEL[item.kind]}
+        </div>
+        <div className="mt-0.5 text-[11px] font-extrabold leading-[1.35] text-ink-900 line-clamp-2">
+          {item.name}
+        </div>
+        {item.progressPct !== undefined ? (
+          <div className="mt-2 h-1 overflow-hidden rounded-full bg-cream-100">
             <div
               className="h-full rounded-full bg-sky-500 transition-all"
               style={{ width: `${item.progressPct}%` }}
             />
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
       <button
         type="button"
         onClick={async () => {
@@ -701,7 +708,7 @@ function BookshelfCard({ item }: { item: BookshelfItem }) {
             });
           }
         }}
-        className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full text-ink-300 hover:bg-cream-100 hover:text-ink-600 transition"
+        className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white/80 text-ink-300 hover:text-ink-600 transition"
         aria-label="削除"
       >
         <X className="h-3.5 w-3.5" />
