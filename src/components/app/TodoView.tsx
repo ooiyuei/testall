@@ -152,7 +152,7 @@ export function TodoView() {
       {/* Header */}
       <header className="flex items-end justify-between">
         <div>
-          <div className="text-[11px] font-medium text-ink-400">TODO</div>
+          <div className="text-[11px] font-medium text-ink-400">やること</div>
           <h1
             className="mt-1 text-[28px] font-extrabold leading-[1.1] tracking-[-0.025em] text-ink-900"
             style={{ fontFamily: "var(--font-display)" }}
