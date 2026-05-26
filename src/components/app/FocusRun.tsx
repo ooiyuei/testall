@@ -59,13 +59,23 @@ export function FocusRun() {
   const startedAtRef = useRef<number | null>(null);
   const totalElapsedRef = useRef<number>(0);
 
-  // タイマー駆動 (副作用は updater 内で行わない)
+  // タイマー駆動 — 実時間から逆算してバックグラウンドのスロットル耐性を持たせる
   useEffect(() => {
     if (phase !== "running") return;
-    const interval = setInterval(() => {
-      setRemaining((prev) => (prev <= 1 ? 0 : prev - 1));
-    }, 1000);
-    return () => clearInterval(interval);
+    const tick = () => {
+      const live = startedAtRef.current !== null ? Date.now() - startedAtRef.current : 0;
+      const elapsed = Math.round((totalElapsedRef.current + live) / 1000);
+      setRemaining(Math.max(0, DEFAULT_DURATION_SEC - elapsed));
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    // タブ復帰時に即再計算（モバイルが setInterval を間引くため）
+    const onVisible = () => { if (!document.hidden) tick(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [phase]);
 
   // 残り 0 になったら finished に遷移 + 完走 haptic + chime + 通知
