@@ -98,29 +98,6 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Proof strip */}
-      <div className="border-t border-ink-100 bg-cream-50">
-        <div className="mx-auto flex max-w-[980px] flex-wrap justify-around gap-4 px-6 py-5 text-center">
-          {PROOF.map((p) => (
-            <div key={p.label} className="min-w-[80px]">
-              <div
-                className="text-[22px] font-extrabold tabular-nums tracking-[-0.02em] text-ink-900"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {p.value}
-              </div>
-              <div className="mt-0.5 text-[10px] text-ink-500">{p.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
     </section>
   );
 }
-
-const PROOF: { value: string; label: string }[] = [
-  { value: "23,400", label: "生徒が利用" },
-  { value: "+5.4", label: "平均偏差値UP/3ヶ月" },
-  { value: "92%", label: "計画完遂率" },
-  { value: "4.8", label: "App Store評価" },
-];
