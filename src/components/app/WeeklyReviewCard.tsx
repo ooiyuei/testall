@@ -37,7 +37,7 @@ function shouldShowReview(now = new Date()): boolean {
 const FEEL_OPTIONS = [
   { id: "ahead",   label: "想像より頑張れた", tone: "bg-mint-100 text-mint-600" },
   { id: "ontrack", label: "予定通り",         tone: "bg-sky-100 text-sky-600" },
-  { id: "behind",  label: "少し遅れた",       tone: "bg-peach-100 text-peach-500" },
+  { id: "behind",  label: "少し遅れた",       tone: "bg-coral-100 text-coral-500" },
   { id: "broken",  label: "崩れた",           tone: "bg-coral-300 text-white" },
 ] as const;
 type Feel = (typeof FEEL_OPTIONS)[number]["id"];

@@ -31,7 +31,7 @@ export type SubjectArea = {
 };
 
 export const SUBJECT_AREAS: SubjectArea[] = [
-  { id: "japanese", name: "国語", shortName: "国", tone: "bg-peach-100 text-peach-500", iconKey: "BookOpen", category: "common" },
+  { id: "japanese", name: "国語", shortName: "国", tone: "bg-coral-100 text-coral-500", iconKey: "BookOpen", category: "common" },
   { id: "math",     name: "数学", shortName: "数", tone: "bg-sky-100 text-sky-700",     iconKey: "Calculator", category: "common" },
   { id: "english",  name: "英語", shortName: "英", tone: "bg-mint-100 text-mint-600",   iconKey: "MessageSquare", category: "common" },
   { id: "science",  name: "理科", shortName: "理", tone: "bg-sun-200 text-ink-900",     iconKey: "FlaskConical", category: "sciences" },

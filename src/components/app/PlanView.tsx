@@ -37,8 +37,8 @@ const KIND_META: Record<
 > = {
   "regular-test": {
     label: "定期テスト",
-    tone: "bg-peach-100 text-peach-500",
-    dot: "bg-peach-500",
+    tone: "bg-coral-100 text-coral-500",
+    dot: "bg-coral-500",
     badge: "info",
   },
   "mock-exam": {
@@ -314,7 +314,7 @@ export function PlanView() {
 
         <footer className="flex flex-wrap gap-3 border-t border-cream-100 px-4 py-2.5">
           <Legend tone="bg-mint-500" label="学習記録" />
-          <Legend tone="bg-peach-500" label="定期テスト" />
+          <Legend tone="bg-coral-500" label="定期テスト" />
           <Legend tone="bg-sky-500" label="模試" />
           <Legend tone="bg-coral-500" label="期限" />
         </footer>

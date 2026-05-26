@@ -634,7 +634,7 @@ function UniversityCard({ u }: { u: University }) {
 
   const tierTone: Record<string, string> = {
     S: "bg-coral-300/30 text-coral-600",
-    A: "bg-peach-100 text-peach-500",
+    A: "bg-coral-100 text-coral-500",
     B: "bg-sky-100 text-sky-600",
     C: "bg-mint-100 text-mint-600",
     D: "bg-cream-100 text-ink-600",
@@ -685,7 +685,7 @@ const LEVEL_LABEL: Record<Textbook["level"], string> = {
 const LEVEL_TONE: Record<Textbook["level"], string> = {
   basic: "bg-mint-100 text-mint-600",
   standard: "bg-sky-100 text-sky-700",
-  advanced: "bg-peach-100 text-peach-500",
+  advanced: "bg-coral-100 text-coral-500",
   top: "bg-coral-300 text-white",
 };
 
@@ -742,7 +742,7 @@ function TextbookCard({
 function MockExamCard({ m }: { m: MockExam }) {
   const providerTone: Record<string, string> = {
     kawai: "bg-sky-100 text-sky-700",
-    sundai: "bg-peach-100 text-peach-500",
+    sundai: "bg-coral-100 text-coral-500",
     toshin: "bg-mint-100 text-mint-600",
     yozemi: "bg-sun-200 text-ink-700",
     benesse: "bg-cream-100 text-ink-700",

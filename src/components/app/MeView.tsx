@@ -591,7 +591,7 @@ function AreaDetail({
             {abilityCounts.map(([name, count]) => (
               <li
                 key={name}
-                className="rounded-full bg-peach-100 px-2 py-0.5 text-[10px] font-bold text-peach-500"
+                className="rounded-full bg-coral-100 px-2 py-0.5 text-[10px] font-bold text-coral-500"
               >
                 {name}
                 <span className="ml-1 text-ink-400 tabular-nums">×{count}</span>

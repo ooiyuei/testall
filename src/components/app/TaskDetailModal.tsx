@@ -16,7 +16,7 @@ const TAG_LABEL: Record<TaskTag, string> = {
 };
 
 const TAG_TONE: Record<TaskTag, string> = {
-  homework: "bg-peach-50 text-peach-500",
+  homework: "bg-coral-50 text-coral-500",
   elective: "bg-sky-50 text-sky-600",
   qualification: "bg-mint-50 text-mint-600",
   added: "bg-sun-100 text-ink-700",

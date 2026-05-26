@@ -48,7 +48,7 @@ const ITEMS: FabItem[] = [
   },
   {
     icon: Clock3,
-    tone: "bg-peach-100 text-peach-500",
+    tone: "bg-coral-100 text-coral-500",
     title: "勉強時間を記録",
     sub: "集中したブロックを後から記録",
     action: { kind: "route", href: "/app/focus" },

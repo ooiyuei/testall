@@ -23,7 +23,7 @@ export const CATEGORY_DEFS: {
     id: "japanese",
     name: "国語",
     shortName: "国",
-    tone: "bg-peach-100 text-peach-500",
+    tone: "bg-coral-100 text-coral-500",
     iconKey: "BookOpen",
   },
   {

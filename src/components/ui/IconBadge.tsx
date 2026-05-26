@@ -15,7 +15,7 @@ const TONE: Record<IconBadgeTone, string> = {
   success: "bg-mint-100 text-mint-600",
   warning: "bg-sun-200/60 text-ink-700",
   danger: "bg-coral-300/15 text-coral-500",
-  info: "bg-peach-100 text-peach-500",
+  info: "bg-sky-100 text-sky-600",
   neutral: "bg-cream-100 text-ink-700",
 };
 

@@ -34,7 +34,7 @@ const CAUSE_LABEL: Record<MissCause, string> = {
 };
 
 const CAUSE_TONE: Record<MissCause, string> = {
-  knowledge: "bg-peach-100 text-peach-500",
+  knowledge: "bg-coral-100 text-coral-500",
   understanding: "bg-coral-300/30 text-coral-500",
   time: "bg-sun-200 text-ink-900",
   careless: "bg-sky-100 text-sky-700",

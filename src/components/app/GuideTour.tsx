@@ -29,7 +29,7 @@ const STEPS: Step[] = [
   },
   {
     icon: ClipboardList,
-    tone: "bg-peach-100 text-peach-500",
+    tone: "bg-coral-100 text-coral-500",
     title: "まずはテストを追加",
     body: "校内テストや模試の結果を入れると、弱点と次の手が出ます。写真でも入力できます。",
     cta: { href: "/app/test/new", label: "テストを追加" },

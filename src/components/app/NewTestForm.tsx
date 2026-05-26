@@ -41,7 +41,7 @@ import type {
 type Mode = "select" | "manual" | "photo";
 
 const CAUSE_OPTIONS: { id: MissCause; label: string; tone: string }[] = [
-  { id: "knowledge", label: "知識不足", tone: "bg-peach-100 text-peach-500" },
+  { id: "knowledge", label: "知識不足", tone: "bg-coral-100 text-coral-500" },
   {
     id: "understanding",
     label: "理解不足",
