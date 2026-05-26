@@ -67,6 +67,7 @@ import { toast } from "@/components/ui/Toast";
 import { confirm } from "@/components/ui/ConfirmDialog";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { GapCard } from "@/components/app/GapCard";
+import { StreakHeatmap } from "@/components/app/StreakHeatmap";
 
 export function MeView() {
   const { state, hydrated } = useStore();
@@ -129,9 +130,18 @@ export function MeView() {
       {/* ── LV/経験値 ── */}
       <LevelSection />
 
+      {/* ── 学習ヒートマップ ── */}
+      <StreakHeatmap />
+
       {/* ── ステータス（五角形 + 9教科リンク + 偏差値/スコア） ── */}
       {/* PDF順: Level → Pentagon → 本棚 */}
       <StatusCard profile={profile} statusPoints={statusPoints} />
+
+      {/* ── 偏差値推移 ── */}
+      <DeviationTrendSection />
+
+      {/* ── 経験値推移 ── */}
+      <ExpTrendSection />
 
       {/* ── 本棚 ── */}
       <BookshelfSection
