@@ -54,7 +54,6 @@ export function FocusRun() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [remaining, setRemaining] = useState<number>(DEFAULT_DURATION_SEC);
   const [rating, setRating] = useState<number>(0);
-  const [note, setNote] = useState<string>("");
   const startedAtRef = useRef<number | null>(null);
   const totalElapsedRef = useRef<number>(0);
 
@@ -201,7 +200,6 @@ export function FocusRun() {
       blockIdx: effectiveBlockIdx,
       completedAt: new Date().toISOString(),
       rating,
-      note: note.trim() || undefined,
       durationSec: elapsedSec(),
     });
     toast.success("記録しました");
@@ -276,8 +274,6 @@ export function FocusRun() {
             block={block}
             rating={rating}
             setRating={setRating}
-            note={note}
-            setNote={setNote}
             onSave={saveAndExit}
             disabled={rating === 0 || alreadyLogged}
             alreadyLogged={alreadyLogged}
@@ -635,8 +631,6 @@ function FinishView({
   block,
   rating,
   setRating,
-  note,
-  setNote,
   onSave,
   disabled,
   alreadyLogged,
@@ -645,8 +639,6 @@ function FinishView({
   block: Block | null;
   rating: number;
   setRating: (n: number) => void;
-  note: string;
-  setNote: (s: string) => void;
   onSave: () => void;
   disabled: boolean;
   alreadyLogged: boolean;
@@ -724,21 +716,6 @@ function FinishView({
             </button>
           ))}
         </div>
-      </section>
-
-      {/* メモ */}
-      <section className="rounded-2xl bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.10)]">
-        <div className="text-[10px] font-bold uppercase tracking-widest text-ink-400">
-          Memo（任意）
-        </div>
-        <textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="ひっかかった点・次に試したいこと"
-          rows={3}
-          aria-label="振り返りメモ"
-          className="mt-2 w-full rounded-xl border border-cream-200 bg-cream-50 px-3 py-2 text-sm text-ink-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-        />
       </section>
 
       {alreadyLogged ? (

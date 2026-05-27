@@ -200,13 +200,22 @@ export function TestDetail({ id }: { id: string }) {
       </section>
 
       {/* CTA */}
-      <Link
-        href="/app/focus"
-        className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 text-[15px] font-black text-white shadow-[0_6px_18px_-8px_var(--color-sky-500)]"
-      >
-        <Play strokeWidth={0} fill="currentColor" className="h-4 w-4" />
-        今日の25分を始める
-      </Link>
+      {completed < diagnosis.todayBlocks.length ? (
+        <Link
+          href={`/app/focus/run?testId=${id}&block=${completed}`}
+          className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 text-[15px] font-black text-white shadow-[0_6px_18px_-8px_var(--color-sky-500)]"
+        >
+          <Play strokeWidth={0} fill="currentColor" className="h-4 w-4" />
+          今日の25分を始める
+        </Link>
+      ) : (
+        <div className="rounded-2xl border border-mint-200 bg-mint-50 p-4 text-center">
+          <div className="text-[13px] font-bold text-mint-700">今日のブロックはすべて完了！</div>
+          <Link href="/app" className="mt-1 inline-block text-[11px] font-bold text-sky-500">
+            ホームへ戻る →
+          </Link>
+        </div>
+      )}
 
       {/* Delete */}
       <button

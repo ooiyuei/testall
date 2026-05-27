@@ -6,18 +6,15 @@
 // MeView の LevelSection の下に挿入する想定。
 
 import { useMemo, useState } from "react";
-import { Flame, BarChart3, PieChart, Award, Calendar } from "lucide-react";
+import { Flame, BarChart3, Calendar } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
-import { computeTotalExp, levelFromExp } from "@/lib/exp";
 import {
   computeDailyBlocks,
   computeMonthStats,
   computeStreak,
-  computeSubjectShare,
   computeWeekStats,
 } from "@/lib/analytics";
-import { evaluateBadges } from "@/lib/badges";
 
 const AREA_COLOR: Record<string, string> = {
   japanese: "bg-coral-500",
@@ -37,32 +34,17 @@ export function AnalyticsSection() {
   const data = useMemo(() => {
     if (!hydrated) return null;
     const blockLogs = state.blockLogs ?? [];
-    const tests = state.tests ?? [];
-    const tasks = state.tasks ?? [];
-    const moods = state.dailyMoodLogs ?? [];
 
     const streak = computeStreak(blockLogs);
     const week = computeWeekStats(blockLogs);
     const month = computeMonthStats(blockLogs);
     const daily = computeDailyBlocks(blockLogs, 7);
-    const share = computeSubjectShare(blockLogs, tests, 30);
-    const totalExp = computeTotalExp({
-      tasks,
-      tests,
-      blockLogs,
-      loginDays: moods.length,
-      streakDays: streak.current,
-    });
-    const level = levelFromExp(totalExp);
-    const badges = evaluateBadges({ blockLogs, tests, level });
-    return { streak, week, month, daily, share, badges, level };
+    return { streak, week, month, daily };
   }, [hydrated, state]);
 
   if (!hydrated || !data) return null;
 
   const stats = period === "week" ? data.week : data.month;
-  const earned = data.badges.filter((b) => b.earned);
-  const nextBadge = data.badges.find((b) => !b.earned);
 
   return (
     <section className="rounded-2xl border border-ink-100/80 bg-white p-5 shadow-soft space-y-5">
@@ -132,65 +114,6 @@ export function AnalyticsSection() {
         <WeeklyBars daily={data.daily} />
       </div>
 
-      {/* 科目別配分 (直近30日) */}
-      {data.share.length > 0 ? (
-        <div>
-          <div className="mb-2 flex items-center gap-1.5">
-            <PieChart className="h-3.5 w-3.5 text-coral-500" />
-            <h3 className="text-[11px] font-bold text-ink-700">科目別配分 (30日)</h3>
-          </div>
-          <div className="flex h-2 overflow-hidden rounded-full bg-cream-100">
-            {data.share.map((s) => (
-              <div
-                key={s.areaId}
-                className={cn("h-full", AREA_COLOR[s.areaId] ?? "bg-ink-300")}
-                style={{ width: `${s.pct}%` }}
-                title={`${s.label} ${s.pct}%`}
-              />
-            ))}
-          </div>
-          <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-            {data.share.map((s) => (
-              <li key={s.areaId} className="flex items-center gap-1.5 text-[10px]">
-                <span className={cn("h-1.5 w-1.5 rounded-full", AREA_COLOR[s.areaId] ?? "bg-ink-300")} />
-                <span className="font-semibold text-ink-700">{s.label}</span>
-                <span className="text-ink-500">{s.pct}%</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
-      {/* バッジ */}
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <Award className="h-3.5 w-3.5 text-sun-500" />
-            <h3 className="text-[11px] font-bold text-ink-700">
-              バッジ {earned.length} / {data.badges.length}
-            </h3>
-          </div>
-          {nextBadge ? (
-            <span className="text-[10px] text-ink-400">次: {nextBadge.title}</span>
-          ) : null}
-        </div>
-        <ul className="flex flex-wrap gap-1.5">
-          {data.badges.map((b) => (
-            <li
-              key={b.id}
-              title={`${b.title} — ${b.desc}${b.earned ? "" : ` (${b.progress}%)`}`}
-              className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-full text-[16px]",
-                b.earned
-                  ? "bg-sun-200 ring-1 ring-sun-400"
-                  : "bg-cream-100 text-ink-300 opacity-60 grayscale",
-              )}
-            >
-              {b.icon}
-            </li>
-          ))}
-        </ul>
-      </div>
     </section>
   );
 }
