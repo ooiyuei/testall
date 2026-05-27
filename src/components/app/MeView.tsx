@@ -51,8 +51,6 @@ import { RadarChart, type RadarPoint } from "@/components/me/RadarChart";
 import { BookshelfAddModal } from "@/components/me/BookshelfAddModal";
 import { HighschoolEditModal } from "@/components/me/HighschoolEditModal";
 import { LevelCard } from "@/components/me/LevelCard";
-import { DeviationTrend, type TrendSeries } from "@/components/me/DeviationTrend";
-import { ExpTrend, type ExpTrendPoint } from "@/components/me/ExpTrend";
 import { computeTotalExp, levelFromExp } from "@/lib/exp";
 import { defaultRemainingMonths, estimateGoalGap, estimateRequiredBlocks } from "@/lib/planning";
 import { HOURS_PER_BLOCK } from "@/lib/planning/constants";
@@ -862,151 +860,6 @@ function LevelSection() {
   );
 }
 
-// ─── 偏差値推移 ──────────────────────────────
-function DeviationTrendSection() {
-  const { state, hydrated } = useStore();
-  if (!hydrated) return null;
-  const tests = state.tests ?? [];
-  if (tests.length === 0) {
-    return (
-      <Card as="section" padding="lg">
-        <SectionLabel title="偏差値の推移" />
-        <p className="mt-3 text-[11px] leading-[1.6] text-ink-500">
-          テスト結果を登録すると、ここに偏差値の推移が表示されます。
-        </p>
-      </Card>
-    );
-  }
-
-  const COLORS: Record<SubjectAreaId, string> = {
-    japanese: "#d35d18",
-    math: "#0071e3",
-    english: "#0f9b5e",
-    science: "#f5b400",
-    history: "#d94a36",
-    civics: "#6e6a60",
-    info: "#36b97a",
-  };
-
-  const series: TrendSeries[] = [];
-  for (const area of ["japanese","math","english","science","history","civics","info"] as SubjectAreaId[]) {
-    const def = SUBJECT_AREAS.find((a) => a.id === area)!;
-    const points = tests
-      .filter((t) => t?.input && guessArea(t.input.subject) === area)
-      .map((t) => {
-        const date = toDateString(t.createdAt) ?? "";
-        const fullScore = t.input.fullScore ?? 0;
-        const score = t.input.score ?? 0;
-        const value =
-          t.input.deviation ??
-          (fullScore > 0 ? Math.round((score / fullScore) * 100 / 2 + 35) : 0);
-        return { date, value };
-      })
-      .filter((p) => p.date)
-      .sort((a, b) => a.date.localeCompare(b.date));
-    if (points.length > 0) {
-      series.push({ name: def.name, color: COLORS[area], points });
-    }
-  }
-
-  return (
-    <Card as="section" padding="lg">
-      <div className="flex items-baseline justify-between">
-        <SectionLabel title="偏差値の推移" />
-        <span className="text-[10px] font-medium text-ink-500 tabular-nums">
-          {tests.length} 回
-        </span>
-      </div>
-      <div className="mt-4">
-        <DeviationTrend series={series} />
-      </div>
-    </Card>
-  );
-}
-
-// ─── 経験値推移 ──────────────────────────────
-function ExpTrendSection() {
-  const { state, hydrated } = useStore();
-
-  const points = useMemo((): ExpTrendPoint[] => {
-    if (!hydrated) return [];
-    const dailyMap = new Map<string, number>();
-
-    for (const log of state.dailyMoodLogs ?? []) {
-      const d = log.dateISO;
-      dailyMap.set(d, (dailyMap.get(d) ?? 0) + 10);
-    }
-    for (const bl of state.blockLogs ?? []) {
-      const d = toDateString(bl.completedAt);
-      if (!d) continue;
-      dailyMap.set(d, (dailyMap.get(d) ?? 0) + 50);
-    }
-    for (const task of state.tasks ?? []) {
-      if (task.status === "done" && task.completedAt) {
-        const d = toDateString(task.completedAt);
-        if (!d) continue;
-        const gain = 30 * Math.max(1, task.blocks ?? 1);
-        dailyMap.set(d, (dailyMap.get(d) ?? 0) + gain);
-      }
-    }
-    for (const test of state.tests ?? []) {
-      const d = toDateString(test.createdAt);
-      if (!d) continue;
-      dailyMap.set(d, (dailyMap.get(d) ?? 0) + 200);
-    }
-
-    if (dailyMap.size === 0) return [];
-
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 29);
-    const cutoffStr = cutoff.toISOString().slice(0, 10);
-
-    const sortedDays = [...dailyMap.entries()]
-      .filter(([d]) => d >= cutoffStr)
-      .sort(([a], [b]) => a.localeCompare(b));
-
-    let baseExp = 0;
-    for (const [d, gain] of [...dailyMap.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-      if (d < cutoffStr) baseExp += gain;
-    }
-
-    const result: ExpTrendPoint[] = [];
-    let cumExp = baseExp;
-    for (const [date, gain] of sortedDays) {
-      cumExp += gain;
-      result.push({ date, cumExp });
-    }
-    return result;
-  }, [hydrated, state.dailyMoodLogs, state.blockLogs, state.tasks, state.tests]);
-
-  if (!hydrated) return null;
-
-  const totalTests = (state.tests ?? []).length;
-  const totalBlocks = (state.blockLogs ?? []).length;
-  const hasData = points.length > 0;
-
-  return (
-    <Card as="section" padding="lg">
-      <div className="flex items-baseline justify-between">
-        <SectionLabel title="経験値の推移" />
-        {hasData ? (
-          <span className="text-[10px] font-medium text-ink-500 tabular-nums">
-            累計 {points[points.length - 1].cumExp.toLocaleString()} EXP
-          </span>
-        ) : null}
-      </div>
-      <div className="mt-4">
-        <ExpTrend points={points} />
-      </div>
-      {hasData ? (
-        <p className="mt-2 text-[10px] text-ink-400">
-          テスト {totalTests}回 · ブロック {totalBlocks}回
-        </p>
-      ) : null}
-    </Card>
-  );
-}
-
 // ─── ステータス計算 ───
 function buildStatusPoints(
   tests: TestRecord[],
@@ -1021,7 +874,7 @@ function buildStatusPoints(
       const recent = filtered[0];
       value = Math.round((recent.input.score / recent.input.fullScore) * 100);
     } else {
-      value = 35;
+      value = 0;
     }
     return {
       label: areaDef.name,

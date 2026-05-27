@@ -337,7 +337,7 @@ export function HomeView() {
       ) : null}
 
       {/* AI コーチへのリンク (フル画面チャットへ) — タイムラインの邪魔をしない控えめな配置 */}
-      {hydrated && totalCount > 0 ? (
+      {hydrated && state.profile?.onboardedAt ? (
         <section className="mt-5">
           <Link
             href="/app/ai"

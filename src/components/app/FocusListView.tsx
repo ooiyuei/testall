@@ -213,33 +213,3 @@ export function FocusListView() {
     </div>
   );
 }
-
-function StatCard({
-  label,
-  value,
-  sub,
-  tone,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-  tone?: "sun";
-}) {
-  return (
-    <div className="rounded-2xl border border-ink-100/80 bg-white p-3.5">
-      <div className="text-[10px] font-semibold text-ink-400">{label}</div>
-      <div className="mt-1 flex items-baseline gap-0.5">
-        <span
-          className={cn(
-            "text-[24px] font-extrabold tabular-nums tracking-[-0.02em]",
-            tone === "sun" ? "text-sun-400" : "text-ink-900",
-          )}
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          {value}
-        </span>
-        <span className="text-[10px] text-ink-400">{sub}</span>
-      </div>
-    </div>
-  );
-}

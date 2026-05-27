@@ -243,7 +243,7 @@ export function SearchView() {
       </div>
 
       {/* 検索履歴 — query が空 + focus or 履歴あり時のみ */}
-      {!query.trim() && history.length > 0 && (focused || true) ? (
+      {!query.trim() && history.length > 0 && focused ? (
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[10px] font-semibold text-ink-400">最近の検索</span>
           {history.map((h) => (

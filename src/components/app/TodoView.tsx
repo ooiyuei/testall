@@ -75,6 +75,7 @@ export function TodoView() {
   const sp = useSearchParams();
   const { state, hydrated } = useStore();
   const [open, setOpen] = useState(false);
+  const [editTask, setEditTask] = useState<StoredTask | null>(null);
   const [tab, setTab] = useState<Tab>("today");
   const [query, setQuery] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
@@ -125,18 +126,17 @@ export function TodoView() {
 
   // Compute counts per tab for header label
   const counts = useMemo(() => {
-    let today = 0, todo = 0, done = 0;
+    let today = 0, todayTotal = 0, todo = 0, done = 0;
     for (const t of tasks) {
       if (t.status === "done") done += 1;
       else todo += 1;
-      if (
-        t.status !== "done" &&
-        (t.due === "today" || (t.dueDate && t.dueDate <= todayISO) || effectivePriority(t) === 1)
-      ) {
-        today += 1;
+      const isToday = t.due === "today" || (t.dueDate && t.dueDate <= todayISO) || effectivePriority(t) === 1;
+      if (isToday) {
+        todayTotal += 1;
+        if (t.status !== "done") today += 1;
       }
     }
-    return { today, todo, done, all: tasks.length };
+    return { today, todayTotal, todo, done, all: tasks.length };
   }, [tasks, todayISO]);
 
   if (!hydrated) return <ListSkeleton rows={5} />;
@@ -158,10 +158,8 @@ export function TodoView() {
             style={{ fontFamily: "var(--font-display)" }}
           >
             今日{" "}
-            <span className="tabular-nums text-sky-500">
-              {counts.today - tasks.filter((t) => t.status === "done" && (t.due === "today" || (t.dueDate && t.dueDate <= todayISO))).length}
-            </span>
-            <span className="text-[14px] font-semibold text-ink-400"> / {counts.today}</span>
+            <span className="tabular-nums text-sky-500">{counts.today}</span>
+            <span className="text-[14px] font-semibold text-ink-400"> / {counts.todayTotal}</span>
           </h1>
         </div>
         <button
@@ -294,10 +292,11 @@ export function TodoView() {
           primary={{ label: "タスク追加", onClick: () => setOpen(true) }}
         />
       ) : (
-        <TaskGroupedList tasks={visible} todayISO={todayISO} />
+        <TaskGroupedList tasks={visible} todayISO={todayISO} onEdit={setEditTask} />
       )}
 
       {open ? <TaskModal onClose={() => setOpen(false)} /> : null}
+      {editTask ? <TaskModal task={editTask} onClose={() => setEditTask(null)} /> : null}
     </div>
     </PullToRefresh>
   );
@@ -329,7 +328,7 @@ function fmtMonthDay(iso: string): string {
   const [, m, d] = iso.split("-");
   return `${Number(m)}/${Number(d)}`;
 }
-function TaskGroupedList({ tasks, todayISO }: { tasks: StoredTask[]; todayISO: string }) {
+function TaskGroupedList({ tasks, todayISO, onEdit }: { tasks: StoredTask[]; todayISO: string; onEdit: (t: StoredTask) => void }) {
   const buckets = bucketize(tasks, todayISO);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
@@ -405,7 +404,7 @@ function TaskGroupedList({ tasks, todayISO }: { tasks: StoredTask[]; todayISO: s
                       });
                     }}
                   >
-                    <TaskRow task={t} todayISO={todayISO} />
+                    <TaskRow task={t} todayISO={todayISO} onEdit={onEdit} />
                   </SwipeableRow>
                 </li>
               ))}
@@ -420,7 +419,7 @@ function TaskGroupedList({ tasks, todayISO }: { tasks: StoredTask[]; todayISO: s
 // PDF mock: シンプルな1行 + ミドット連結のメタ情報
 // ○ タイトル
 //   ●教科 · 25分 · 課題 (遅延赤バッジ)
-function TaskRow({ task, todayISO }: { task: StoredTask; todayISO: string }) {
+function TaskRow({ task, todayISO, onEdit }: { task: StoredTask; todayISO: string; onEdit: (t: StoredTask) => void }) {
   const done = task.status === "done";
   const area = SUBJECT_AREAS.find((a) => a.id === task.subjectArea);
   const overdue = !done && task.dueDate ? task.dueDate < todayISO : false;
@@ -452,7 +451,12 @@ function TaskRow({ task, todayISO }: { task: StoredTask; todayISO: string }) {
       >
         {done ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
       </button>
-      <div className="min-w-0 flex-1">
+      <button
+        type="button"
+        onClick={() => onEdit(task)}
+        className="min-w-0 flex-1 text-left"
+        aria-label={`${task.title}を編集`}
+      >
         <div
           className={cn(
             "text-[14px] font-bold leading-snug",
@@ -478,18 +482,19 @@ function TaskRow({ task, todayISO }: { task: StoredTask; todayISO: string }) {
             </span>
           ) : null}
         </div>
-      </div>
+      </button>
     </article>
   );
 }
 
-function TaskModal({ onClose }: { onClose: () => void }) {
-  const [title, setTitle] = useState("");
-  const [blocks, setBlocks] = useState(1);
-  const [tag, setTag] = useState<TaskTag>("homework");
-  const [subjectArea, setSubjectArea] = useState<string>("");
-  const [due, setDue] = useState<DueBucket>("today");
-  const [customDate, setCustomDate] = useState("");
+function TaskModal({ task, onClose }: { task?: StoredTask; onClose: () => void }) {
+  const isEdit = !!task;
+  const [title, setTitle] = useState(task?.title ?? "");
+  const [blocks, setBlocks] = useState(task?.blocks ?? 1);
+  const [tag, setTag] = useState<TaskTag>(task?.tag ?? "homework");
+  const [subjectArea, setSubjectArea] = useState<string>(task?.subjectArea ?? "");
+  const [due, setDue] = useState<DueBucket>(task?.due ?? "today");
+  const [customDate, setCustomDate] = useState(task?.dueDate ?? "");
   const trapRef = useFocusTrap<HTMLFormElement>(true);
 
   // Esc で閉じる + body スクロールロック
@@ -510,7 +515,7 @@ function TaskModal({ onClose }: { onClose: () => void }) {
     e.preventDefault();
     if (!title.trim()) return;
     saveTask({
-      id: `tk-${Date.now().toString(36)}`,
+      id: task?.id ?? `tk-${Date.now().toString(36)}`,
       title: title.trim(),
       blocks,
       tag,
@@ -518,8 +523,9 @@ function TaskModal({ onClose }: { onClose: () => void }) {
       priority: priorityFromDue(due),
       due,
       dueDate: customDate || undefined,
-      status: "todo",
-      createdAt: new Date().toISOString(),
+      status: task?.status ?? "todo",
+      createdAt: task?.createdAt ?? new Date().toISOString(),
+      completedAt: task?.completedAt,
     });
     onClose();
   }
@@ -537,12 +543,12 @@ function TaskModal({ onClose }: { onClose: () => void }) {
         onSubmit={handle}
         role="dialog"
         aria-modal="true"
-        aria-label="タスクを追加"
+        aria-label={isEdit ? "タスクを編集" : "タスクを追加"}
         className="sheet-in relative z-10 mx-auto w-full max-w-[480px] rounded-t-3xl bg-cream-50 px-5 pt-3 pb-[max(env(safe-area-inset-bottom),1.25rem)] shadow-pop"
       >
         <div className="mx-auto h-1 w-10 rounded-full bg-ink-200" />
         <div className="mt-3 flex items-center justify-between">
-          <h3 className="text-[15px] font-bold text-ink-900">タスクを追加</h3>
+          <h3 className="text-[15px] font-bold text-ink-900">{isEdit ? "タスクを編集" : "タスクを追加"}</h3>
           <button
             type="button"
             onClick={onClose}
@@ -688,7 +694,7 @@ function TaskModal({ onClose }: { onClose: () => void }) {
           fullWidth
           className="mt-5"
         >
-          追加する
+          {isEdit ? "保存する" : "追加する"}
         </Button>
       </form>
     </div>
