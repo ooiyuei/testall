@@ -51,6 +51,7 @@ import { RadarChart, type RadarPoint } from "@/components/me/RadarChart";
 import { BookshelfAddModal } from "@/components/me/BookshelfAddModal";
 import { HighschoolEditModal } from "@/components/me/HighschoolEditModal";
 import { LevelCard } from "@/components/me/LevelCard";
+import { AnalyticsSection } from "@/components/me/AnalyticsSection";
 import { computeTotalExp, levelFromExp } from "@/lib/exp";
 import { defaultRemainingMonths, estimateGoalGap, estimateRequiredBlocks } from "@/lib/planning";
 import { HOURS_PER_BLOCK } from "@/lib/planning/constants";
@@ -123,7 +124,8 @@ export function MeView() {
       {/* ── LV/経験値 ── */}
       <LevelSection />
 
-      {/* 偏差値・経験値の推移グラフはマイページから削除 (詳細は各教科ページへ) */}
+      {/* ── 学習分析 (streak / 週月集計 / 7日バー / 科目配分 / バッジ) ── */}
+      <AnalyticsSection />
 
       {/* ── 本棚 ── */}
       <BookshelfSection
