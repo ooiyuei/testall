@@ -454,7 +454,7 @@ function TaskRow({ task, todayISO, onEdit }: { task: StoredTask; todayISO: strin
       <button
         type="button"
         onClick={() => onEdit(task)}
-        className="min-w-0 flex-1 text-left"
+        className="min-w-0 flex-1 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
         aria-label={`${task.title}を編集`}
       >
         <div

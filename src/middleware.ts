@@ -33,11 +33,15 @@ export async function middleware(request: NextRequest) {
   });
 
   try {
+    let timerId: ReturnType<typeof setTimeout>;
     await Promise.race([
-      supabase.auth.getUser(),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("supabase_auth_timeout")), SUPABASE_AUTH_TIMEOUT_MS),
-      ),
+      supabase.auth.getUser().finally(() => clearTimeout(timerId)),
+      new Promise((_, reject) => {
+        timerId = setTimeout(
+          () => reject(new Error("supabase_auth_timeout")),
+          SUPABASE_AUTH_TIMEOUT_MS,
+        );
+      }),
     ]);
   } catch (e) {
     console.warn("[middleware] supabase auth skipped:", (e as Error).message);

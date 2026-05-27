@@ -11,6 +11,7 @@ import {
   Clock3,
   FileText,
   ScrollText,
+  Sparkles,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -32,6 +33,13 @@ type FabItem = {
 };
 
 const ITEMS: FabItem[] = [
+  {
+    icon: Sparkles,
+    tone: "bg-mint-100 text-mint-600",
+    title: "AI コーチに相談",
+    sub: "Sara に次の一手・苦手対策を聞く",
+    action: { kind: "route", href: "/app/ai" },
+  },
   {
     icon: ClipboardList,
     tone: "bg-sky-100 text-sky-600",

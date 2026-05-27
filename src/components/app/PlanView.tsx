@@ -49,9 +49,9 @@ const KIND_META: Record<
   },
   deadline: {
     label: "出願・期限",
-    tone: "bg-coral-300/40 text-coral-500",
-    dot: "bg-coral-500",
-    badge: "danger",
+    tone: "bg-sun-200 text-ink-700",
+    dot: "bg-sun-400",
+    badge: "warning",
   },
   study: {
     label: "学習予定",
@@ -316,7 +316,7 @@ export function PlanView() {
           <Legend tone="bg-mint-500" label="学習記録" />
           <Legend tone="bg-coral-500" label="定期テスト" />
           <Legend tone="bg-sky-500" label="模試" />
-          <Legend tone="bg-coral-500" label="期限" />
+          <Legend tone="bg-sun-400" label="期限" />
         </footer>
       </section>
 

@@ -55,10 +55,19 @@ export function AiCoachView() {
   const messages: ChatMessage[] = state.chatMessages ?? [];
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const recogRef = useRef<LocalSpeechRecognition | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, loading]);
+
+  // アンマウント時にリクエストと音声認識をクリーンアップ
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+      recogRef.current?.stop();
+    };
+  }, []);
 
   async function sendMessage(content: string) {
     const trimmed = content.trim();
@@ -67,11 +76,13 @@ export function AiCoachView() {
     setError(null);
     setLoading(true);
     addChatMessage({ id: newId(), role: "user", content: trimmed, timestamp: new Date().toISOString() });
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     try {
       const profile = state.profile;
       const latest = state.tests[0];
       // /api/chat の契約に合わせて: history + userMessage + context
-      const history = messages.slice(-10).map((m) => ({ role: m.role, content: m.content }));
+      const history = (state.chatMessages ?? []).slice(-10).map((m) => ({ role: m.role, content: m.content }));
       const cutoffMs = Date.now() - 14 * 24 * 60 * 60 * 1000;
       const recentBlocks14d = (state.blockLogs ?? []).filter(
         (b) => b?.completedAt && new Date(b.completedAt).getTime() >= cutoffMs,
@@ -79,6 +90,7 @@ export function AiCoachView() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: ctrl.signal,
         body: JSON.stringify({
           history,
           userMessage: trimmed,
@@ -109,6 +121,7 @@ export function AiCoachView() {
       setDegraded(Boolean(data.degraded));
       addChatMessage({ id: newId(), role: "assistant", content: data.text, timestamp: new Date().toISOString() });
     } catch (e: unknown) {
+      if (e instanceof Error && e.name === "AbortError") return; // アンマウント時は無視
       const msg = e instanceof Error ? e.message : "通信エラー";
       setError(msg);
     } finally {

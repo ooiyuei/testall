@@ -21,14 +21,21 @@ type ChatContext = {
     subject: string;
     testName: string;
     scorePct: number | null;
-    weakUnits: string[];
+    weakUnits?: string[];
   } | null;
   recentBlocks14d?: number;
 };
 
-function buildSystemPrompt(ctx?: ChatContext): string {
-  if (!ctx) return SYSTEM_PROMPT_BASE;
-  const lines: string[] = [SYSTEM_PROMPT_BASE, "", "# ユーザーの最新状況"];
+function buildSystemBlocks(ctx?: ChatContext): Anthropic.TextBlockParam[] {
+  const baseBlock: Anthropic.TextBlockParam = {
+    type: "text",
+    text: SYSTEM_PROMPT_BASE,
+    cache_control: { type: "ephemeral" },
+  };
+
+  if (!ctx) return [baseBlock];
+
+  const lines: string[] = ["# ユーザーの最新状況"];
   if (ctx.grade) lines.push(`- 学年: ${ctx.grade}`);
   if (typeof ctx.deviation === "number")
     lines.push(`- 現在の偏差値 (おおよそ): ${ctx.deviation}`);
@@ -41,16 +48,19 @@ function buildSystemPrompt(ctx?: ChatContext): string {
         t.scorePct !== null ? `(${t.scorePct}%)` : ""
       }`,
     );
-    if (t.weakUnits?.length > 0)
+    if (t.weakUnits && t.weakUnits.length > 0)
       lines.push(`- 苦手単元: ${t.weakUnits.join("・")}`);
   }
   if (typeof ctx.recentBlocks14d === "number")
     lines.push(`- 直近14日の完了ブロック: ${ctx.recentBlocks14d}`);
-  return lines.join("\n");
+
+  return [
+    baseBlock,
+    { type: "text", text: lines.join("\n") },
+  ];
 }
 
 function fallbackReply(userMessage: string): string {
-  const m = userMessage.toLowerCase();
   if (/次の25分|今日|何やる|なにやる|今やる/.test(userMessage)) {
     return "直近のテストで一番点数が低かった単元から取り組むのがおすすめです。25分タイマーを開始して、完了条件を 1 つに絞ってみてください。";
   }
@@ -110,9 +120,9 @@ export async function POST(req: Request) {
     ];
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-5",
+      model: "claude-sonnet-4-6",
       max_tokens: 512,
-      system: buildSystemPrompt(body.context),
+      system: buildSystemBlocks(body.context),
       messages,
     });
 
@@ -126,7 +136,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, text });
   } catch (e) {
     console.error("[chat] failed", e);
-    // 失敗時もフォールバック応答を返す
     return NextResponse.json({
       ok: true,
       text: fallbackReply(body.userMessage),

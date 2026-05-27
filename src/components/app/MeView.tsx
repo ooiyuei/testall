@@ -872,7 +872,9 @@ function buildStatusPoints(
     let value = 0;
     if (filtered.length > 0) {
       const recent = filtered[0];
-      value = Math.round((recent.input.score / recent.input.fullScore) * 100);
+      value = recent.input.fullScore > 0
+        ? Math.round((recent.input.score / recent.input.fullScore) * 100)
+        : 0;
     } else {
       value = 0;
     }

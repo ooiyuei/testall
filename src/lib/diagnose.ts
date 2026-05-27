@@ -295,6 +295,34 @@ export function validateDiagnosis(d: Diagnosis): boolean {
   return true;
 }
 
+const SYSTEM_PROMPT_CACHED: Anthropic.TextBlockParam[] = [
+  {
+    type: "text",
+    text: SYSTEM_PROMPT + "\n\n出力JSONスキーマ:\n" + JSON_SCHEMA_HINT,
+    cache_control: { type: "ephemeral" },
+  },
+];
+
+async function callDiagnoseOnce(
+  client: Anthropic,
+  userPrompt: string,
+): Promise<Diagnosis | null> {
+  const res = await client.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 4096,
+    system: SYSTEM_PROMPT_CACHED,
+    messages: [{ role: "user", content: userPrompt }],
+  });
+
+  const text = res.content
+    .filter((b): b is Anthropic.TextBlock => b.type === "text")
+    .map((b) => b.text)
+    .join("\n");
+
+  const parsed = extractJson<Diagnosis>(text);
+  return parsed && validateDiagnosis(parsed) ? parsed : null;
+}
+
 export async function diagnose(input: TestInput): Promise<Diagnosis> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -306,25 +334,25 @@ export async function diagnose(input: TestInput): Promise<Diagnosis> {
   if (cached) return cached;
 
   const client = new Anthropic({ apiKey });
-  const res = await client.messages.create({
-    model: "claude-sonnet-4-5",
-    max_tokens: 4096,
-    system: SYSTEM_PROMPT + "\n\n出力JSONスキーマ:\n" + JSON_SCHEMA_HINT,
-    messages: [{ role: "user", content: buildUserPrompt(input) }],
-  });
+  const userPrompt = buildUserPrompt(input);
 
-  const text = res.content
-    .filter((b): b is Anthropic.TextBlock => b.type === "text")
-    .map((b) => b.text)
-    .join("\n");
+  // 1回目
+  let result = await callDiagnoseOnce(client, userPrompt).catch(() => null);
 
-  const parsed = extractJson<Diagnosis>(text);
-  if (!parsed || !validateDiagnosis(parsed)) {
+  // バリデーション失敗時は1度だけリトライ
+  if (!result) {
+    result = await callDiagnoseOnce(
+      client,
+      userPrompt + "\n\n重要: 必ず上記JSONスキーマのみを返してください。前置き・後置きの文章は不要です。",
+    ).catch(() => null);
+  }
+
+  if (!result) {
     return fallbackDiagnosis(input);
   }
 
-  setCachedDiagnosis(input, parsed);
-  return parsed;
+  setCachedDiagnosis(input, result);
+  return result;
 }
 
 function extractJson<T>(text: string): T | null {
@@ -342,6 +370,68 @@ function extractJson<T>(text: string): T | null {
 
 export function fallbackDiagnosisPublic(input: TestInput): Diagnosis {
   return fallbackDiagnosis(input);
+}
+
+function nextHalfHour(from: Date): Date {
+  const d = new Date(from);
+  d.setSeconds(0, 0);
+  const mins = d.getHours() * 60 + d.getMinutes();
+  const next = Math.ceil((mins + 5) / 30) * 30; // 5分後以降の次の30分刻み
+  d.setHours(Math.floor(next / 60), next % 60);
+  return d;
+}
+
+function fmtTime(d: Date): string {
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function buildFallbackBlocks(
+  input: TestInput,
+  top3Weak: typeof input.units,
+): import("./types").Block[] {
+  const now = new Date();
+  const hour = now.getHours();
+  // 23時以降なら翌日早朝ブロック1個のみ
+  if (hour >= 23) {
+    return [
+      {
+        startTime: "07:00",
+        endTime: "07:25",
+        subject: input.subject,
+        topic: top3Weak[0]?.unit ?? "弱点単元",
+        source: input.textbooks[0] ?? "手持ち基礎問題集",
+        goal: "基本例題を理解する",
+        completion: "4問中3問を答えを見ずに解ける",
+      },
+    ];
+  }
+  const start1 = nextHalfHour(now);
+  const end1 = new Date(start1.getTime() + 25 * 60_000);
+  const start2 = new Date(end1.getTime() + 10 * 60_000); // 10分休憩
+  const end2 = new Date(start2.getTime() + 25 * 60_000);
+  const blocks: import("./types").Block[] = [
+    {
+      startTime: fmtTime(start1),
+      endTime: fmtTime(end1),
+      subject: input.subject,
+      topic: top3Weak[0]?.unit ?? "弱点単元",
+      source: input.textbooks[0] ?? "手持ち基礎問題集",
+      goal: "基本例題を理解する",
+      completion: "4問中3問を答えを見ずに解ける",
+    },
+  ];
+  if (start2.getHours() < 23) {
+    blocks.push({
+      startTime: fmtTime(start2),
+      endTime: fmtTime(end2),
+      subject: input.subject,
+      topic: top3Weak[1]?.unit ?? "次の弱点",
+      source: input.textbooks[0] ?? "手持ち基礎問題集",
+      goal: "解法の型を覚える",
+      completion: "解法を白紙に再現できる",
+    });
+  }
+  return blocks;
 }
 
 function fallbackDiagnosis(input: TestInput): Diagnosis {
@@ -388,26 +478,7 @@ function fallbackDiagnosis(input: TestInput): Diagnosis {
       subjects: i % 2 === 0 ? [input.subject] : [input.subject, "英語"],
       blocks: i === 5 ? 5 : i === 6 ? 4 : 3,
     })),
-    todayBlocks: [
-      {
-        startTime: "17:00",
-        endTime: "17:45",
-        subject: input.subject,
-        topic: top3Weak[0]?.unit ?? "弱点単元",
-        source: input.textbooks[0] ?? "手持ち基礎問題集",
-        goal: "基本例題を理解する",
-        completion: "4問中3問を答えを見ずに解ける",
-      },
-      {
-        startTime: "20:00",
-        endTime: "20:45",
-        subject: input.subject,
-        topic: top3Weak[1]?.unit ?? "次の弱点",
-        source: input.textbooks[0] ?? "手持ち基礎問題集",
-        goal: "解法の型を覚える",
-        completion: "解法を白紙に再現できる",
-      },
-    ],
+    todayBlocks: buildFallbackBlocks(input, top3Weak),
     encouragement: "次の25分だけ勝てばいい。それを積み上げれば届く。",
   };
 }
