@@ -209,8 +209,9 @@ export function HomeView() {
       {/* Headline — "今日のプラン" + 残ブロック・残時間 */}
       {totalCount > 0 ? (
         <section className="mt-6">
-          <div className="text-[11px] font-medium tracking-wide text-ink-400">
-            今日のプラン
+          <div className="flex items-center gap-1 text-[11px] font-medium tracking-wide text-ink-400">
+            <Sparkles className="h-3 w-3 text-mint-500" />
+            AIが作った今日のプラン
           </div>
           <h1
             className="mt-1 text-[28px] font-extrabold leading-[1.2] tracking-[-0.025em] text-ink-900"
@@ -455,38 +456,39 @@ function TimelineRow({
 function EmptyTodayCard() {
   return (
     <section className="mt-5 space-y-2.5">
+      {/* Primary: テスト登録 → AIがプランを作る */}
       <div className="rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50/80 to-mint-50/40 p-5">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-white text-sky-500">
-            <Play className="h-5 w-5" strokeWidth={2.3} />
+          <div className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-white text-mint-600">
+            <Sparkles className="h-5 w-5" strokeWidth={2.1} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-[14px] font-bold text-ink-900">
-              まず25分、集中してみる
+              テストを登録する
             </div>
             <p className="mt-0.5 text-[11px] leading-[1.7] text-ink-500">
-              テストがなくても、タイマーはすぐ使えます。
+              結果を入れると、AIが苦手を分析して<br />
+              今日やる25分ブロックを作ってくれます。
             </p>
             <Link
-              href="/app/focus/run"
-              className="mt-3 inline-flex h-10 items-center gap-1 rounded-full bg-sky-500 px-4 text-[12px] font-bold text-white transition active:scale-[0.97]"
+              href="/app/test/new"
+              className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-ink-900 px-4 text-[12px] font-bold text-white transition active:scale-[0.97]"
             >
-              <Play className="h-3.5 w-3.5" strokeWidth={2.4} />
-              25分はじめる
+              最初のテストを追加
             </Link>
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-ink-100/80 bg-white p-5 text-center">
-        <div className="text-[14px] font-bold text-ink-900">
-          テスト結果を登録する
-        </div>
+      {/* Secondary: タイマーだけ使う */}
+      <div className="flex items-center justify-center gap-2 py-1">
+        <span className="text-[11px] text-ink-400">テストなしで今すぐ集中したい？</span>
         <Link
-          href="/app/test/new"
-          className="mt-3 inline-flex h-9 items-center gap-1 rounded-full bg-ink-900 px-4 text-[11px] font-bold text-white transition active:scale-[0.97]"
+          href="/app/focus/run"
+          className="inline-flex items-center gap-1 text-[11px] font-bold text-sky-500 transition active:opacity-70"
         >
-          最初のテストを追加
+          <Play className="h-3 w-3" strokeWidth={2.5} fill="currentColor" />
+          25分はじめる
         </Link>
       </div>
     </section>
