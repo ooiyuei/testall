@@ -157,8 +157,18 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
   // 全 DB (手書き + bulk + AI 深掘りマージ) を一度だけ計算
   const allBooks = useMemo(() => getAllTextbooks(), []);
 
+  // 種類タブに対応する usageTags フィルタ
+  const kindTagFilter = useMemo((): string[] | null => {
+    if (kind === "workbook") return ["drill", "comprehensive"];
+    if (kind === "past-exam") return ["past-exam"];
+    return null;
+  }, [kind]);
+
   const filtered = useMemo(() => {
     let list = allBooks;
+    if (kindTagFilter) {
+      list = list.filter((b) => b.usageTags.some((t) => kindTagFilter.includes(t)));
+    }
     if (filterArea !== "all") {
       list = list.filter((b) =>
         filterArea === "history" || filterArea === "civics"
@@ -177,17 +187,20 @@ export function BookshelfAddModal({ onClose }: { onClose: () => void }) {
     return [...list].sort(
       (a, b) => (a.rank ?? 9999) - (b.rank ?? 9999),
     ).slice(0, 50); // モーダル内なので 50 件まで
-  }, [allBooks, filterArea, filterLevel, filterPub, query]);
+  }, [allBooks, kindTagFilter, filterArea, filterLevel, filterPub, query]);
 
-  const popular = useMemo(
-    () =>
-      POPULAR_IDS.map((id) => allBooks.find((b) => b.id === id)).filter(
-        (b): b is Textbook => !!b,
-      ),
-    [allBooks],
-  );
+  const popular = useMemo(() => {
+    const base = POPULAR_IDS.map((id) => allBooks.find((b) => b.id === id)).filter(
+      (b): b is Textbook => !!b,
+    );
+    if (kindTagFilter) {
+      return base.filter((b) => b.usageTags.some((t) => kindTagFilter.includes(t)));
+    }
+    return base;
+  }, [allBooks, kindTagFilter]);
 
-  const noQuery = !query.trim() && filterArea === "all" && filterLevel === "all" && filterPub === "all";
+  // 絞り込みなし = 人気リストを表示 (参考書タブのみ)
+  const noQuery = !query.trim() && filterArea === "all" && filterLevel === "all" && filterPub === "all" && !kindTagFilter;
   const list: Textbook[] = noQuery ? popular : filtered;
 
   function pick(b: Textbook) {

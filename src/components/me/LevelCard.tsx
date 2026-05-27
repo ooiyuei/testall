@@ -170,8 +170,14 @@ export function LevelCard({
               {remaining?.toLocaleString() ?? "—"}
             </span>
             <span className="text-[10px] font-medium text-white/55">
-              ブロック残 / {done.toLocaleString()} 完了
+              ブロック残
+              {typeof remaining === "number" ? (
+                <span className="ml-1 text-white/40">≈{Math.round(remaining * 25 / 60)}h</span>
+              ) : null}
             </span>
+          </div>
+          <div className="text-[10px] text-white/40">
+            完了済み {done.toLocaleString()} ブロック
           </div>
           <div className="mt-2 h-[5px] overflow-hidden rounded-full bg-white/10">
             <div

@@ -158,7 +158,7 @@ export function TodoView() {
             style={{ fontFamily: "var(--font-display)" }}
           >
             今日{" "}
-            <span className="tabular-nums text-sky-500">{counts.today}</span>
+            <span className="tabular-nums text-sky-500">{Math.max(0, counts.today)}</span>
             <span className="text-[14px] font-semibold text-ink-400"> / {counts.todayTotal}</span>
           </h1>
           <p className="mt-0.5 text-[11px] text-ink-400">自分で追加した宿題・課題（AIプランとは別）</p>

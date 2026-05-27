@@ -511,13 +511,45 @@ export function ScheduleStep({
 
 // ── Step 9: 休日 ─────────────────────────────────────
 type WeekendDay = "sat" | "sat-half" | "sun" | "sun-half";
+type DayUsage = "none" | "half" | "full";
 
-const WEEKEND_DAY_OPTIONS: { id: WeekendDay; label: string; sub: string }[] = [
-  { id: "sat", label: "土曜 終日", sub: "丸1日使える" },
-  { id: "sat-half", label: "土曜 半日", sub: "午前or午後のみ" },
-  { id: "sun", label: "日曜 終日", sub: "丸1日使える" },
-  { id: "sun-half", label: "日曜 半日", sub: "午前or午後のみ" },
-];
+function DayRow({
+  label: dayLabel,
+  usage,
+  onChange,
+}: {
+  label: string;
+  usage: DayUsage;
+  onChange: (v: DayUsage) => void;
+}) {
+  const opts: { id: DayUsage; label: string }[] = [
+    { id: "none", label: "使わない" },
+    { id: "half", label: "半日" },
+    { id: "full", label: "終日" },
+  ];
+  return (
+    <div className="rounded-2xl border border-cream-200 bg-white px-4 py-3">
+      <div className="mb-2 text-[13px] font-bold text-ink-900">{dayLabel}</div>
+      <div className="flex gap-2">
+        {opts.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            onClick={() => onChange(o.id)}
+            className={cn(
+              "flex-1 rounded-xl py-2 text-[13px] font-bold transition active:scale-[0.97]",
+              usage === o.id
+                ? "bg-sky-500 text-white"
+                : "bg-cream-50 text-ink-600 hover:bg-cream-100",
+            )}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function WeekendStep({
   value,
@@ -526,45 +558,31 @@ export function WeekendStep({
   value: WeekendDay[];
   onChange: (v: WeekendDay[]) => void;
 }) {
-  function toggle(id: WeekendDay) {
-    if (value.includes(id)) {
-      onChange(value.filter((v) => v !== id));
-    } else {
-      onChange([...value, id]);
-    }
+  const satUsage: DayUsage = value.includes("sat") ? "full" : value.includes("sat-half") ? "half" : "none";
+  const sunUsage: DayUsage = value.includes("sun") ? "full" : value.includes("sun-half") ? "half" : "none";
+
+  function setSat(v: DayUsage) {
+    const rest = value.filter((id) => id !== "sat" && id !== "sat-half");
+    if (v === "full") onChange([...rest, "sat"]);
+    else if (v === "half") onChange([...rest, "sat-half"]);
+    else onChange(rest);
+  }
+
+  function setSun(v: DayUsage) {
+    const rest = value.filter((id) => id !== "sun" && id !== "sun-half");
+    if (v === "full") onChange([...rest, "sun"]);
+    else if (v === "half") onChange([...rest, "sun-half"]);
+    else onChange(rest);
   }
 
   return (
     <>
-      <StepHeader title="休日の使い方" subtitle="勉強に使える日・時間帯を教えてください。" />
-      <div className="grid gap-3">
-        {WEEKEND_DAY_OPTIONS.map((o) => (
-          <button
-            key={o.id}
-            type="button"
-            onClick={() => toggle(o.id)}
-            aria-pressed={value.includes(o.id)}
-            className={cn(
-              "flex h-14 items-center justify-between rounded-2xl border-2 px-5 text-left transition active:scale-[0.99]",
-              value.includes(o.id)
-                ? "border-sky-500 bg-sky-50 ring-2 ring-sky-500/20"
-                : "border-cream-200 bg-white hover:bg-cream-50",
-            )}
-          >
-            <div>
-              <div className="text-[15px] font-bold text-ink-900">{o.label}</div>
-              <div className="text-[12px] text-ink-500">{o.sub}</div>
-            </div>
-            <span className={cn(
-              "flex h-5 w-5 items-center justify-center rounded-full border-2",
-              value.includes(o.id) ? "border-sky-500 bg-sky-500" : "border-cream-300 bg-white",
-            )}>
-              {value.includes(o.id) && <span className="h-2 w-2 rounded-full bg-white" />}
-            </span>
-          </button>
-        ))}
+      <StepHeader title="休日の使い方" subtitle="土日それぞれ、勉強に使える時間を選んでください。" />
+      <div className="space-y-3">
+        <DayRow label="土曜日" usage={satUsage} onChange={setSat} />
+        <DayRow label="日曜日" usage={sunUsage} onChange={setSun} />
       </div>
-      <p className="mt-4 text-[12px] text-ink-400">どれも選ばなくてもOKです。</p>
+      <p className="mt-4 text-[12px] text-ink-400">「使わない」を選んでもOKです。</p>
     </>
   );
 }

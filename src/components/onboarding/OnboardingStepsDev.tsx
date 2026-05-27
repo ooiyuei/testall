@@ -296,9 +296,23 @@ export function TargetUnisStep({
     <>
       <StepHeader title="志望校を3つまで" subtitle="第1〜第3志望。後から変えてOK。" />
 
-      {/* 選択済リスト — PDF mock: 黒背景 + 白文字 + 白の偏差値数字 */}
+      {/* 検索バー — 先頭に固定してレイアウトシフトを防ぐ */}
+      <label htmlFor="uni-search" className="sr-only">大学名を検索</label>
+      <div className="relative">
+        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" strokeWidth={1.75} />
+        <input
+          id="uni-search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="大学名や略称を検索"
+          className="h-12 w-full rounded-xl border border-cream-200 bg-white pl-10 pr-3 text-[15px] text-ink-900 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20"
+          autoComplete="off"
+        />
+      </div>
+
+      {/* 選択済リスト — 検索バーの下に表示 */}
       {value.length > 0 && (
-        <ul className="mb-4 space-y-2">
+        <ul className="mt-3 space-y-2">
           {value.map((tu, i) => {
             const u = allMerged.find((x) => x.id === tu.universityId);
             if (!u) return null;
@@ -332,19 +346,6 @@ export function TargetUnisStep({
           })}
         </ul>
       )}
-
-      <label htmlFor="uni-search" className="sr-only">大学名を検索</label>
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" strokeWidth={1.75} />
-        <input
-          id="uni-search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="大学名や略称を検索"
-          className="h-12 w-full rounded-xl border border-cream-200 bg-white pl-10 pr-3 text-[15px] text-ink-900 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20"
-          autoComplete="off"
-        />
-      </div>
 
       {/* 結果リスト — PDF mock: 各行に大学名/学部 + 偏差値数字 (sky-500) */}
       <ul className="mt-3 space-y-1.5">
