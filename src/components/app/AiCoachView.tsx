@@ -72,6 +72,10 @@ export function AiCoachView() {
       const latest = state.tests[0];
       // /api/chat の契約に合わせて: history + userMessage + context
       const history = messages.slice(-10).map((m) => ({ role: m.role, content: m.content }));
+      const cutoffMs = Date.now() - 14 * 24 * 60 * 60 * 1000;
+      const recentBlocks14d = (state.blockLogs ?? []).filter(
+        (b) => b?.completedAt && new Date(b.completedAt).getTime() >= cutoffMs,
+      ).length;
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -80,10 +84,21 @@ export function AiCoachView() {
           userMessage: trimmed,
           context: {
             grade: profile?.grade,
-            target: profile?.target,
-            latestTest: latest?.input
-              ? { subject: latest.input.subject, score: latest.input.score, fullScore: latest.input.fullScore }
+            deviation: profile?.deviation,
+            targetUniversity: profile?.targetUniversities?.[0]?.universityId,
+            examDate: profile?.examDate,
+            latestTest: latest
+              ? {
+                  subject: latest.input.subject,
+                  testName: latest.input.testName,
+                  scorePct:
+                    latest.input.fullScore > 0
+                      ? Math.round((latest.input.score / latest.input.fullScore) * 100)
+                      : null,
+                  weakUnits: (latest.diagnosis.weaknesses ?? []).slice(0, 3).map((w) => w.unit),
+                }
               : null,
+            recentBlocks14d,
           },
         }),
       });
@@ -137,12 +152,22 @@ export function AiCoachView() {
     return "こんばんは。";
   })();
   const latest = state.tests[0];
-  const introLines = [
-    `${greeting}今日のテストの結果、見ました。`,
-    latest && latest.input.fullScore > 0
-      ? `${latest.input.subject}が${Math.round((latest.input.score / latest.input.fullScore) * 100)}%だったね。一緒に立て直しましょう。`
-      : "テストをまだ登録していませんが、まずは今日の25分から整えましょう。",
-  ];
+  const introLines = (() => {
+    if (!latest || latest.input.fullScore <= 0) {
+      return [
+        `${greeting}テストをまだ登録していないね。`,
+        "まずは今日の25分から始めましょう。",
+      ];
+    }
+    const pct = Math.round((latest.input.score / latest.input.fullScore) * 100);
+    const secondLine =
+      pct >= 80
+        ? `${latest.input.subject}が${pct}%、よく取れてるね。この調子を続ける作戦を考えよう。`
+        : pct >= 60
+        ? `${latest.input.subject}が${pct}%。もう一伸びできるポイントを一緒に探しましょう。`
+        : `${latest.input.subject}が${pct}%だったね。次の25分で立て直す作戦を考えよう。`;
+    return [`${greeting}最近のテスト結果、見ました。`, secondLine];
+  })();
 
   return (
     <div className="flex h-[100dvh] flex-col bg-cream-50">

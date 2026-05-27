@@ -222,7 +222,12 @@ function PhotoMode({
     } catch {
       // 前処理失敗時は元ファイルをフォールバック
       const buffer = await file.arrayBuffer();
-      base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+      const bytes = new Uint8Array(buffer);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i += 8192) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+      }
+      base64 = btoa(binary);
       mediaType = file.type || "image/jpeg";
     }
 
@@ -1021,7 +1026,7 @@ function ManualForm({ prefill }: { prefill?: VisionResult | null }) {
       </div>
 
       {/* Sticky action bar */}
-      <div className="fixed inset-x-0 bottom-20 z-20 mx-auto w-full max-w-[480px] px-4">
+      <div className="fixed inset-x-0 bottom-28 z-20 mx-auto w-full max-w-[480px] px-4">
         <div className="flex gap-2 rounded-2xl bg-white/95 p-2 shadow-[0_8px_24px_-8px_rgba(50,46,41,0.18)] backdrop-blur">
           {step > 0 ? (
             <button

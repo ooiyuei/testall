@@ -223,7 +223,7 @@ export function FocusRun() {
       }}
     >
       {/* Top bar */}
-      <div className="flex items-center justify-between px-5 pt-safe-top pt-4">
+      <div className="flex items-center justify-between px-5 pt-safe pt-4">
         <button
           type="button"
           onClick={async () => {

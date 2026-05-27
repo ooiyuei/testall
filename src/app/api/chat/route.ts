@@ -41,7 +41,7 @@ function buildSystemPrompt(ctx?: ChatContext): string {
         t.scorePct !== null ? `(${t.scorePct}%)` : ""
       }`,
     );
-    if (t.weakUnits.length > 0)
+    if (t.weakUnits?.length > 0)
       lines.push(`- 苦手単元: ${t.weakUnits.join("・")}`);
   }
   if (typeof ctx.recentBlocks14d === "number")

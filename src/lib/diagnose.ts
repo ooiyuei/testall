@@ -263,7 +263,8 @@ ${historyLines.length > 0 ? historyLines.join("\n") + "\n" : ""}
 - 本棚に登録された参考書を最優先で使い、未登録のものは推奨しない。
 - 直近14日のブロック数から「無理のないペース」を推定し、weekPlan に反映する。
 今日は${new Date().toLocaleDateString("ja-JP", { weekday: "long", month: "long", day: "numeric" })}です。
-todayBlocksは、今日の夕方17:00以降を想定して3-5個 (25分単位) 提案してください。`;
+現在時刻は${new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })}です。
+todayBlocksは今の時刻から開始できる現実的な時間帯で3-5個 (25分単位) 提案してください。すでに夜21時を過ぎている場合は1-2個に減らしても構いません。startTime/endTime は実際の時刻 (HH:MM形式) を使うこと。`;
 }
 
 function labelCause(c: MissCause): string {
@@ -283,9 +284,10 @@ const HH_MM_RE = /^\d{2}:\d{2}$/;
 
 export function validateDiagnosis(d: Diagnosis): boolean {
   if (!d.summary || !d.level || !d.gap) return false;
-  if (!Array.isArray(d.weaknesses) || d.weaknesses.length < 1 || d.weaknesses.length > 5)
-    return false;
-  if (!Array.isArray(d.todayBlocks) || d.todayBlocks.length < 3 || d.todayBlocks.length > 5)
+  // weaknesses は 0 個でも valid (満点時など)。上限も 8 個まで許容
+  if (!Array.isArray(d.weaknesses) || d.weaknesses.length > 8) return false;
+  // todayBlocks は 1〜8 個。Claude が少なめに返す場合も許容
+  if (!Array.isArray(d.todayBlocks) || d.todayBlocks.length < 1 || d.todayBlocks.length > 8)
     return false;
   for (const b of d.todayBlocks) {
     if (!HH_MM_RE.test(b.startTime) || !HH_MM_RE.test(b.endTime)) return false;
