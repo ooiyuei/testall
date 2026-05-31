@@ -26,7 +26,19 @@ export function AuthScreen({ mode }: { mode: Mode }) {
   const [emailMode, setEmailMode] = useState(false);
   const [email, setEmail] = useState("");
   const [emailSent, setEmailSent] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const isSignup = mode === "signup";
+  const needConsent = isSignup && !agreed;
+
+  // 同意の事実(日時)を保存。未成年の個人情報取得には明示同意の記録が要る。
+  function recordConsent() {
+    try {
+      localStorage.setItem(
+        "testall:consent",
+        JSON.stringify({ at: new Date().toISOString(), terms: true, privacy: true, guardian: true }),
+      );
+    } catch {}
+  }
 
   // OAuth callback で帰ってきたエラーを表示
   useEffect(() => {
@@ -49,6 +61,12 @@ export function AuthScreen({ mode }: { mode: Mode }) {
   }, [searchParams]);
 
   async function continueAs(method: string) {
+    if (needConsent) {
+      haptic.error();
+      setErrorMsg("利用規約とプライバシーポリシーへの同意が必要です");
+      return;
+    }
+    if (isSignup) recordConsent();
     haptic.medium();
     setErrorMsg(null);
     setSubmitting(method);
@@ -77,6 +95,11 @@ export function AuthScreen({ mode }: { mode: Mode }) {
   }
 
   async function submitEmail() {
+    if (needConsent) {
+      haptic.error();
+      setErrorMsg("利用規約とプライバシーポリシーへの同意が必要です");
+      return;
+    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       haptic.error();
       setErrorMsg("正しいメールアドレスを入力してください");
@@ -86,6 +109,7 @@ export function AuthScreen({ mode }: { mode: Mode }) {
     setErrorMsg(null);
     setSubmitting("email");
     try {
+      if (isSignup) recordConsent();
       await signInWithMagicLink(email);
       haptic.success();
       setEmailSent(true);
@@ -231,22 +255,29 @@ export function AuthScreen({ mode }: { mode: Mode }) {
           <div className="mt-8 flex flex-col gap-2.5">
             {isSignup ? (
               <>
+                <ConsentCheckbox checked={agreed} onChange={setAgreed} />
                 <SocialButton
                   variant="apple"
                   submitting={submitting === "apple"}
+                  disabled={needConsent}
                   onClick={() => continueAs("apple")}
                   label="Apple で登録"
                 />
                 <SocialButton
                   variant="google"
                   submitting={submitting === "google"}
+                  disabled={needConsent}
                   onClick={() => continueAs("google")}
                   label="Google で登録"
                 />
                 <button
                   type="button"
+                  disabled={needConsent}
                   onClick={() => setEmailMode(true)}
-                  className="h-[52px] rounded-[14px] bg-transparent text-[14px] font-semibold text-ink-700 transition active:bg-cream-100"
+                  className={cn(
+                    "h-[52px] rounded-[14px] bg-transparent text-[14px] font-semibold text-ink-700 transition active:bg-cream-100",
+                    needConsent && "opacity-50",
+                  )}
                 >
                   メールで登録
                 </button>
@@ -361,6 +392,36 @@ export function AuthScreen({ mode }: { mode: Mode }) {
         </div>
       </main>
     </div>
+  );
+}
+
+function ConsentCheckbox({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="mb-1 flex cursor-pointer items-start gap-2.5 rounded-[14px] bg-cream-100/60 px-3.5 py-3">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-0.5 h-[18px] w-[18px] flex-none accent-sky-500"
+      />
+      <span className="text-[11px] leading-[1.7] text-ink-600">
+        <Link href="/terms" className="font-semibold text-sky-600">
+          利用規約
+        </Link>
+        ・
+        <Link href="/privacy" className="font-semibold text-sky-600">
+          プライバシーポリシー
+        </Link>
+        に同意します。
+        <span className="text-ink-500">（18歳未満の方は保護者の同意を得ています）</span>
+      </span>
+    </label>
   );
 }
 
