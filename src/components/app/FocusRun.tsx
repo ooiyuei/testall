@@ -218,7 +218,7 @@ export function FocusRun() {
       note: note.trim() || undefined,
       durationSec: elapsedSec(),
     });
-    toast.success("記録しました");
+    toast.success("記録しました · +50 EXP");
     router.push(testId ? `/app/test/${testId}` : "/app");
   }
 
