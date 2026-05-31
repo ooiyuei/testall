@@ -22,9 +22,21 @@ function logErr(context: string, err: unknown) {
   console.error(`[store-remote] ${context}:`, err);
 }
 
-export async function loadAll(userId: string): Promise<Partial<StoreState>> {
+// loadAll の結果。
+// - ok:          profile クエリが成功した（接続が健全）か。false なら何も上書きしない。
+// - established: このユーザーの remote profile 行が実在するか（=同期済みアカウント）。
+//                false かつローカルにデータあり = 初回ログイン → ローカルを remote へ昇格。
+// - state:       各フィールド。クエリがエラーしたフィールドは undefined（=ローカル保持）、
+//                成功して空なら [] / {}（=削除を反映）。
+export type LoadResult = {
+  ok: boolean;
+  established: boolean;
+  state: Partial<StoreState>;
+};
+
+export async function loadAll(userId: string): Promise<LoadResult> {
   const client = sb();
-  if (!client) return {};
+  if (!client) return { ok: false, established: false, state: {} };
 
   const [
     profileRes,
@@ -48,21 +60,80 @@ export async function loadAll(userId: string): Promise<Partial<StoreState>> {
     client.from("user_weekly_executions").select("data").eq("user_id", userId),
   ]);
 
+  // エラーしたクエリは undefined（ローカル保持）、成功は配列（空配列なら削除反映）。
+  const rows = <T>(res: { data: { data: unknown }[] | null; error: unknown | null }): T[] | undefined =>
+    res.error ? undefined : (res.data ?? []).map((r) => r.data as T);
+
+  const profileErrored = !!profileRes.error;
+  const profileRow = (profileRes.data?.data as StoredProfile | undefined) ?? undefined;
+
   const rawPlanning = planningRes.data?.data as (PlanningProfile & { fixedSlots?: FixedSlot[] }) | undefined;
   const { fixedSlots: remoteFixedSlots, ...planningData } = rawPlanning ?? {};
 
-  return {
-    profile: (profileRes.data?.data as StoredProfile) ?? undefined,
-    planning: Object.keys(planningData).length > 0 ? (planningData as PlanningProfile) : undefined,
-    fixedSlots: remoteFixedSlots ?? [],
-    tests: (testsRes.data ?? []).map((r) => r.data as StoredTest),
-    blockLogs: (blockLogsRes.data ?? []).map((r) => r.data as BlockLog),
-    tasks: (tasksRes.data ?? []).map((r) => r.data as StoredTask),
-    events: (eventsRes.data ?? []).map((r) => r.data as CalendarEvent),
-    dailyMoodLogs: (dailyLogsRes.data ?? []).map((r) => r.data as DailyMoodLog),
-    weeklyGoals: (weeklyGoalsRes.data ?? []).map((r) => r.data as WeeklyGoal),
-    weeklyExecutions: (weeklyExecsRes.data ?? []).map((r) => r.data as WeeklyExecutionLog),
+  const state: Partial<StoreState> = {
+    profile: profileErrored ? undefined : profileRow,
+    planning: planningRes.error
+      ? undefined
+      : Object.keys(planningData).length > 0
+        ? (planningData as PlanningProfile)
+        : undefined,
+    fixedSlots: planningRes.error ? undefined : remoteFixedSlots ?? [],
+    tests: rows<StoredTest>(testsRes),
+    blockLogs: rows<BlockLog>(blockLogsRes),
+    tasks: rows<StoredTask>(tasksRes),
+    events: rows<CalendarEvent>(eventsRes),
+    dailyMoodLogs: rows<DailyMoodLog>(dailyLogsRes),
+    weeklyGoals: rows<WeeklyGoal>(weeklyGoalsRes),
+    weeklyExecutions: rows<WeeklyExecutionLog>(weeklyExecsRes),
   };
+
+  return {
+    ok: !profileErrored,
+    established: !profileErrored && profileRow != null,
+    state,
+  };
+}
+
+// 全ユーザーデータをローカル → remote へ昇格（初回ログインの移行用）。
+export async function pushAllToRemote(userId: string, state: StoreState): Promise<void> {
+  const client = sb();
+  if (!client) return;
+  const jobs: Promise<unknown>[] = [];
+  if (state.profile) jobs.push(saveProfileRemote(userId, state.profile));
+  if (state.planning || (state.fixedSlots?.length ?? 0) > 0) {
+    jobs.push(savePlanningRemote(userId, state.planning ?? ({} as PlanningProfile), state.fixedSlots ?? []));
+  }
+  for (const t of state.tests ?? []) jobs.push(saveTestRemote(userId, t));
+  for (const b of state.blockLogs ?? []) jobs.push(saveBlockLogRemote(userId, b));
+  for (const t of state.tasks ?? []) jobs.push(saveTaskRemote(userId, t));
+  for (const e of state.events ?? []) jobs.push(saveEventRemote(userId, e));
+  for (const l of state.dailyMoodLogs ?? []) jobs.push(saveDailyMoodLogRemote(userId, l));
+  for (const g of state.weeklyGoals ?? []) jobs.push(saveWeeklyGoalRemote(userId, g));
+  for (const x of state.weeklyExecutions ?? []) jobs.push(saveWeeklyExecutionRemote(userId, x));
+  await Promise.all(jobs);
+}
+
+// 全ユーザーデータを remote から削除（「データ削除」機能の本体）。
+export async function clearAllRemote(userId: string): Promise<void> {
+  const client = sb();
+  if (!client) return;
+  const tables = [
+    "user_profiles",
+    "user_planning",
+    "user_tests",
+    "user_block_logs",
+    "user_tasks",
+    "user_events",
+    "user_daily_logs",
+    "user_weekly_goals",
+    "user_weekly_executions",
+  ];
+  const results = await Promise.all(
+    tables.map((t) => client.from(t).delete().eq("user_id", userId)),
+  );
+  results.forEach((r, i) => {
+    if (r.error) logErr(`clearAll:${tables[i]}`, r.error);
+  });
 }
 
 export async function saveProfileRemote(userId: string, profile: StoredProfile): Promise<void> {

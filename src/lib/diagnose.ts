@@ -426,6 +426,16 @@ function fallbackDiagnosis(input: TestInput): Diagnosis {
         goal: "解法の型を覚える",
         completion: "解法を白紙に再現できる",
       },
+      {
+        // 3ブロック目（復習）。validateDiagnosis が todayBlocks>=3 を要求するため必須。
+        startTime: "21:00",
+        endTime: "21:25",
+        subject: input.subject,
+        topic: "今日やった2ブロックの解き直し",
+        source: input.textbooks[0] ?? "手持ち基礎問題集",
+        goal: "間違えた問題だけ再演習する",
+        completion: "解けなかった問題を答えを見ずに解ける",
+      },
     ],
     encouragement: "次の25分だけ勝てばいい。それを積み上げれば届く。",
   };
