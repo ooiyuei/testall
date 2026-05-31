@@ -7,6 +7,24 @@ const nextConfig: NextConfig = {
     // 対応ブラウザでは自動でフェード遷移、非対応では何もしない（安全）。
     viewTransition: true,
   },
+  // セキュリティHTTPヘッダー (clickjacking/MIMEスニッフィング対策)。
+  // camera=(self): バーコードスキャナ(html5-qrcode)が同一オリジンでカメラを使うため許可。
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(self), microphone=(), geolocation=(), browsing-topics=()",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 // Sentry 設定 (DSN が未設定なら sentry SDK 自体が no-op)

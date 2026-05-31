@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { checkRateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -265,6 +266,9 @@ function toLegacy(v: VisionResult): LegacyVisionResult {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: Request) {
+  // 画像→Vision は最も高単価。IPあたり強めに絞る
+  const rl = checkRateLimit(req, { name: "diagnose-image", limit: 6, windowMs: 60_000 });
+  if (!rl.ok) return tooManyRequests(rl.retryAfter);
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
