@@ -2,10 +2,21 @@
 
 import { useEffect, useRef, useState } from "react";
 import { invalidateStoreCache, readStore, setAuthUserId, writeStore, type StoreState } from "../store";
-import { loadAll } from "../store-remote";
+import { loadAll, pushAllToRemote } from "../store-remote";
 import { useAuth } from "./useAuth";
 
 const EMPTY: StoreState = { tests: [], blockLogs: [] };
+
+// 初回ログイン時、ローカルに「昇格する価値のあるデータ」があるか。
+function hasLocalData(s: StoreState): boolean {
+  return (
+    !!s.profile ||
+    (s.tests?.length ?? 0) > 0 ||
+    (s.tasks?.length ?? 0) > 0 ||
+    (s.blockLogs?.length ?? 0) > 0 ||
+    (s.events?.length ?? 0) > 0
+  );
+}
 
 export function useStore(): { state: StoreState; hydrated: boolean } {
   const [state, setState] = useState<StoreState>(EMPTY);
@@ -43,31 +54,38 @@ export function useStore(): { state: StoreState; hydrated: boolean } {
     let cancelled = false;
     (async () => {
       try {
-        const remote = await loadAll(userId);
+        const result = await loadAll(userId);
         // race ガード: userId が変わってたら捨てる (ログアウト→他ユーザーログインの順序保証)
         if (cancelled || currentUserIdRef.current !== userId) return;
+        // 接続エラー時はローカルを保持し、次回に委ねる（空配列で上書きしない）。
+        if (!result.ok) return;
         const current = readStore();
-        writeStore({
-          ...current,
-          profile: remote.profile ?? current.profile,
-          planning: remote.planning ?? current.planning,
-          tests: remote.tests && remote.tests.length > 0 ? remote.tests : current.tests,
-          blockLogs: remote.blockLogs && remote.blockLogs.length > 0 ? remote.blockLogs : current.blockLogs,
-          tasks: remote.tasks && remote.tasks.length > 0 ? remote.tasks : current.tasks,
-          events: remote.events && remote.events.length > 0 ? remote.events : current.events,
-          dailyMoodLogs: remote.dailyMoodLogs && remote.dailyMoodLogs.length > 0
-            ? remote.dailyMoodLogs : current.dailyMoodLogs,
-          weeklyGoals: remote.weeklyGoals && remote.weeklyGoals.length > 0
-            ? remote.weeklyGoals : current.weeklyGoals,
-          weeklyExecutions: remote.weeklyExecutions && remote.weeklyExecutions.length > 0
-            ? remote.weeklyExecutions : current.weeklyExecutions,
-          fixedSlots: remote.fixedSlots && remote.fixedSlots.length > 0
-            ? remote.fixedSlots : current.fixedSlots,
-        });
+        const r = result.state;
+        if (result.established) {
+          // 同期済みアカウント = remote が真実。
+          // クエリ成功で空([])なら削除を反映、クエリ失敗(undefined)はローカル保持。
+          // chatMessages / unitProficiency は remote 未対応のためローカルを維持。
+          writeStore({
+            ...current,
+            profile: r.profile ?? current.profile,
+            planning: r.planning ?? current.planning,
+            tests: r.tests ?? current.tests,
+            blockLogs: r.blockLogs ?? current.blockLogs,
+            tasks: r.tasks ?? current.tasks,
+            events: r.events ?? current.events,
+            dailyMoodLogs: r.dailyMoodLogs ?? current.dailyMoodLogs,
+            weeklyGoals: r.weeklyGoals ?? current.weeklyGoals,
+            weeklyExecutions: r.weeklyExecutions ?? current.weeklyExecutions,
+            fixedSlots: r.fixedSlots ?? current.fixedSlots,
+          });
+        } else if (hasLocalData(current)) {
+          // 初回ログイン（remote にまだ profile が無い）: ローカルを破棄せず remote へ昇格。
+          await pushAllToRemote(userId, current);
+        }
       } catch (e) {
         if (!cancelled && process.env.NODE_ENV !== "production") {
           // 開発時のみ表示。本番では Sentry が拾う。
-          console.error("[useStore] remote loadAll error:", e);
+          console.error("[useStore] remote sync error:", e);
         }
       }
     })();

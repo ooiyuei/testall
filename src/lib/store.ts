@@ -12,6 +12,7 @@ import type {
   WeeklyGoal,
 } from "./planning/types";
 import {
+  clearAllRemote,
   deleteEventRemote,
   deleteTaskRemote,
   deleteTestRemote,
@@ -456,7 +457,11 @@ export function getStreak(): number {
 }
 
 export function clearAll(): StoreState {
-  return writeStore(EMPTY_STATE);
+  const next = writeStore(EMPTY_STATE);
+  // ローカルだけでなく Supabase 側のユーザーデータも削除する。
+  // これをしないと次回ログイン時に loadAll が remote から復元してしまう（復活バグ）。
+  if (_authUserId) bg(clearAllRemote(_authUserId));
+  return next;
 }
 
 // ── プランニングプロフィール ─────────────────
@@ -610,12 +615,20 @@ export function cleanupCompletedTasks(today = new Date()): StoreState {
   const week = new Date(today);
   week.setDate(week.getDate() - 7);
   const cutoff = week.toISOString();
-  const tasks = (current.tasks ?? []).filter((t) => {
+  const kept = (current.tasks ?? []).filter((t) => {
     if (t.status !== "done") return true;
     if (!t.completedAt) return true;
     return t.completedAt >= cutoff;
   });
-  return writeStore({ ...current, tasks });
+  const keptIds = new Set(kept.map((t) => t.id));
+  const removedIds = (current.tasks ?? [])
+    .filter((t) => !keptIds.has(t.id))
+    .map((t) => t.id);
+  const next = writeStore({ ...current, tasks: kept });
+  if (_authUserId) {
+    for (const id of removedIds) bg(deleteTaskRemote(_authUserId, id));
+  }
+  return next;
 }
 
 // ── 本棚 ────────────────────────────────
@@ -625,23 +638,23 @@ export function addBookshelfItem(item: BookshelfItem): StoreState {
   if (!p) return current;
   const items = p.bookshelfItems ?? [];
   const filtered = items.filter((x) => x.id !== item.id);
-  return writeStore({
-    ...current,
-    profile: { ...p, bookshelfItems: [item, ...filtered] },
-  });
+  const nextProfile = { ...p, bookshelfItems: [item, ...filtered] };
+  const next = writeStore({ ...current, profile: nextProfile });
+  if (_authUserId) bg(saveProfileRemote(_authUserId, nextProfile));
+  return next;
 }
 
 export function removeBookshelfItem(id: string): StoreState {
   const current = readStore();
   const p = current.profile;
   if (!p) return current;
-  return writeStore({
-    ...current,
-    profile: {
-      ...p,
-      bookshelfItems: (p.bookshelfItems ?? []).filter((x) => x.id !== id),
-    },
-  });
+  const nextProfile = {
+    ...p,
+    bookshelfItems: (p.bookshelfItems ?? []).filter((x) => x.id !== id),
+  };
+  const next = writeStore({ ...current, profile: nextProfile });
+  if (_authUserId) bg(saveProfileRemote(_authUserId, nextProfile));
+  return next;
 }
 
 // ── イベント（定期テスト・模試など） ──

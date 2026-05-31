@@ -3,6 +3,7 @@
 // next/headers の cookies() 経由で createServerClient が読み取れる。
 
 import { createServerClient } from "@supabase/ssr";
+import type { EmailOtpType } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -20,8 +21,11 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/signin?${params.toString()}`);
   }
 
+  // OAuth/PKCE は ?code=、Magic Link/OTP は ?token_hash=&type= で返ってくる。
   const code = searchParams.get("code");
-  if (!code) {
+  const tokenHash = searchParams.get("token_hash");
+  const otpType = searchParams.get("type") as EmailOtpType | null;
+  if (!code && !tokenHash) {
     return NextResponse.redirect(`${origin}/signin?error=missing_code`);
   }
 
@@ -49,8 +53,12 @@ export async function GET(request: Request) {
     },
   });
 
-  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error || !data.session) {
+  // code があれば OAuth/PKCE、なければ Magic Link(token_hash) を検証する。
+  const { data, error } = code
+    ? await supabase.auth.exchangeCodeForSession(code)
+    : await supabase.auth.verifyOtp({ type: otpType ?? "email", token_hash: tokenHash! });
+
+  if (error || !data.session || !data.user) {
     const params = new URLSearchParams({
       error: "auth_failed",
       ...(error?.message ? { error_description: error.message } : {}),
@@ -58,8 +66,13 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/signin?${params.toString()}`);
   }
 
-  // 新規ユーザーは onboarding へ、既存は /app へ
-  const isNewUser = data.user.created_at === data.user.last_sign_in_at;
-  const destination = isNewUser ? "/onboarding" : "/app";
+  // 新規/既存の判定は「タイムスタンプ比較」でなく profile 行の有無で確実に行う。
+  // profile 未作成 = オンボーディング未完了 → /onboarding、作成済み → /app。
+  const { data: profileRow } = await supabase
+    .from("user_profiles")
+    .select("user_id")
+    .eq("user_id", data.user.id)
+    .maybeSingle();
+  const destination = profileRow ? "/app" : "/onboarding";
   return NextResponse.redirect(`${origin}${destination}`);
 }

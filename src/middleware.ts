@@ -32,15 +32,28 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  let user: { id: string } | null = null;
   try {
-    await Promise.race([
+    const result = await Promise.race([
       supabase.auth.getUser(),
-      new Promise((_, reject) =>
+      new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("supabase_auth_timeout")), SUPABASE_AUTH_TIMEOUT_MS),
       ),
     ]);
+    user = (result as Awaited<ReturnType<typeof supabase.auth.getUser>>).data.user;
   } catch (e) {
     console.warn("[middleware] supabase auth skipped:", (e as Error).message);
+  }
+
+  // ルート保護: NEXT_PUBLIC_AUTH_REQUIRED='true' のときだけ /app 配下を認証必須にする。
+  // デフォルト(未設定/false)では匿名利用(localStorage)を許可し、挙動は変えない。
+  if (process.env.NEXT_PUBLIC_AUTH_REQUIRED === "true" && !user) {
+    const path = request.nextUrl.pathname;
+    if (path === "/app" || path.startsWith("/app/")) {
+      const signin = new URL("/signin", request.url);
+      signin.searchParams.set("redirect", path);
+      return NextResponse.redirect(signin);
+    }
   }
 
   return response;
