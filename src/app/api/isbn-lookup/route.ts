@@ -10,6 +10,7 @@
 import { NextResponse } from "next/server";
 import { TEXTBOOKS, findByIsbn } from "@/lib/master/textbooks";
 import type { Textbook } from "@/lib/master";
+import { checkRateLimit } from "@/lib/rate-limit";
 import {
   fetchCommunityTextbook,
   upsertCommunityTextbook,
@@ -112,6 +113,12 @@ async function fetchOpenBd(isbn: string): Promise<CustomBook | null> {
 export async function GET(
   req: Request,
 ): Promise<NextResponse<OkExisting | OkCustom | Fail>> {
+  const rl = checkRateLimit(req, { name: "isbn", limit: 40, windowMs: 60_000 });
+  if (!rl.ok)
+    return NextResponse.json(
+      { ok: false, error: "rate_limited" } as Fail,
+      { status: 429, headers: { "retry-after": String(Math.max(1, rl.retryAfter)) } },
+    );
   const { searchParams } = new URL(req.url);
   const raw = searchParams.get("isbn") ?? "";
   const isbn = normalizeIsbn(raw);

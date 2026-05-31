@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { diagnose, fallbackDiagnosisPublic } from "@/lib/diagnose";
 import type { TestInput } from "@/lib/types";
+import { checkRateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
+  const rl = checkRateLimit(req, { name: "diagnose", limit: 20, windowMs: 60_000 });
+  if (!rl.ok) return tooManyRequests(rl.retryAfter);
   let input: TestInput | null = null;
   try {
     input = (await req.json()) as TestInput;

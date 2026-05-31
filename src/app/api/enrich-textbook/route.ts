@@ -9,6 +9,7 @@
 
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { checkRateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -56,6 +57,8 @@ type Body = {
 };
 
 export async function POST(req: Request) {
+  const rl = checkRateLimit(req, { name: "enrich", limit: 10, windowMs: 60_000 });
+  if (!rl.ok) return tooManyRequests(rl.retryAfter);
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
@@ -74,6 +77,13 @@ export async function POST(req: Request) {
   if (!body.title || !body.publisher) {
     return NextResponse.json(
       { ok: false, error: "title_and_publisher_required" },
+      { status: 400 },
+    );
+  }
+  // 入力長の上限: プロンプトインジェクション/トークン浪費の緩和
+  if (body.title.length > 200 || body.publisher.length > 100) {
+    return NextResponse.json(
+      { ok: false, error: "input_too_long" },
       { status: 400 },
     );
   }

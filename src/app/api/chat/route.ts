@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import type { ChatMessage } from "@/lib/store";
 import { getChatCache, setChatCache } from "@/lib/chat-cache";
+import { checkRateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -70,6 +71,8 @@ function fallbackReply(userMessage: string | undefined): string {
 }
 
 export async function POST(req: Request) {
+  const rl = checkRateLimit(req, { name: "chat", limit: 15, windowMs: 60_000 });
+  if (!rl.ok) return tooManyRequests(rl.retryAfter);
   const apiKey = process.env.ANTHROPIC_API_KEY;
   let body: {
     history: ChatMessage[];
@@ -93,7 +96,15 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
+  // 入力長の上限: 無限トークン消費/プロンプトインジェクションの緩和
+  if (body.userMessage.length > 2000) {
+    return NextResponse.json(
+      { ok: false, error: "message_too_long" },
+      { status: 400 },
+    );
+  }
   if (!Array.isArray(body.history)) body.history = [];
+  if (body.history.length > 40) body.history = body.history.slice(-40);
 
   // API キー無し → フォールバックを返す
   if (!apiKey) {
