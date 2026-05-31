@@ -22,10 +22,11 @@ if (dsn) {
 
     integrations: [
       Sentry.replayIntegration({
-        // 個人情報をマスク
-        maskAllText: false,
+        // 未成年の成績・志望校・AIチャット本文が平文録画されるのを防ぐ。
+        // 本文を全マスクしてもレイアウト/操作の再現は残るのでデバッグは可能。
+        maskAllText: true,
         maskAllInputs: true,
-        blockAllMedia: false,
+        blockAllMedia: true,
       }),
     ],
 
