@@ -8,7 +8,7 @@ export function Hero() {
         {/* Eyebrow pill */}
         <div className="inline-flex items-center gap-2 rounded-full border border-ink-100 bg-cream-50 px-3.5 py-1.5 text-[11px] font-semibold tracking-wide text-ink-600">
           <span className="h-1.5 w-1.5 rounded-full bg-mint-500" />
-          NEW · v0.5 リリース
+          NEW · テスト結果を、次の25分に
         </div>
 
         {/* Editorial headline */}

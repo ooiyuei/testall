@@ -147,19 +147,24 @@ export function AiCoachView() {
         <Link href="/app" aria-label="戻る" className="flex h-9 w-9 items-center justify-center rounded-full text-ink-700 active:bg-ink-100">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div className="flex flex-1 items-center justify-center gap-2">
-          <span className="text-[15px] font-bold text-ink-900">AI コーチ</span>
-          {degraded ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-sun-300/30 px-2 py-0.5 text-[10px] font-semibold text-sun-600">
-              <span className="h-1.5 w-1.5 rounded-full bg-sun-500" />
-              制限モード
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-mint-600">
-              <span className="h-1.5 w-1.5 rounded-full bg-mint-500" />
-              オンライン
-            </span>
-          )}
+        <div className="flex flex-1 items-center justify-center gap-2.5">
+          <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-sky-500 text-[13px] font-bold text-white">
+            S
+          </span>
+          <div className="flex flex-col items-start leading-tight">
+            <span className="text-[15px] font-bold text-ink-900">Sara</span>
+            {degraded ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-sun-600">
+                <span className="h-1.5 w-1.5 rounded-full bg-sun-500" />
+                制限モード
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-mint-600">
+                <span className="h-1.5 w-1.5 rounded-full bg-mint-500" />
+                オンライン
+              </span>
+            )}
+          </div>
         </div>
         <div className="w-9" />
       </header>
