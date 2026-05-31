@@ -245,7 +245,7 @@ export function SearchView() {
       </div>
 
       {/* 検索履歴 — query が空 + focus or 履歴あり時のみ */}
-      {!query.trim() && history.length > 0 && (focused || true) ? (
+      {!query.trim() && history.length > 0 && focused ? (
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[10px] font-semibold text-ink-400">最近の検索</span>
           {history.map((h) => (
@@ -660,10 +660,7 @@ function UniversityCard({ u }: { u: University }) {
 
   return (
     <li>
-      <button
-        type="button"
-        className="w-full flex items-center gap-3 rounded-2xl border border-cream-200 bg-white p-3 shadow-soft text-left hover:bg-cream-50 transition"
-      >
+      <div className="w-full flex items-center gap-3 rounded-2xl border border-cream-200 bg-white p-3 shadow-soft text-left">
         <IconBadge tone="primary" size="md">
           <Building2 strokeWidth={1.75} />
         </IconBadge>
@@ -688,8 +685,7 @@ function UniversityCard({ u }: { u: University }) {
             ) : null}
           </div>
         </div>
-        <ChevronRight className="h-4 w-4 flex-none text-ink-300" strokeWidth={1.75} />
-      </button>
+      </div>
     </li>
   );
 }
@@ -768,10 +764,7 @@ function MockExamCard({ m }: { m: MockExam }) {
 
   return (
     <li>
-      <button
-        type="button"
-        className="w-full flex items-center gap-3 rounded-2xl border border-cream-200 bg-white p-3 shadow-soft text-left hover:bg-cream-50 transition"
-      >
+      <div className="w-full flex items-center gap-3 rounded-2xl border border-cream-200 bg-white p-3 shadow-soft text-left">
         <IconBadge tone="info" size="md">
           <ScrollText strokeWidth={1.75} />
         </IconBadge>
@@ -786,8 +779,7 @@ function MockExamCard({ m }: { m: MockExam }) {
             {m.examDate ?? "—"} · {m.targetGrades.join("/")} · {m.year}
           </div>
         </div>
-        <ChevronRight className="h-4 w-4 flex-none text-ink-300" strokeWidth={1.75} />
-      </button>
+      </div>
     </li>
   );
 }
