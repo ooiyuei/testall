@@ -4,7 +4,7 @@ export const metadata = { title: "ページが見つかりません" };
 
 export default function NotFound() {
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col justify-center bg-cream-50">
+    <div className="mx-auto flex min-h-svh w-full max-w-[480px] flex-col justify-center bg-cream-50">
       <NotFoundState
         title="ページが見つかりません"
         body="削除されたか、URLが変更された可能性があります。"

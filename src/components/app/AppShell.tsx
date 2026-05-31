@@ -64,8 +64,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   });
 
   return (
-    <div className="app-shell min-h-screen w-full">
-      <div className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col bg-cream-50 shadow-[0_0_60px_-30px_rgba(20,19,15,0.18)] md:my-6 md:min-h-[calc(100vh-3rem)] md:rounded-[32px] md:border md:border-cream-200/80">
+    <div className="app-shell min-h-svh w-full">
+      <div className="mx-auto flex min-h-svh w-full max-w-[480px] flex-col bg-cream-50 shadow-[0_0_60px_-30px_rgba(20,19,15,0.18)] md:my-6 md:min-h-[calc(100svh-3rem)] md:rounded-[32px] md:border md:border-cream-200/80">
         {!immersive ? (
           <>
             <AppHeader

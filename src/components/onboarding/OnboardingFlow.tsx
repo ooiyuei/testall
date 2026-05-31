@@ -338,7 +338,7 @@ export function OnboardingFlow() {
 
   return (
     <div
-      className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col bg-cream-50"
+      className="mx-auto flex min-h-svh w-full max-w-[480px] flex-col bg-cream-50"
       onKeyDown={handleKeyDown}
     >
       <OnboardingHeader

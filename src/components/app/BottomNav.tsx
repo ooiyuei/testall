@@ -59,16 +59,16 @@ export function BottomNav() {
                     "h-6 w-6 transition-colors",
                     active
                       ? "text-ink-900"
-                      : "text-ink-300 group-hover:text-ink-700",
+                      : "text-ink-400 group-hover:text-ink-700",
                   )}
-                  strokeWidth={active ? 2.0 : 1.6}
+                  strokeWidth={active ? 2.0 : 1.7}
                 />
                 <span
                   className={cn(
-                    "text-[10px] leading-none tracking-tight transition-colors",
+                    "text-[11px] leading-none tracking-tight transition-colors",
                     active
                       ? "font-bold text-ink-900"
-                      : "font-medium text-ink-400 group-hover:text-ink-700",
+                      : "font-medium text-ink-500 group-hover:text-ink-700",
                   )}
                 >
                   {t.label}

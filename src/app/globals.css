@@ -55,12 +55,17 @@
   --color-sun-300: #ffd047;
   --color-sun-400: #f5b400;
   --color-sun-500: #c98e00;
+  --color-sun-600: #a87600;
 
   /* Warn */
+  --color-coral-50:  #fff1ee;
+  --color-coral-100: #ffe3dd;
   --color-coral-200: #ffc3b8;
   --color-coral-300: #ff9181;
   --color-coral-400: #f56a55;
   --color-coral-500: #d94a36;
+  --color-coral-600: #c23a27;
+  --color-coral-700: #9c2c1d;
 
   /* Type stack — Apple JP 実測値準拠 (Hiragino は ProN ではなく Pro) */
   --font-sans:
@@ -114,6 +119,8 @@ body {
   letter-spacing: -0.02em;
   font-size: 15px;
   line-height: 1.6;
+  /* ブラウザ純正の引っ張り更新/バウンドを抑止 (自作PullToRefreshとの二重発火を防ぐ) */
+  overscroll-behavior-y: contain;
 }
 
 /* 日本語本文：行間広め・字間ちょい広め・禁則 */
@@ -136,6 +143,8 @@ h1, h2, h3, h4, h5 {
 
 button, a {
   letter-spacing: 0.01em;
+  /* タップ遅延(300ms)を消す。ズーム禁止に頼らずに誤タップ拡大だけ抑える */
+  touch-action: manipulation;
 }
 
 /* デフォルトのトランジションを統一 (滑らかな押し心地) */

@@ -23,6 +23,7 @@ import { toast } from "@/components/ui/Toast";
 import { haptic } from "@/lib/haptic";
 import { sound } from "@/lib/sound";
 import { notify } from "@/lib/notify";
+import { burstConfetti } from "@/lib/confetti";
 import { focusSession } from "@/lib/focus-session";
 
 const DEFAULT_DURATION_SEC = 25 * 60;
@@ -83,6 +84,8 @@ export function FocusRun() {
     if (phase === "running" && remaining === 0) {
       haptic.success();
       sound.chime();
+      // 完走の最高潮: リング中央から紙吹雪を吹き上げる(reduced-motionは自動で無音)
+      burstConfetti({ origin: { x: 0.5, y: 0.4 } });
       // バックグラウンドでも見えるよう通知（許可済みなら）
       notify.send("25分、完走！", {
         body: "お疲れさま。次はどう振り返る？",
@@ -227,7 +230,7 @@ export function FocusRun() {
 
   return (
     <div
-      className="min-h-screen"
+      className="min-h-svh"
       style={{
         background:
           "linear-gradient(160deg, #14130f 0%, #1c1a17 40%, #0f2a4a 80%, #0a1e36 100%)",
@@ -341,14 +344,17 @@ function TimerView({
             <div
               className="font-mono text-[52px] font-black tabular-nums leading-none text-white"
               style={{ letterSpacing: "-0.02em" }}
-              aria-live="polite"
-              aria-label={`残り時間 ${mins}分${secs}秒`}
+              aria-hidden="true"
             >
               <span>{String(mins).padStart(2, "0")}</span>
               <span className="text-white/30">:</span>
               <span>{String(secs).padStart(2, "0")}</span>
             </div>
             <TimerLabel phase={phase} minsLeft={minsLeft} ratio={ratio} />
+            {/* SR用: 毎秒でなく分が変わった時だけ読み上げ(VoiceOverが連呼するのを防ぐ) */}
+            <span className="sr-only" role="timer" aria-live="polite">
+              {minsLeft > 0 ? `残り${minsLeft}分` : "時間です"}
+            </span>
           </div>
         </div>
       </section>

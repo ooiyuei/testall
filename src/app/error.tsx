@@ -24,7 +24,7 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col items-center justify-center bg-cream-50 px-5 py-10 text-center">
+    <div className="mx-auto flex min-h-svh w-full max-w-[480px] flex-col items-center justify-center bg-cream-50 px-5 py-10 text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-coral-300/15 text-coral-500 shadow-soft">
         <AlertTriangle className="h-7 w-7" strokeWidth={2.2} />
       </div>
