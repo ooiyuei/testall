@@ -33,6 +33,7 @@ import {
 
 // ── ステップ定義 ──────────────────────────────────────
 const STEPS = [
+  { id: "name",        label: "名前" },
   { id: "grade",       label: "学年" },
   { id: "school",      label: "高校" },
   { id: "deviation",   label: "偏差値" },
@@ -49,6 +50,7 @@ type StepId = (typeof STEPS)[number]["id"];
 
 // ── フォームステート ──────────────────────────────────
 type FormState = {
+  name: string;
   grade: string;
   schoolName: string;
   deviationBucket: DeviationBucket;
@@ -149,8 +151,8 @@ function OnboardingFooter({
   onFinishEarly?: () => void;
 }) {
   const isLast = stepIdx === totalSteps - 1;
-  // 必須3項目 (学年=0, 偏差値=2, 志望校=5) を終えたら「ここまでで始める」を表示
-  const canFinishEarly = stepIdx >= 5 && !isLast && onFinishEarly;
+  // 必須コア(名前→学年→偏差値→目標)を終えたら「ここまでで始める」を出して長さの圧を下げる
+  const canFinishEarly = stepIdx >= 4 && !isLast && onFinishEarly;
 
   return (
     <footer className="sticky bottom-0 z-10 border-t border-ink-100/60 bg-cream-50/90 px-5 py-4 backdrop-blur-xl">
@@ -194,11 +196,13 @@ export function OnboardingFlow() {
   const [form, setForm] = useState<FormState>(() => {
     const existing = readStore().profile;
     return {
+      name: existing?.name ?? "",
       grade: existing?.grade ?? "h2",
       schoolName: existing?.schoolName ?? "",
       deviationBucket: existing?.deviationBucket ?? "55-60",
       deviationByArea: existing?.deviationByArea ?? {},
-      targetDeviationBucket: existing?.targetDeviationBucket ?? "65-70",
+      // 現偏差値より少し上を初期値に。固定65-70は『現57→目標67』の非現実的目標を惰性で残してしまう
+      targetDeviationBucket: existing?.targetDeviationBucket ?? "60-65",
       universityTypes: existing?.universityTypes ?? [],
       interestedFacultyCategories: existing?.interestedFacultyCategories ?? [],
       targetUniversities: existing?.targetUniversities ?? [],
@@ -252,6 +256,7 @@ export function OnboardingFlow() {
     const existing = readStore().profile;
     const profile: StoredProfile = {
       ...existing,
+      name: form.name.trim() || existing?.name,
       grade: form.grade,
       schoolName: form.schoolName.trim() || undefined,
       deviationBucket: form.deviationBucket,
@@ -349,6 +354,28 @@ export function OnboardingFlow() {
       />
 
       <main className="flex-1 px-5 pt-7 pb-32">
+        {stepId === "name" && (
+          <div>
+            <h1
+              className="text-[26px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-900"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              呼ばれたい名前は？
+            </h1>
+            <p className="mt-2 text-[13px] leading-[1.7] text-ink-500">
+              ニックネームでOK。空欄でも始められます（後から変えられます）。
+            </p>
+            <input
+              type="text"
+              autoFocus
+              value={form.name}
+              onChange={(e) => update("name", e.target.value)}
+              placeholder="例：ゆうえい"
+              maxLength={20}
+              className="mt-6 h-[52px] w-full rounded-[14px] border border-ink-100 bg-white px-3.5 text-[16px] text-ink-900 outline-none focus:border-sky-400"
+            />
+          </div>
+        )}
         {stepId === "grade" && (
           <GradeStep value={form.grade} onChange={(v) => update("grade", v)} />
         )}
