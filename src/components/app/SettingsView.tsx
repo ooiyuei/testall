@@ -88,26 +88,6 @@ export function SettingsView() {
         設定
       </h1>
 
-      {/* アカウント — PDF 順に最上位 */}
-      <section>
-        <SectionLabel title="アカウント" className="mb-2" />
-        <SettingsGroup>
-          <SettingsRow icon={Mail} tone="primary" label="メールアドレス" value={user?.email ?? "—"} disabled />
-          <SettingsRow icon={User} tone="neutral" label="表示名" value={state.profile?.name ?? "—"} disabled />
-          <SettingsRow icon={Sparkles} tone="success" label="連携サービス" value="Google" disabled />
-        </SettingsGroup>
-      </section>
-
-      {/* 通知 */}
-      <section>
-        <SectionLabel title="通知" className="mb-2" />
-        <SettingsGroup>
-          <SettingsRow icon={Bell} tone="primary" label="毎日のリマインド" value="近日対応" disabled />
-          <SettingsRow icon={Clock} tone="neutral" label="ブロック開始通知" value="近日対応" disabled />
-          <SettingsRow icon={FileText} tone="neutral" label="週次レポート" value="近日対応" disabled />
-        </SettingsGroup>
-      </section>
-
       {/* アクセシビリティ */}
       <section>
         <SectionLabel title="アクセシビリティ" className="mb-2" />
@@ -115,15 +95,6 @@ export function SettingsView() {
           <HapticToggleRow />
           <SoundToggleRow />
           <NotifyToggleRow />
-        </SettingsGroup>
-      </section>
-
-      {/* プラン */}
-      <section>
-        <SectionLabel title="プラン" className="mb-2" />
-        <SettingsGroup>
-          <SettingsRow icon={Zap} tone="primary" label="現在のプラン" value="Free" disabled />
-          <SettingsRow icon={CreditCard} tone="neutral" label="支払い方法" value="—" disabled />
         </SettingsGroup>
       </section>
 
@@ -162,6 +133,35 @@ export function SettingsView() {
           <SettingsLink href="/terms" icon={FileText} tone="neutral" label="利用規約" />
           <SettingsLink href="/privacy" icon={Shield} tone="neutral" label="プライバシーポリシー" />
           <SettingsRow icon={Lock} tone="neutral" label="バージョン" value="0.6.0" disabled />
+        </SettingsGroup>
+      </section>
+
+      {/* アカウント（現在は表示のみ・編集は順次対応） */}
+      <section>
+        <SectionLabel title="アカウント" className="mb-2" />
+        <SettingsGroup>
+          <SettingsRow icon={Mail} tone="primary" label="メールアドレス" value={user?.email ?? "—"} disabled />
+          <SettingsRow icon={User} tone="neutral" label="表示名" value={state.profile?.name ?? "—"} disabled />
+          <SettingsRow icon={Sparkles} tone="success" label="連携サービス" value="Google" disabled />
+        </SettingsGroup>
+      </section>
+
+      {/* 通知（準備中） */}
+      <section>
+        <SectionLabel title="通知（準備中）" className="mb-2" />
+        <SettingsGroup>
+          <SettingsRow icon={Bell} tone="primary" label="毎日のリマインド" value="近日対応" disabled />
+          <SettingsRow icon={Clock} tone="neutral" label="ブロック開始通知" value="近日対応" disabled />
+          <SettingsRow icon={FileText} tone="neutral" label="週次レポート" value="近日対応" disabled />
+        </SettingsGroup>
+      </section>
+
+      {/* プラン */}
+      <section>
+        <SectionLabel title="プラン" className="mb-2" />
+        <SettingsGroup>
+          <SettingsRow icon={Zap} tone="primary" label="現在のプラン" value="Free" disabled />
+          <SettingsRow icon={CreditCard} tone="neutral" label="支払い方法" value="—" disabled />
         </SettingsGroup>
       </section>
 
