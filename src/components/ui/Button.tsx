@@ -31,7 +31,7 @@ const VARIANT_STYLE: Record<Variant, { cls: string; base: string }> = {
   },
   secondary: {
     base: PILL_BASE,
-    cls: "bg-mint-500 text-white shadow-[0_6px_18px_-8px_var(--color-mint-500)] hover:bg-mint-600",
+    cls: "bg-mint-600 text-white shadow-[0_6px_18px_-8px_var(--color-mint-600)] hover:bg-mint-500",
   },
   soft: {
     base: PILL_BASE,
@@ -47,7 +47,7 @@ const VARIANT_STYLE: Record<Variant, { cls: string; base: string }> = {
   },
   destructive: {
     base: ROUNDED_BASE,
-    cls: "bg-coral-500 text-white hover:bg-coral-400",
+    cls: "bg-coral-600 text-white hover:bg-coral-500",
   },
 };
 

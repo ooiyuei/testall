@@ -103,7 +103,7 @@ export function AuthScreen({ mode }: { mode: Mode }) {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col bg-cream-50 px-6 pt-6 pb-8">
+    <div className="mx-auto flex min-h-svh w-full max-w-[480px] flex-col bg-cream-50 px-6 pt-6 pb-8">
       {/* Top: back + brand */}
       <header className="flex items-center justify-between">
         <Link

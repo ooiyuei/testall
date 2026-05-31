@@ -49,8 +49,10 @@ export const viewport: Viewport = {
   themeColor: "#fbfaf7",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // safe-area(env())を有効化。これでpb-safe/pt-safe/BottomNav/BottomSheetが一斉に効く
+  viewportFit: "cover",
+  // WCAG 1.4.4: 受験生が小さい文字を長時間読む。ピンチズームを禁止しない
+  maximumScale: 5,
 };
 
 export default function RootLayout({
