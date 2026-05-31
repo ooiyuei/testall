@@ -13,6 +13,7 @@ import { addChatMessage, logDailyMood } from "@/lib/store";
 import type { ChatMessage } from "@/lib/store";
 import { cn } from "@/lib/cn";
 import { toast } from "@/components/ui/Toast";
+import { confirm } from "@/components/ui/ConfirmDialog";
 import { useRouter } from "next/navigation";
 
 function newId(): string {
@@ -23,6 +24,14 @@ const QUICK_ACTIONS = [
   { emoji: "🍃", label: "ルートを見る", href: "/app/me" },
   { emoji: "⏰", label: "25分はじめる", href: "/app/focus/run" },
   { emoji: "😊", label: "今日はやめる", action: "today-off" as const },
+];
+
+// 空チャット時の「何を聞けばいいか」の取っ掛かり（タップで送信）
+const STARTER_QUESTIONS = [
+  "次の25分、何をやればいい？",
+  "苦手のつぶし方を教えて",
+  "今週の計画を立てて",
+  "志望校まであと何が必要？",
 ];
 
 // Web Speech API のミニマル型 (TS lib.dom が SpeechRecognition を未定義の環境に対応)
@@ -187,6 +196,26 @@ export function AiCoachView() {
                   </div>
                 ))
               : null}
+            {/* 質問の例（取っ掛かり）— 履歴ゼロ時のみ */}
+            {!hasMessages ? (
+              <div className="flex flex-col items-start gap-2 pl-1 pt-1">
+                <span className="text-[11px] font-medium text-ink-400">
+                  こう聞いてみよう
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {STARTER_QUESTIONS.map((q) => (
+                    <button
+                      key={q}
+                      type="button"
+                      onClick={() => void sendMessage(q)}
+                      className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-[12px] font-medium text-sky-700 transition active:scale-95"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             {/* 履歴 */}
             {messages.map((m) => (
               <div key={m.id} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
@@ -245,8 +274,13 @@ export function AiCoachView() {
               <button
                 key={q.label}
                 type="button"
-                onClick={() => {
-                  // 「今日はやめる」: 当日 mood を today-off に記録 + ホームに戻る
+                onClick={async () => {
+                  // 誤タップ防止: 確認してから当日 mood を today-off 記録 + ホームへ
+                  const ok = await confirm({
+                    title: "今日はお休みにする？",
+                    body: "今日を休みとして記録して、ホームに戻ります。",
+                  });
+                  if (!ok) return;
                   logDailyMood({
                     dateISO: new Date().toISOString().slice(0, 10),
                     mood: "today-off",

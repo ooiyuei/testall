@@ -14,7 +14,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
-  AtSign,
   BookMarked,
   ChevronDown,
   ChevronRight,
@@ -80,7 +79,8 @@ export function MeView() {
   }
 
   const profile = state.profile;
-  const userId = profile?.userId ?? ensureUserId();
+  // userId の生成・永続化の副作用は維持（共有機能が無いので画面には表示しない）
+  if (!profile?.userId) ensureUserId();
 
   const gradeLabel =
     GRADES.find((g) => g.id === profile?.grade)?.name ?? "学年未設定";
@@ -108,7 +108,6 @@ export function MeView() {
       {/* ── ヘッダ ── */}
       <ProfileButton
         profile={profile}
-        userId={userId}
         gradeLabel={gradeLabel}
         firstUniName={firstUniName}
         open={profileOpen}
@@ -172,14 +171,12 @@ export function MeView() {
 // ─── プロフィールボタン（ヘッダ） ───────────────────
 function ProfileButton({
   profile,
-  userId,
   gradeLabel,
   firstUniName,
   open,
   onToggle,
 }: {
   profile?: StoredProfile;
-  userId: string;
   gradeLabel: string;
   firstUniName: string;
   open: boolean;
@@ -210,11 +207,6 @@ function ProfileButton({
             <span className="text-[20px] font-bold leading-tight text-ink-900 truncate">
               {profile?.name ?? "あなた"}
             </span>
-          </div>
-          {/* @ID — 控えめ */}
-          <div className="mt-0.5 flex items-center gap-0.5 text-[10px] text-ink-400">
-            <AtSign className="h-2.5 w-2.5 flex-none" />
-            <span className="truncate">{userId}</span>
           </div>
           {/* 学年 + 第一志望 */}
           <div className="mt-1.5 flex items-center gap-1.5 text-[12px] text-ink-500">
