@@ -597,15 +597,20 @@ function Controls({
         aria-label="タイマーコントロール"
       >
         {phase === "idle" && (
-          <button
-            type="button"
-            onClick={onStart}
-            className={mainBtn}
-            style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
-            aria-label="集中タイマーを開始"
-          >
-            <Play className="h-7 w-7" fill="currentColor" aria-hidden="true" />
-          </button>
+          <div className="flex flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={onStart}
+              className={mainBtn}
+              style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
+              aria-label="集中タイマーを開始"
+            >
+              <Play className="h-7 w-7" fill="currentColor" aria-hidden="true" />
+            </button>
+            <span className="text-[13px] font-bold tracking-wide text-white/70">
+              はじめる
+            </span>
+          </div>
         )}
 
         {phase === "running" && (
