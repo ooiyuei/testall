@@ -15,6 +15,8 @@ import { useScrollRestoration } from "@/lib/hooks/useScrollRestoration";
 import { useKeyboardShortcut } from "@/lib/hooks/useKeyboardShortcut";
 import { CommandPalette } from "@/components/ui/CommandPalette";
 import { MiniFocusBar } from "@/components/system/MiniFocusBar";
+import { LevelUpOverlay } from "./LevelUpOverlay";
+import { useLevelUp } from "@/lib/hooks/useLevelUp";
 import { useCallback, useState } from "react";
 
 function titleFromPath(path: string): { title?: string; back?: string; showAdd?: boolean } {
@@ -44,6 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const meta = titleFromPath(pathname);
   const [paletteOpen, setPaletteOpen] = useState(false);
   useScrollRestoration();
+  const { levelUpTo, dismiss } = useLevelUp();
 
   // PC ユーザー向けショートカット
   // Cmd+K / "/" — グローバル検索パレット
@@ -81,6 +84,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <BottomNav />
       </div>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      {levelUpTo !== null ? (
+        <LevelUpOverlay level={levelUpTo} onDone={dismiss} />
+      ) : null}
     </div>
   );
 }
