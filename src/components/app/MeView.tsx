@@ -158,7 +158,7 @@ export function MeView() {
         />
       </ul>
 
-      <p className="text-center text-[10px] text-ink-400">Testall v0.5.0</p>
+      <p className="text-center text-[10px] text-ink-400">Testall v0.6.0</p>
 
       {/* ── 本棚追加モーダル ── */}
       {bookshelfModal ? (
