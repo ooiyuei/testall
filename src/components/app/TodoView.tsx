@@ -127,18 +127,19 @@ export function TodoView() {
 
   // Compute counts per tab for header label
   const counts = useMemo(() => {
-    let today = 0, todo = 0, done = 0;
+    let today = 0, todo = 0, done = 0, todayDone = 0, todayTotal = 0;
     for (const t of tasks) {
       if (t.status === "done") done += 1;
       else todo += 1;
-      if (
-        t.status !== "done" &&
-        (t.due === "today" || (t.dueDate && t.dueDate <= todayISO) || effectivePriority(t) === 1)
-      ) {
-        today += 1;
+      const isToday =
+        t.due === "today" || (t.dueDate && t.dueDate <= todayISO) || effectivePriority(t) === 1;
+      if (isToday) {
+        todayTotal += 1;
+        if (t.status === "done") todayDone += 1;
+        else today += 1;
       }
     }
-    return { today, todo, done, all: tasks.length };
+    return { today, todo, done, all: tasks.length, todayDone, todayTotal };
   }, [tasks, todayISO]);
 
   if (!hydrated) return <ListSkeleton rows={5} />;
@@ -160,10 +161,8 @@ export function TodoView() {
             style={{ fontFamily: "var(--font-display)" }}
           >
             今日{" "}
-            <span className="tabular-nums text-sky-500">
-              {counts.today - tasks.filter((t) => t.status === "done" && (t.due === "today" || (t.dueDate && t.dueDate <= todayISO))).length}
-            </span>
-            <span className="text-[14px] font-semibold text-ink-400"> / {counts.today}</span>
+            <span className="tabular-nums text-sky-500">{counts.todayDone}</span>
+            <span className="text-[14px] font-semibold text-ink-400"> / {counts.todayTotal}</span>
           </h1>
         </div>
         <button
