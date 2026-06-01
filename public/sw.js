@@ -1,26 +1,33 @@
-// Testall — 最小 Service Worker (offline shell)
-// 静的アセットを cache-first、API は network-first
-// ※ 何かおかしい場合は DevTools → Application → Service Workers → Unregister
+// Testall — Service Worker
+// 方針:
+//   ナビゲーション(HTML) = network-first … 常に最新UIを取りに行く(更新が即届く)
+//   静的アセット(JS/CSS/画像/font) = stale-while-revalidate … 即表示しつつ裏で更新→次回は最新
+//   API = network-first
+// ⚠️ デプロイで内容が変わったら CACHE_VERSION を必ず上げること。
+//    上げると activate 時に古いキャッシュが全削除され、全ユーザーに最新が行き渡る。
+// ※ 手動で直すには DevTools → Application → Service Workers → Unregister + Clear storage。
 
-const CACHE_VERSION = "testall-v1";
-const APP_SHELL = ["/", "/app", "/manifest.json", "/icon-192.svg", "/icon-512.svg"];
+const CACHE_VERSION = "testall-v2";
+// HTML は network-first なので precache は最小限(オフライン時の保険)のみ。
+const APP_SHELL = ["/", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_VERSION).then((cache) => cache.addAll(APP_SHELL)).catch(() => {}),
   );
+  // 新しいSWを待たせず即有効化
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k)),
-      ),
-    ),
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k))),
+      )
+      .then(() => self.clients.claim()),
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
@@ -31,13 +38,21 @@ self.addEventListener("fetch", (event) => {
 
   // API は network-first
   if (url.pathname.startsWith("/api/")) {
+    event.respondWith(fetch(request).catch(() => caches.match(request)));
+    return;
+  }
+
+  // ナビゲーション(HTML) は network-first（常に最新を取りに行く・失敗時のみキャッシュ）
+  if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(() => caches.match(request)),
+      fetch(request).catch(() =>
+        caches.match(request).then((hit) => hit || caches.match("/")),
+      ),
     );
     return;
   }
 
-  // 静的アセットは cache-first
+  // 静的アセットは stale-while-revalidate（cache即返し＋裏で更新→次回最新）
   if (
     request.destination === "image" ||
     request.destination === "style" ||
@@ -45,25 +60,17 @@ self.addEventListener("fetch", (event) => {
     request.destination === "font"
   ) {
     event.respondWith(
-      caches.match(request).then((hit) => {
-        if (hit) return hit;
-        return fetch(request).then((res) => {
-          if (res && res.status === 200) {
-            const copy = res.clone();
-            caches.open(CACHE_VERSION).then((c) => c.put(request, copy));
-          }
-          return res;
-        });
-      }),
-    );
-    return;
-  }
-
-  // ナビゲーション (HTML) は network-first、失敗時にキャッシュ
-  if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request).catch(() =>
-        caches.match(request).then((hit) => hit || caches.match("/app")),
+      caches.open(CACHE_VERSION).then((cache) =>
+        cache.match(request).then((hit) => {
+          const fetching = fetch(request)
+            .then((res) => {
+              if (res && res.status === 200) cache.put(request, res.clone());
+              return res;
+            })
+            .catch(() => hit);
+          // キャッシュがあれば即返し、無ければネットワーク待ち
+          return hit || fetching;
+        }),
       ),
     );
   }
