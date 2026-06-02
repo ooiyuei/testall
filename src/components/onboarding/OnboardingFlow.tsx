@@ -289,6 +289,10 @@ export function OnboardingFlow() {
     };
     setProfile(profile);
     seedDemoIfFirstTime();
+    // オンボ直後はホームの達成(今日のプラン)をそのまま見せる。多ステップ案内の二重疲労を避ける
+    try {
+      sessionStorage.setItem("testall:guide-tour-done", "1");
+    } catch {}
     router.push("/app");
   }
 
@@ -325,6 +329,10 @@ export function OnboardingFlow() {
       userId: existing?.userId ?? nanoid(12),
     } as StoredProfile);
     seedDemoIfFirstTime();
+    // オンボ直後はホームの達成(今日のプラン)をそのまま見せる。多ステップ案内の二重疲労を避ける
+    try {
+      sessionStorage.setItem("testall:guide-tour-done", "1");
+    } catch {}
     router.push("/app");
   }
 
