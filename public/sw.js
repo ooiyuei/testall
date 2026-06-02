@@ -7,7 +7,7 @@
 //    上げると activate 時に古いキャッシュが全削除され、全ユーザーに最新が行き渡る。
 // ※ 手動で直すには DevTools → Application → Service Workers → Unregister + Clear storage。
 
-const CACHE_VERSION = "testall-v3";
+const CACHE_VERSION = "testall-v4";
 // HTML は network-first なので precache は最小限(オフライン時の保険)のみ。
 const APP_SHELL = ["/", "/manifest.json"];
 
