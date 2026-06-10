@@ -7,16 +7,14 @@
 //   streak = 今日 (または昨日まで) から遡って連続でブロック完了した日数
 
 import type { BlockLog, StoredTest } from "./store";
+import { currentDayISO } from "./store";
+import { localYMD as ymd, parseLocalYMD } from "./date-safe";
 import { guessArea } from "./master/subjects/guessArea";
 import type { SubjectAreaId } from "./master/subjects/hierarchy";
 
-// ─── 日付ユーティリティ (ローカルタイム基準) ───────────
-function ymd(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${dd}`;
-}
+// ─── 日付ユーティリティ ───────────────────────
+// 日付キーは store.ts の currentDayISO (6時リセット・ローカルタイム) に統一。
+// 深夜0時〜6時の学習は「前日」の学習日としてカウントされる。
 
 function addDays(base: Date, n: number): Date {
   const d = new Date(base);
@@ -40,15 +38,15 @@ export function computeStreak(blockLogs: BlockLog[]): {
 } {
   if (blockLogs.length === 0) return { current: 0, longest: 0, todayDone: false };
 
-  // 日別の完了有無 set
+  // 日別の完了有無 set (6時リセットの学習日キー)
   const days = new Set<string>();
   for (const b of blockLogs) {
     if (!b.completedAt) continue;
-    days.add(ymd(new Date(b.completedAt)));
+    days.add(currentDayISO(new Date(b.completedAt)));
   }
 
-  const today = new Date();
-  const todayKey = ymd(today);
+  const todayKey = currentDayISO(new Date());
+  const today = parseLocalYMD(todayKey);
   const yesterdayKey = ymd(addDays(today, -1));
   const todayDone = days.has(todayKey);
 
@@ -92,15 +90,15 @@ export type DailyBlocks = { date: string; weekday: string; count: number; minute
 const WEEKDAY_JP = ["日", "月", "火", "水", "木", "金", "土"];
 
 export function computeDailyBlocks(blockLogs: BlockLog[], days = 7): DailyBlocks[] {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // 「今日」は 6時リセットの学習日基準 (深夜0〜6時は前日の続き)
+  const today = parseLocalYMD(currentDayISO(new Date()));
   const map = new Map<string, { count: number; minutes: number }>();
   for (let i = days - 1; i >= 0; i--) {
     map.set(ymd(addDays(today, -i)), { count: 0, minutes: 0 });
   }
   for (const b of blockLogs) {
     if (!b.completedAt) continue;
-    const key = ymd(new Date(b.completedAt));
+    const key = currentDayISO(new Date(b.completedAt));
     const entry = map.get(key);
     if (!entry) continue;
     entry.count += 1;
@@ -108,7 +106,7 @@ export function computeDailyBlocks(blockLogs: BlockLog[], days = 7): DailyBlocks
   }
   const result: DailyBlocks[] = [];
   for (const [date, v] of map.entries()) {
-    const d = new Date(date);
+    const d = parseLocalYMD(date);
     result.push({ date, weekday: WEEKDAY_JP[d.getDay()], count: v.count, minutes: v.minutes });
   }
   return result;
@@ -158,7 +156,7 @@ function aggregatePeriod(
     if (t < start.getTime() || t >= end.getTime()) continue;
     blocks += 1;
     minutes += Math.round((b.durationSec ?? 1500) / 60);
-    active.add(ymd(new Date(b.completedAt)));
+    active.add(currentDayISO(new Date(b.completedAt)));
   }
   return {
     blocks,

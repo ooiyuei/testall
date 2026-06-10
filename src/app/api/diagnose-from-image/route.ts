@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+// base64 で約 33% 膨らむため、元画像 ~7.5MB 相当
+const MAX_BASE64_LENGTH = 10 * 1024 * 1024;
+const MAX_FILE_BYTES = 8 * 1024 * 1024;
 
 // ---------------------------------------------------------------------------
 // 答案画像からのテスト情報抽出
@@ -273,6 +278,10 @@ export async function POST(req: Request) {
     );
   }
 
+  // Vision はトークン消費が大きいので厳しめに制限
+  const rl = rateLimit(`vision:${clientIp(req)}`, { limit: 10, windowMs: 60_000 });
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec);
+
   let base64Data: string;
   let mediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp";
 
@@ -285,6 +294,12 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { ok: false, error: "image_required" },
         { status: 400 },
+      );
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      return NextResponse.json(
+        { ok: false, error: "image_too_large" },
+        { status: 413 },
       );
     }
     const mimeType = file.type as typeof mediaType;
@@ -303,6 +318,12 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { ok: false, error: "image_required" },
         { status: 400 },
+      );
+    }
+    if (body.image.length > MAX_BASE64_LENGTH) {
+      return NextResponse.json(
+        { ok: false, error: "image_too_large" },
+        { status: 413 },
       );
     }
     base64Data = body.image;
@@ -347,8 +368,10 @@ export async function POST(req: Request) {
     const candidate = fenced ? fenced[1] : rawText;
     const jsonMatch = candidate.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
+      // モデル出力はサーバーログのみに残し、クライアントには返さない (情報漏洩防止)
+      console.error("[diagnose-from-image] parse failed:", rawText.slice(0, 500));
       return NextResponse.json(
-        { ok: false, error: "parse_failed", raw: rawText.slice(0, 500) },
+        { ok: false, error: "parse_failed" },
         { status: 500 },
       );
     }
@@ -357,8 +380,9 @@ export async function POST(req: Request) {
     try {
       parsed = JSON.parse(jsonMatch[0]);
     } catch {
+      console.error("[diagnose-from-image] JSON parse failed:", jsonMatch[0].slice(0, 500));
       return NextResponse.json(
-        { ok: false, error: "parse_failed", raw: jsonMatch[0].slice(0, 500) },
+        { ok: false, error: "parse_failed" },
         { status: 500 },
       );
     }

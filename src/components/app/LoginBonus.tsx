@@ -8,6 +8,7 @@ import { Flame, Gift, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
 import { currentDayISO } from "@/lib/store";
+import { localYMD, parseLocalYMD } from "@/lib/date-safe";
 
 const SHOWN_KEY_PREFIX = "testall:login-bonus-shown:";
 
@@ -17,12 +18,10 @@ function getStreak(blockLogs: { completedAt: string }[]): number {
     blockLogs.map((b) => currentDayISO(new Date(b.completedAt))),
   );
   const todayISO = currentDayISO();
-  const [ty, tm, td] = todayISO.split("-").map(Number);
-  const today = new Date(ty, tm - 1, td);
-  let cursor = new Date(today);
+  const cursor = parseLocalYMD(todayISO);
   if (!days.has(todayISO)) cursor.setDate(cursor.getDate() - 1);
   let count = 0;
-  while (days.has(cursor.toISOString().slice(0, 10))) {
+  while (days.has(localYMD(cursor))) {
     count += 1;
     cursor.setDate(cursor.getDate() - 1);
   }

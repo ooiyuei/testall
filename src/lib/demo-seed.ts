@@ -12,6 +12,7 @@ import type {
   StoredTask,
   StoredTest,
 } from "./store";
+import { localYMD } from "./date-safe";
 
 export const DEMO_TEST_ID = "demo-test-1";
 export const DEMO_TASK_PREFIX = "demo-task-";
@@ -29,10 +30,10 @@ export type DemoSeed = {
 /** 今日のスケジュールに合わせた 3 ブロックのデモテストを返す */
 export function buildDemoSeed(): DemoSeed {
   const now = new Date();
-  const todayISO = now.toISOString().slice(0, 10);
+  const todayISO = localYMD(now);
   const tomorrowDate = new Date(now);
   tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-  const tomorrowISO = tomorrowDate.toISOString().slice(0, 10);
+  const tomorrowISO = localYMD(tomorrowDate);
 
   // 模試 2 週間後, 定期テスト 4 週間後を自動セット
   const mockDate = new Date(now);
@@ -120,15 +121,15 @@ export function buildDemoSeed(): DemoSeed {
     {
       id: `${DEMO_EVENT_PREFIX}1`,
       title: "全統第2回 マーク模試",
-      date: mockDate.toISOString().slice(0, 10),
-      endDate: mockDate.toISOString().slice(0, 10),
+      date: localYMD(mockDate),
+      endDate: localYMD(mockDate),
       kind: "mock-exam",
     },
     {
       id: `${DEMO_EVENT_PREFIX}2`,
       title: "前期中間テスト",
-      date: examDate.toISOString().slice(0, 10),
-      endDate: new Date(examDate.getTime() + 2 * 86400000).toISOString().slice(0, 10),
+      date: localYMD(examDate),
+      endDate: localYMD(new Date(examDate.getTime() + 2 * 86400000)),
       kind: "regular-test",
     },
   ];

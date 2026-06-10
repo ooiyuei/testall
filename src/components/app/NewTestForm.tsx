@@ -30,6 +30,7 @@ import { preprocessImage } from "@/lib/image-preprocess";
 import { updateProfileFromTests } from "@/lib/auto-deviation";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/components/ui/Toast";
+import { localYMD, toDateString } from "@/lib/date-safe";
 import type {
   Diagnosis,
   MissCause,
@@ -283,6 +284,9 @@ function PhotoMode({
     vision_failed: "解析に失敗しました。もう一度試してください。",
     network_error: "通信エラーが発生しました。接続を確認してください。",
     image_required: "画像が選択されていません。",
+    image_too_large: "画像サイズが大きすぎます。8MB以下にしてください。",
+    unsupported_image_type: "対応していない画像形式です。JPEG/PNG をご利用ください。",
+    rate_limited: "リクエストが多すぎます。1分ほど待ってからもう一度お試しください。",
   };
 
   return (
@@ -569,8 +573,7 @@ type FormState = {
 };
 
 function todayDate(): string {
-  const d = new Date();
-  return d.toISOString().slice(0, 10);
+  return localYMD(new Date());
 }
 
 // PDF mock _ _ _ _ (8).png 進捗ステップ (done / active / pending)
@@ -1064,6 +1067,23 @@ function ManualForm({ prefill }: { prefill?: VisionResult | null }) {
           </button>
         </div>
       </div>
+
+      {/* 診断中フルスクリーンオーバーレイ — 待ち時間の不安を減らす */}
+      {submitting ? (
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-cream-50/95 backdrop-blur-sm"
+          role="status"
+          aria-live="polite"
+        >
+          <Loader2 className="h-10 w-10 animate-spin text-sky-500" />
+          <p className="mt-4 text-[16px] font-bold text-ink-900">
+            AIが苦手を分析中…
+          </p>
+          <p className="mt-1.5 text-[12px] text-ink-500">
+            10〜20秒ほどかかります。このまま待っていてください。
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1382,7 +1402,7 @@ function SubjectScoreInput({
           />
           <input
             type="number"
-            inputMode="numeric"
+            inputMode="decimal"
             value={entry.deviation ?? ""}
             onChange={(e) => onChange({ deviation: e.target.value })}
             placeholder="—"
@@ -1709,9 +1729,7 @@ function buildHistoryContext(): TestInput["history"] {
   const recentBlockLogs = (store.blockLogs ?? [])
     .filter((b) => b?.completedAt && new Date(b.completedAt).getTime() >= cutoffMs)
     .map((b) => {
-      const v = b.completedAt;
-      const date = typeof v === "string" ? v.slice(0, 10)
-        : new Date(v as unknown as number).toISOString().slice(0, 10);
+      const date = toDateString(b.completedAt) ?? "";
       return { date, rating: b.rating };
     });
   const bookshelf = (store.profile?.bookshelfItems ?? []).map((b) => ({

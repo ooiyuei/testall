@@ -48,6 +48,7 @@ import { Button } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { toast } from "@/components/ui/Toast";
 import { haptic } from "@/lib/haptic";
+import { localYMD } from "@/lib/date-safe";
 import { sound } from "@/lib/sound";
 import { notify } from "@/lib/notify";
 import { Vibrate, Volume2, BellRing } from "lucide-react";
@@ -98,13 +99,13 @@ export function SettingsView() {
         </SettingsGroup>
       </section>
 
-      {/* 通知 */}
+      {/* 通知 — まだ使えないことをセクション名で明示 */}
       <section>
-        <SectionLabel title="通知" className="mb-2" />
+        <SectionLabel title="通知（近日対応予定）" className="mb-2" />
         <SettingsGroup>
-          <SettingsRow icon={Bell} tone="primary" label="毎日のリマインド" value="近日対応" disabled />
-          <SettingsRow icon={Clock} tone="neutral" label="ブロック開始通知" value="近日対応" disabled />
-          <SettingsRow icon={FileText} tone="neutral" label="週次レポート" value="近日対応" disabled />
+          <SettingsRow icon={Bell} tone="primary" label="毎日のリマインド" value="準備中" disabled />
+          <SettingsRow icon={Clock} tone="neutral" label="ブロック開始通知" value="準備中" disabled />
+          <SettingsRow icon={FileText} tone="neutral" label="週次レポート" value="準備中" disabled />
         </SettingsGroup>
       </section>
 
@@ -820,7 +821,7 @@ function DataExportImport() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `testall-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `testall-backup-${localYMD(new Date())}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

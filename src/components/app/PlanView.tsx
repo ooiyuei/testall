@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 import { deleteEvent, saveEvent } from "@/lib/store";
 import type { CalendarEvent, CalendarEventKind } from "@/lib/store";
 import { CalendarSkeleton } from "@/components/ui/Skeleton";
@@ -26,6 +27,7 @@ import { toast } from "@/components/ui/Toast";
 import { confirm } from "@/components/ui/ConfirmDialog";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { haptic } from "@/lib/haptic";
+import { toDateString } from "@/lib/date-safe";
 import { useRef } from "react";
 
 const WEEKDAYS = ["月", "火", "水", "木", "金", "土", "日"];
@@ -267,13 +269,9 @@ export function PlanView() {
             const isToday = cellYmd === todayYmd;
             const isSelected = cellYmd === selectedDate;
             const cellEvents = eventsForDate(cellYmd);
-            const hasLog = (state.blockLogs ?? []).some((l) => {
-              const v = l?.completedAt;
-              const ymd = typeof v === "string" ? v.slice(0, 10)
-                : typeof v === "number" ? new Date(v).toISOString().slice(0, 10)
-                : null;
-              return ymd === cellYmd;
-            });
+            const hasLog = (state.blockLogs ?? []).some(
+              (l) => toDateString(l?.completedAt) === cellYmd,
+            );
             return (
               <li key={i}>
                 <button
@@ -558,6 +556,7 @@ function EventEditor({
   onDelete: (id: string) => void;
 }) {
   const [draft, setDraft] = useState<CalendarEvent>(event);
+  const trapRef = useFocusTrap<HTMLDivElement>(true);
 
   function handleSave() {
     if (!draft.title.trim()) {
@@ -578,6 +577,10 @@ function EventEditor({
       onClick={onClose}
     >
       <div
+        ref={trapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={isNew ? "予定を追加" : "予定を編集"}
         className="w-full max-w-[480px] rounded-t-3xl bg-cream-50 p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] shadow-[0_-12px_30px_-12px_rgba(0,0,0,0.25)] sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >

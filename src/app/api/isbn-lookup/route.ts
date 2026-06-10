@@ -32,6 +32,19 @@ type OkExisting = { ok: true; source: "local"; textbook: Textbook };
 type OkCustom = { ok: true; source: "openbd" | "community"; custom: CustomBook };
 type Fail = { ok: false; error: string };
 
+// カバー画像 URL のサニタイズ — UGC (community DB) 由来の値が
+// javascript:/data: 等のスキームだった場合に <img src> へ流さない
+function safeHttpUrl(url: string | undefined | null): string | undefined {
+  if (!url) return undefined;
+  try {
+    const u = new URL(url);
+    if (u.protocol === "https:" || u.protocol === "http:") return url;
+  } catch {
+    /* invalid URL */
+  }
+  return undefined;
+}
+
 // ISBN を 13桁正規化 (ハイフン除去・10桁→13桁変換)
 function normalizeIsbn(raw: string): string | null {
   const s = raw.replace(/[^0-9Xx]/g, "");
@@ -105,7 +118,7 @@ async function fetchOpenBd(isbn: string): Promise<CustomBook | null> {
     author: s.author || undefined,
     publisher: s.publisher || undefined,
     pubdate: s.pubdate || undefined,
-    coverUrl: s.cover || undefined,
+    coverUrl: safeHttpUrl(s.cover),
   };
 }
 
@@ -136,7 +149,7 @@ export async function GET(
       title: community.title,
       author: community.author ?? undefined,
       publisher: community.publisher ?? undefined,
-      coverUrl: community.cover_url ?? undefined,
+      coverUrl: safeHttpUrl(community.cover_url),
     };
     // 使われた回数を増やす (fire-and-forget)
     upsertCommunityTextbook({

@@ -1,5 +1,6 @@
 import type { MockExam, MockExamProvider } from "../types";
 import { MOCK_EXAMS } from "./data";
+import { localYMD } from "../../date-safe";
 
 export { MOCK_EXAMS };
 export type { MockExam, MockExamProvider };
@@ -40,7 +41,7 @@ export function listByGrade(grade: string): MockExam[] {
 }
 
 export function upcomingExams(grade?: string, today = new Date()): MockExam[] {
-  const todayStr = today.toISOString().slice(0, 10);
+  const todayStr = localYMD(today);
   return MOCK_EXAMS
     .filter((m) => !m.examDate || m.examDate >= todayStr)
     .filter((m) => !grade || m.targetGrades.includes(grade))

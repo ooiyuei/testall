@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import type { ChatMessage } from "@/lib/store";
 import { getChatCache, setChatCache } from "@/lib/chat-cache";
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -92,6 +93,18 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ ok: false, error: "invalid_body" }, { status: 400 });
   }
+
+  if (typeof body.userMessage !== "string" || !body.userMessage.trim()) {
+    return NextResponse.json({ ok: false, error: "invalid_body" }, { status: 400 });
+  }
+  if (body.userMessage.length > 2000) {
+    return NextResponse.json({ ok: false, error: "message_too_long" }, { status: 400 });
+  }
+  if (!Array.isArray(body.history)) body.history = [];
+
+  // 匿名アクセスでの API クォータ焼き尽くし防止
+  const rl = rateLimit(`chat:${clientIp(req)}`, { limit: 20, windowMs: 60_000 });
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec);
 
   // API キー無し → フォールバックを返す
   if (!apiKey) {

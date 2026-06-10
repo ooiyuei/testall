@@ -202,8 +202,14 @@ export function FocusRun() {
       rating,
       durationSec: elapsedSec(),
     });
-    toast.success("記録しました");
-    router.push(testId ? `/app/test/${testId}` : "/app");
+    if (testId) {
+      toast.success("記録しました");
+      router.push(`/app/test/${testId}`);
+    } else {
+      // フリー学習: 達成を承認しつつ、次のアクション (テスト登録) に誘導
+      toast.success("25分おつかれさま！", "テストを登録するとAIが次にやるべき勉強を提案します");
+      router.push("/app");
+    }
   }
 
   if (!hydrated) {
@@ -686,6 +692,9 @@ function FinishView({
       {/* 自己評価 */}
       <section className="rounded-2xl bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.10)]">
         <div className="text-[13px] font-bold text-ink-900">今回の達成度</div>
+        <p className="mt-0.5 text-[11px] text-ink-400">
+          ★を選ぶと記録できます（あとで振り返りに使われます）
+        </p>
         <div
           className="mt-3 flex items-center justify-center gap-3"
           role="group"
@@ -737,7 +746,7 @@ function FinishView({
             : "bg-mint-500 shadow-[0_4px_20px_rgba(15,155,94,0.35)] active:scale-[0.98] hover:shadow-[0_6px_24px_rgba(15,155,94,0.45)]",
         )}
       >
-        {disabled ? "★ で達成度を選んで記録" : hasContext ? "記録して戻る" : "完了"}
+        {disabled ? "上の★で達成度を選んでください" : hasContext ? "記録して戻る" : "完了"}
       </button>
     </div>
   );

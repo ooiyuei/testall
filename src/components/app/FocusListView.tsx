@@ -195,17 +195,28 @@ export function FocusListView() {
           </ul>
         </section>
       ) : (
-        <section className="mt-6 rounded-2xl border border-dashed border-cream-300 bg-white/60 p-5 text-center">
-          <div className="text-[14px] font-bold text-ink-900">
-            テストを登録すると、今日の勉強が自動で組まれます
-          </div>
+        <section className="mt-6 space-y-3">
+          {/* テストなしでもタイマーは使えることを明示 */}
           <Link
-            href="/app/test/new"
-            className="mt-3 inline-flex h-10 items-center gap-1 rounded-full bg-cream-100 px-4 text-[12px] font-bold text-ink-700"
+            href="/app/focus/run"
+            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-ink-900 text-[15px] font-bold text-white shadow-soft active:scale-[0.98] transition"
           >
-            <Plus className="h-4 w-4" />
-            テストを追加
+            <Play className="h-4 w-4" strokeWidth={2.4} fill="currentColor" />
+            今すぐ25分はじめる
           </Link>
+          <div className="rounded-2xl border border-dashed border-cream-300 bg-white/60 p-5 text-center">
+            <div className="text-[14px] font-bold text-ink-900">
+              テストを登録すると、AIが苦手を分析して勉強プランを作ります
+            </div>
+            <p className="mt-1 text-[11px] text-ink-500">あとからでもOK</p>
+            <Link
+              href="/app/test/new"
+              className="mt-3 inline-flex h-10 items-center gap-1 rounded-full bg-cream-100 px-4 text-[12px] font-bold text-ink-700"
+            >
+              <Plus className="h-4 w-4" />
+              テストを追加
+            </Link>
+          </div>
         </section>
       )}
 

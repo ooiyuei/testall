@@ -12,7 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Mic, MicOff, Send } from "lucide-react";
 import { useStore } from "@/lib/hooks/useStore";
-import { addChatMessage, logDailyMood } from "@/lib/store";
+import { addChatMessage, currentDayISO, logDailyMood } from "@/lib/store";
 import type { ChatMessage } from "@/lib/store";
 import { cn } from "@/lib/cn";
 import { toast } from "@/components/ui/Toast";
@@ -285,7 +285,8 @@ export function AiCoachView() {
                 onClick={() => {
                   // 「今日はやめる」: 当日 mood を today-off に記録 + ホームに戻る
                   logDailyMood({
-                    dateISO: new Date().toISOString().slice(0, 10),
+                    // getTodayMoodLog と同じ 6時リセットの学習日キーを使う
+                    dateISO: currentDayISO(),
                     mood: "today-off",
                     returnTime: state.profile?.returnTime ?? "18:30",
                     finalBlocks: 0,

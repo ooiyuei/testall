@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
 import { currentDayISO } from "@/lib/store";
+import { localYMD, parseLocalYMD } from "@/lib/date-safe";
 import type { Block } from "@/lib/types";
 import { MoodCheckCard } from "./MoodCheckCard";
 import { GuideTour } from "./GuideTour";
@@ -111,11 +112,9 @@ export function HomeView() {
       state.blockLogs.map((b) => currentDayISO(new Date(b.completedAt))),
     );
     if (dateSet.size === 0) return 0;
-    const [ty, tm, td] = todayISO.split("-").map(Number);
-    const todayDate = new Date(ty, tm - 1, td);
-    const yesterdayDate = new Date(todayDate);
+    const yesterdayDate = parseLocalYMD(todayISO);
     yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-    const yesterdayISO = yesterdayDate.toISOString().slice(0, 10);
+    const yesterdayISO = localYMD(yesterdayDate);
     let cursorISO = dateSet.has(todayISO)
       ? todayISO
       : dateSet.has(yesterdayISO)
@@ -123,9 +122,8 @@ export function HomeView() {
         : null;
     if (!cursorISO) return 0;
     let count = 0;
-    const [cy, cm, cd] = cursorISO.split("-").map(Number);
-    const cursor = new Date(cy, cm - 1, cd);
-    while (dateSet.has(cursor.toISOString().slice(0, 10))) {
+    const cursor = parseLocalYMD(cursorISO);
+    while (dateSet.has(localYMD(cursor))) {
       count += 1;
       cursor.setDate(cursor.getDate() - 1);
     }

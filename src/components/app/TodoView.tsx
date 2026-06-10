@@ -38,6 +38,7 @@ import {
   toggleTaskStatus,
   DUE_LABEL,
 } from "@/lib/store";
+import { localYMD, parseLocalYMD } from "@/lib/date-safe";
 import type { DueBucket, StoredTask, TaskTag } from "@/lib/store";
 import { SUBJECT_AREAS } from "@/lib/master/subjects/hierarchy";
 
@@ -91,7 +92,8 @@ export function TodoView() {
   }, [hydrated]);
 
   const tasks = state.tasks ?? [];
-  const todayISO = new Date().toISOString().slice(0, 10);
+  // 期限はカレンダー日付なのでローカル日付で比較 (effectivePriority と同じ基準)
+  const todayISO = localYMD(new Date());
 
   const visible = useMemo(() => {
     let list = tasks;
@@ -219,9 +221,12 @@ export function TodoView() {
             <button
               type="button"
               onClick={() => setQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-ink-200 text-ink-600"
+              aria-label="検索をクリア"
+              className="absolute right-1 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center text-ink-600"
             >
-              <X className="h-3.5 w-3.5" strokeWidth={2} />
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-ink-200">
+                <X className="h-3.5 w-3.5" strokeWidth={2} />
+              </span>
             </button>
           ) : null}
         </div>
@@ -306,9 +311,9 @@ export function TodoView() {
 // 日付バケット定義 — PDF mock の "今日 5/14 (1/3)" 形式
 type Bucket = { id: string; label: string; date?: string; tasks: StoredTask[] };
 function bucketize(tasks: StoredTask[], todayISO: string): Bucket[] {
-  const tomorrow = new Date(todayISO);
+  const tomorrow = parseLocalYMD(todayISO);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowISO = tomorrow.toISOString().slice(0, 10);
+  const tomorrowISO = localYMD(tomorrow);
   const buckets: Bucket[] = [
     { id: "today", label: "今日", date: todayISO, tasks: [] },
     { id: "tomorrow", label: "明日", date: tomorrowISO, tasks: [] },

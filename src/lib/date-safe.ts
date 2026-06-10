@@ -2,17 +2,41 @@
 // 旧データ・破損データ・外部 import で createdAt/completedAt が
 // number / Date / null になっているケースに備える。
 
+/**
+ * ローカルタイムの YYYY-MM-DD。
+ * toISOString() は UTC に変換されるため、日本時間 (UTC+9) では
+ * 0:00〜8:59 の間に日付が1日前にズレる。日付キーには必ずこちらを使う。
+ */
+export function localYMD(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** YYYY-MM-DD をローカル深夜0時の Date に変換 (new Date(str) は UTC 解釈されるため) */
+export function parseLocalYMD(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
 /** unknown を ISO 日付 (YYYY-MM-DD) に正規化。失敗時は null。 */
 export function toDateString(v: unknown): string | null {
-  if (typeof v === "string") return v.slice(0, 10);
-  if (typeof v === "number") {
-    try {
-      return new Date(v).toISOString().slice(0, 10);
-    } catch {
-      return null;
+  if (typeof v === "string") {
+    // フルタイムスタンプはローカル日付に変換、日付のみの文字列はそのまま
+    if (v.includes("T")) {
+      const d = new Date(v);
+      return Number.isNaN(d.getTime()) ? v.slice(0, 10) : localYMD(d);
     }
+    return v.slice(0, 10);
   }
-  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  if (typeof v === "number") {
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? null : localYMD(d);
+  }
+  if (v instanceof Date) {
+    return Number.isNaN(v.getTime()) ? null : localYMD(v);
+  }
   return null;
 }
 

@@ -15,6 +15,7 @@ import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
 import { setUnitProficiency } from "@/lib/store";
+import { toDateString } from "@/lib/date-safe";
 import {
   CURRICULUM,
   SUBJECT_AREAS,
@@ -61,10 +62,7 @@ export function SubjectAreaDetail({ area }: { area: SubjectAreaId }) {
     const pts = (state.tests ?? [])
       .filter((t) => t?.input && guessArea(t.input.subject) === area)
       .map((t) => {
-        const raw = t.createdAt;
-        const date = typeof raw === "string" ? raw.slice(0, 10)
-          : typeof raw === "number" ? new Date(raw).toISOString().slice(0, 10)
-          : "";
+        const date = toDateString(t.createdAt) ?? "";
         const fullScore = t.input.fullScore ?? 0;
         const score = t.input.score ?? 0;
         const value =

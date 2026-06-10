@@ -9,6 +9,7 @@
 
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -77,6 +78,12 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
+  if (body.title.length > 200 || body.publisher.length > 100) {
+    return NextResponse.json({ ok: false, error: "invalid_body" }, { status: 400 });
+  }
+
+  const rl = rateLimit(`enrich:${clientIp(req)}`, { limit: 10, windowMs: 60_000 });
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec);
 
   const userPrompt = [
     "参考書情報:",

@@ -154,13 +154,12 @@ function StreakCard({
 
 function WeeklyBars({ daily }: { daily: ReturnType<typeof computeDailyBlocks> }) {
   const max = Math.max(1, ...daily.map((d) => d.count));
-  const today = new Date();
-  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   return (
     <div className="flex items-end justify-between gap-1.5 h-24 rounded-xl bg-cream-50/60 px-3 py-2">
-      {daily.map((d) => {
+      {daily.map((d, idx) => {
         const h = Math.round((d.count / max) * 100);
-        const isToday = d.date === todayKey;
+        // computeDailyBlocks は古い→新しい順で、末尾が今日 (6時リセットの学習日)
+        const isToday = idx === daily.length - 1;
         return (
           <div key={d.date} className="flex flex-1 flex-col items-center gap-1">
             <div className="flex w-full flex-1 items-end">

@@ -5,6 +5,7 @@
 // sessionStorage 時代の残データは初回読み込み時に自動移行する (migrateFromSession).
 
 import type { Diagnosis, TestInput } from "./types";
+import { localYMD, parseLocalYMD } from "./date-safe";
 import type {
   Mood,
   PlanningProfile,
@@ -153,14 +154,15 @@ export function priorityFromDue(due: DueBucket): 1 | 2 | 3 {
 export function effectivePriority(task: StoredTask, today = new Date()): 1 | 2 | 3 {
   if (task.priority === 1) return 1;
   if (!task.due) return task.priority;
-  const todayISO = today.toISOString().slice(0, 10);
+  // 期限はカレンダー日付の概念なのでローカル日付で比較 (toISOString は UTC でズレる)
+  const todayISO = localYMD(today);
   if (task.due === "today" || (task.dueDate && task.dueDate <= todayISO)) {
     return 1;
   }
   if (task.due === "tomorrow") {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    if (todayISO >= tomorrow.toISOString().slice(0, 10)) return 1;
+    if (todayISO >= localYMD(tomorrow)) return 1;
     return 2;
   }
   return task.priority;
@@ -431,11 +433,9 @@ export function getStreak(): number {
   const todayISO = currentDayISO();
 
   // Allow grace: if today has no log yet but yesterday does, start from yesterday.
-  const [ty, tm, td] = todayISO.split("-").map(Number);
-  const todayDate = new Date(ty, tm - 1, td);
-  const yesterdayDate = new Date(todayDate);
+  const yesterdayDate = parseLocalYMD(todayISO);
   yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterdayISO = yesterdayDate.toISOString().slice(0, 10);
+  const yesterdayISO = localYMD(yesterdayDate);
 
   const cursorISO = dateSet.has(todayISO)
     ? todayISO
@@ -446,9 +446,8 @@ export function getStreak(): number {
   if (!cursorISO) return 0;
 
   let count = 0;
-  const [cy, cm, cd] = cursorISO.split("-").map(Number);
-  const cursor = new Date(cy, cm - 1, cd);
-  while (dateSet.has(cursor.toISOString().slice(0, 10))) {
+  const cursor = parseLocalYMD(cursorISO);
+  while (dateSet.has(localYMD(cursor))) {
     count += 1;
     cursor.setDate(cursor.getDate() - 1);
   }
@@ -469,12 +468,14 @@ export function setPlanning(planning: PlanningProfile): StoreState {
 
 // ── 日付ヘルパ（6時リセット） ────────────────
 // 06:00 未満は「前日」扱いにする。
+// 注意: toISOString() は UTC のため日本時間では 0:00〜8:59 に日付がズレる。
+// 必ずローカル日付 (localYMD) で文字列化する。
 export function currentDayISO(now = new Date()): string {
   const d = new Date(now);
   if (d.getHours() < 6) {
     d.setDate(d.getDate() - 1);
   }
-  return d.toISOString().slice(0, 10);
+  return localYMD(d);
 }
 
 // ── 日次気分ログ ──────────────────────────
@@ -514,7 +515,7 @@ export function startOfWeek(date: Date): string {
   const diff = day === 0 ? -6 : 1 - day;
   d.setDate(d.getDate() + diff);
   d.setHours(0, 0, 0, 0);
-  return d.toISOString().slice(0, 10);
+  return localYMD(d);
 }
 
 // ── 週次実行ログ ─────────────────────────

@@ -720,10 +720,12 @@ function BookshelfCard({ item }: { item: BookshelfItem }) {
             });
           }
         }}
-        className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full text-ink-300 hover:bg-cream-100 hover:text-ink-600 transition"
+        className="absolute right-0 top-0 flex h-10 w-10 items-center justify-center text-ink-300 hover:text-ink-600 transition"
         aria-label="削除"
       >
-        <X className="h-3.5 w-3.5" />
+        <span className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-cream-100">
+          <X className="h-3.5 w-3.5" />
+        </span>
       </button>
     </li>
   );
