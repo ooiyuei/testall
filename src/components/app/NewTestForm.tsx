@@ -568,6 +568,7 @@ type FormState = {
   testKindId: string;
   testDate: string;
   testName: string;
+  scope: string;            // テスト範囲 (任意) 例: "数IIB 数列〜ベクトル、教科書p.45-89"
   selectedCategories: SubjectCategory[];
   subjects: SubjectEntry[];
 };
@@ -666,6 +667,7 @@ function buildInitialState(prefill: VisionResult | null): FormState {
       testKindId: "school-mock",
       testDate: todayDate(),
       testName: prefill.testName ?? "",
+      scope: "",
       selectedCategories: [cat],
       subjects: prefillEntry ? [prefillEntry] : [],
     };
@@ -678,6 +680,7 @@ function buildInitialState(prefill: VisionResult | null): FormState {
     testKindId: "school-mock",
     testDate: todayDate(),
     testName: "",
+    scope: "",
     selectedCategories: [initialCat],
     subjects: first ? [first] : [],
   };
@@ -954,6 +957,7 @@ function ManualForm({ prefill }: { prefill?: VisionResult | null }) {
       })),
       testKindId: form.testKindId,
       testDate: form.testDate,
+      scope: form.scope.trim() || undefined,
       subjects: subjectsPayload,
       // v0.5: 過去のテスト履歴 / 学習ログ / 本棚を AI に渡してパーソナライズ
       history: buildHistoryContext(),
@@ -1164,6 +1168,24 @@ function BasicStep({
           onChange={(e) => update("testDate", e.target.value)}
           className="mt-2 h-11 w-full rounded-xl border border-cream-200 bg-white px-3 text-sm text-ink-900 outline-none focus:border-sky-400"
         />
+      </Card>
+
+      <Card>
+        <div className="flex items-center justify-between">
+          <Label>テスト範囲</Label>
+          <span className="text-[10px] text-ink-500">任意</span>
+        </div>
+        <textarea
+          value={form.scope}
+          onChange={(e) => update("scope", e.target.value)}
+          placeholder="例：数列〜ベクトル、教科書 p.45-89"
+          rows={2}
+          maxLength={300}
+          className="mt-2 w-full resize-none rounded-xl border border-cream-200 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-sky-400"
+        />
+        <p className="mt-1 text-[10px] text-ink-400">
+          書いておくと、AIが範囲に合わせた復習プランを作りやすくなります。
+        </p>
       </Card>
 
       <Card>

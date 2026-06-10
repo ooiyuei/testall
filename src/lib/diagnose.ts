@@ -247,6 +247,7 @@ ${extraLines.join("\n")}
 - テスト名: ${input.testName}
 - 科目: ${input.subject}
 - 点数: ${input.score}/${input.fullScore} (${Math.round((input.score / input.fullScore) * 100)}%)
+${input.scope ? `- テスト範囲: ${input.scope.slice(0, 300)}` : ""}
 - 単元別正答率 (全体 ${pct}%):
 ${unitLines}
 

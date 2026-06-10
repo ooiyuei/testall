@@ -18,6 +18,7 @@ export type TestInput = {
   // v0.4 拡張：複数科目を1テストで管理
   testKindId?: string;
   testDate?: string; // YYYY-MM-DD
+  scope?: string; // テスト範囲 (任意) 例: "数列〜ベクトル、教科書p.45-89"
   subjects?: SubjectInput[]; // 複数科目それぞれ点数・単元
 
   // v0.5 拡張: 診断の文脈データ (AI 精度向上のため)

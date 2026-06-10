@@ -27,6 +27,8 @@ type Props = {
   deviationDelta?: number;
   blocksRemainingByHorizon?: Partial<Record<Horizon, number>>;
   blocksDoneByHorizon?: Partial<Record<Horizon, number>>;
+  /** 残り日数 (1日ペース換算表示に使用) */
+  daysRemainingByHorizon?: Partial<Record<Horizon, number>>;
 };
 
 export function LevelCard({
@@ -38,6 +40,7 @@ export function LevelCard({
   deviationDelta,
   blocksRemainingByHorizon,
   blocksDoneByHorizon,
+  daysRemainingByHorizon,
 }: Props) {
   const [horizon, setHorizon] = useState<Horizon>("exam");
   const pct = Math.max(
@@ -46,6 +49,7 @@ export function LevelCard({
   );
   const remaining = blocksRemainingByHorizon?.[horizon];
   const done = blocksDoneByHorizon?.[horizon] ?? 0;
+  const daysRemaining = daysRemainingByHorizon?.[horizon];
   const totalGoalBlocks = (remaining ?? 0) + done;
   const goalPct =
     totalGoalBlocks > 0
@@ -170,15 +174,16 @@ export function LevelCard({
               {remaining?.toLocaleString() ?? "—"}
             </span>
             <span className="text-[10px] font-medium text-white/55">
-              ブロック残
-              {typeof remaining === "number" ? (
-                <span className="ml-1 text-white/40">≈{Math.round(remaining * 25 / 60)}h</span>
-              ) : null}
+              ブロック残 / {done.toLocaleString()} 完了
             </span>
           </div>
-          <div className="text-[10px] text-white/40">
-            完了済み {done.toLocaleString()} ブロック
-          </div>
+          {/* 「必要時間」だと実感が湧かないので 1日あたりのペースで示す */}
+          {typeof remaining === "number" && remaining > 0 && daysRemaining ? (
+            <div className="mt-0.5 text-[11px] font-bold text-mint-500">
+              1日 {Math.max(1, Math.ceil(remaining / daysRemaining))} ブロック（25分×
+              {Math.max(1, Math.ceil(remaining / daysRemaining))}）で届くペース
+            </div>
+          ) : null}
           <div className="mt-2 h-[5px] overflow-hidden rounded-full bg-white/10">
             <div
               className="h-full rounded-full bg-mint-500 transition-all"

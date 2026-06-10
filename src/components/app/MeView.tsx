@@ -831,6 +831,7 @@ function LevelSection() {
   const done = (state.blockLogs ?? []).length;
   let blocksRemainingByHorizon: Record<"exam" | "year" | "quarter", number> | undefined;
   let blocksDoneByHorizon: Record<"exam" | "year" | "quarter", number> | undefined;
+  let daysRemainingByHorizon: Record<"exam" | "year" | "quarter", number> | undefined;
 
   if (profile?.deviation && profile.targetUniversities?.length) {
     const grade = (profile.grade as "h1" | "h2" | "h3" | "ronin") ?? "h2";
@@ -869,6 +870,11 @@ function LevelSection() {
       quarter: calcRemaining(Math.min(3, monthsToExam)),
     };
     blocksDoneByHorizon = { exam: done, year: done, quarter: done };
+    daysRemainingByHorizon = {
+      exam: Math.max(1, Math.round(monthsToExam * 30)),
+      year: Math.max(1, Math.round(Math.min(12, monthsToExam) * 30)),
+      quarter: Math.max(1, Math.round(Math.min(3, monthsToExam) * 30)),
+    };
   }
 
   return (
@@ -878,6 +884,7 @@ function LevelSection() {
       nextLevelExp={lv.nextLevelExp}
       blocksRemainingByHorizon={blocksRemainingByHorizon}
       blocksDoneByHorizon={blocksDoneByHorizon}
+      daysRemainingByHorizon={daysRemainingByHorizon}
     />
   );
 }

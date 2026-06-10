@@ -132,6 +132,16 @@ export function TestDetail({ id }: { id: string }) {
         trend={computeTrend(state.tests, test.id, input.subject)}
       />
 
+      {/* テスト範囲 (入力されていれば表示) */}
+      {input.scope ? (
+        <section className="rounded-2xl border border-ink-100/80 bg-white p-4">
+          <div className="text-[10px] font-medium text-ink-500">テスト範囲</div>
+          <p className="mt-1 text-[13px] leading-relaxed text-ink-900 whitespace-pre-wrap">
+            {input.scope}
+          </p>
+        </section>
+      ) : null}
+
       {/* Level / Gap */}
       <section className="grid grid-cols-1 gap-3">
         <InfoCard

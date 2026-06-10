@@ -259,6 +259,8 @@ export type StoreState = {
   tasks?: StoredTask[];
   chatMessages?: ChatMessage[];
   unitProficiency?: UnitProficiencyMap;
+  /** 進度チェック: 科目ID → 現在やっている単元ID (「イマココ」マーカー) */
+  subjectProgress?: Record<string, string>;
   fixedSlots?: FixedSlot[];
 };
 
@@ -324,6 +326,10 @@ function parseRaw(raw: string | null): StoreState {
       unitProficiency:
         parsed.unitProficiency && typeof parsed.unitProficiency === "object"
           ? parsed.unitProficiency
+          : {},
+      subjectProgress:
+        parsed.subjectProgress && typeof parsed.subjectProgress === "object"
+          ? parsed.subjectProgress
           : {},
       fixedSlots: Array.isArray(parsed.fixedSlots) ? parsed.fixedSlots : [],
     };
@@ -746,6 +752,18 @@ export function clearUnitProficiency(unitId: string): StoreState {
   const next = { ...(current.unitProficiency ?? {}) };
   delete next[unitId];
   return writeStore({ ...current, unitProficiency: next });
+}
+
+// ── 進度チェック (科目ごとの「イマココ」単元) ──
+export function setSubjectProgress(
+  subjectId: string,
+  unitId: string | null,
+): StoreState {
+  const current = readStore();
+  const next = { ...(current.subjectProgress ?? {}) };
+  if (unitId === null) delete next[subjectId];
+  else next[subjectId] = unitId;
+  return writeStore({ ...current, subjectProgress: next });
 }
 
 // ── 固定スロット (食事・お風呂など) ────────

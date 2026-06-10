@@ -11,10 +11,10 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { Check, MapPin, Sparkles } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/hooks/useStore";
-import { setUnitProficiency } from "@/lib/store";
+import { setSubjectProgress, setUnitProficiency } from "@/lib/store";
 import { toDateString } from "@/lib/date-safe";
 import {
   CURRICULUM,
@@ -40,9 +40,12 @@ const DEFAULT_PROFICIENCY: Proficiency = "fair";
 export function SubjectAreaDetail({ area }: { area: SubjectAreaId }) {
   const { state, hydrated } = useStore();
   const [gradeToggle, setGradeToggle] = useState<GradeId>("h2");
+  // 単元タップの意味を切り替える: 得意・苦手 / 進度 (イマココ)
+  const [unitMode, setUnitMode] = useState<"proficiency" | "progress">("proficiency");
   // store 経由で永続化された unitProficiency を参照
   const proficiency: Record<string, Proficiency> =
     (state.unitProficiency as Record<string, Proficiency>) ?? {};
+  const subjectProgress: Record<string, string> = state.subjectProgress ?? {};
 
   const areaDef = SUBJECT_AREAS.find((a) => a.id === area);
 
@@ -185,55 +188,131 @@ export function SubjectAreaDetail({ area }: { area: SubjectAreaId }) {
           </ul>
         </div>
 
+        {/* 単元タップの意味切替: 得意・苦手 / 進度 */}
+        <div className="mt-2 flex gap-1 rounded-xl bg-cream-100/70 p-1">
+          <button
+            type="button"
+            onClick={() => setUnitMode("proficiency")}
+            className={cn(
+              "h-8 flex-1 rounded-lg text-[11px] font-bold transition",
+              unitMode === "proficiency" ? "bg-white text-ink-900 shadow-soft" : "text-ink-500",
+            )}
+          >
+            得意・苦手
+          </button>
+          <button
+            type="button"
+            onClick={() => setUnitMode("progress")}
+            className={cn(
+              "h-8 flex-1 rounded-lg text-[11px] font-bold transition",
+              unitMode === "progress" ? "bg-white text-ink-900 shadow-soft" : "text-ink-500",
+            )}
+          >
+            進度チェック
+          </button>
+        </div>
+
         <ul className="mt-3 space-y-2">
-          {visibleSubjects.map((s) => (
-            <li
-              key={s.id}
-              className="rounded-2xl border border-ink-100/80 bg-white p-3"
-            >
-              <div className="text-[13px] font-bold text-ink-900">{s.name}</div>
-              <ul className="mt-2 space-y-2">
-                {s.domains.map((d) => (
-                  <li key={d.id}>
-                    <div className="text-[11px] font-medium text-ink-500">
-                      {d.name}
-                    </div>
-                    <ul className="mt-1 flex flex-wrap gap-1">
-                      {d.units.map((u) => {
-                        const prof = proficiency[u.id] ?? DEFAULT_PROFICIENCY;
-                        const def = PROFICIENCY_LEVELS.find((p) => p.id === prof)!;
-                        return (
-                          <li key={u.id}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const order: Proficiency[] = ["good", "fair", "weak", "bad"];
-                                const cur = order.indexOf(prof);
-                                const next = order[(cur + 1) % order.length];
-                                setUnitProficiency(u.id, next);
-                              }}
-                              className={cn(
-                                "rounded-full px-2.5 py-1 text-[11px] font-bold transition",
-                                def.tone,
-                              )}
-                            >
-                              {u.name}
-                              <span className="ml-1 text-[9px] opacity-70">
-                                {def.label}
-                              </span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
+          {visibleSubjects.map((s) => {
+            // 進度: 単元はカリキュラム順なので「イマココ」より前 = 既習扱い
+            const flatUnits = s.domains.flatMap((d) => d.units);
+            const currentUnitId = subjectProgress[s.id];
+            const currentIdx = currentUnitId
+              ? flatUnits.findIndex((u) => u.id === currentUnitId)
+              : -1;
+            return (
+              <li
+                key={s.id}
+                className="rounded-2xl border border-ink-100/80 bg-white p-3"
+              >
+                <div className="flex items-baseline justify-between">
+                  <div className="text-[13px] font-bold text-ink-900">{s.name}</div>
+                  {unitMode === "progress" && currentIdx >= 0 ? (
+                    <span className="text-[10px] font-bold text-sky-600 tabular-nums">
+                      {currentIdx + 1} / {flatUnits.length} 単元目
+                    </span>
+                  ) : null}
+                </div>
+                <ul className="mt-2 space-y-2">
+                  {s.domains.map((d) => (
+                    <li key={d.id}>
+                      <div className="text-[11px] font-medium text-ink-500">
+                        {d.name}
+                      </div>
+                      <ul className="mt-1 flex flex-wrap gap-1">
+                        {d.units.map((u) => {
+                          if (unitMode === "progress") {
+                            const idx = flatUnits.findIndex((x) => x.id === u.id);
+                            const isCurrent = u.id === currentUnitId;
+                            const isDone = currentIdx >= 0 && idx < currentIdx;
+                            return (
+                              <li key={u.id}>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    // 同じ単元を再タップで解除
+                                    setSubjectProgress(s.id, isCurrent ? null : u.id)
+                                  }
+                                  aria-pressed={isCurrent}
+                                  className={cn(
+                                    "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold transition",
+                                    isCurrent
+                                      ? "bg-sky-500 text-white ring-2 ring-sky-200"
+                                      : isDone
+                                        ? "bg-mint-100 text-mint-600"
+                                        : "bg-cream-100 text-ink-400",
+                                  )}
+                                >
+                                  {isCurrent ? (
+                                    <MapPin className="h-3 w-3" strokeWidth={2.4} />
+                                  ) : isDone ? (
+                                    <Check className="h-3 w-3" strokeWidth={2.4} />
+                                  ) : null}
+                                  {u.name}
+                                  {isCurrent ? (
+                                    <span className="text-[9px] opacity-90">イマココ</span>
+                                  ) : null}
+                                </button>
+                              </li>
+                            );
+                          }
+                          const prof = proficiency[u.id] ?? DEFAULT_PROFICIENCY;
+                          const def = PROFICIENCY_LEVELS.find((p) => p.id === prof)!;
+                          return (
+                            <li key={u.id}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const order: Proficiency[] = ["good", "fair", "weak", "bad"];
+                                  const cur = order.indexOf(prof);
+                                  const next = order[(cur + 1) % order.length];
+                                  setUnitProficiency(u.id, next);
+                                }}
+                                className={cn(
+                                  "rounded-full px-2.5 py-1 text-[11px] font-bold transition",
+                                  def.tone,
+                                )}
+                              >
+                                {u.name}
+                                <span className="ml-1 text-[9px] opacity-70">
+                                  {def.label}
+                                </span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          })}
         </ul>
         <p className="mt-2 text-[10px] text-ink-400">
-          単元タップで「得意 → ちょい得意 → 苦手 → マジで苦手」が切り替わります。
+          {unitMode === "progress"
+            ? "今やっている単元をタップして「イマココ」を付けると、それより前は既習扱いになります。"
+            : "単元タップで「得意 → ちょい得意 → 苦手 → マジで苦手」が切り替わります。"}
         </p>
       </section>
 
